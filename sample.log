@@ -1,0 +1,2 @@
+####<Feb 14, 2012 4:57:45 AM PST> <Info> <Log Management> <kc-app-01.medrec.com> <> <[ACTIVE] ExecuteThread: '0' for queue: 'weblogic.kernel.Default (self-tuning)'> <> <> <> <1329224265929> <BEA-170023> <The Server Logging is initialized with Java Logging API implementation.>
+####<Feb 14, 2012 4:57:46 AM PST> <Info> <Diagnostics> <kc-app-01.medrec.com> <AdminServer> <[ACTIVE] ExecuteThread: '0' for queue: 'weblogic.kernel.Default (self-tuning)'> <<WLS Kernel>> <> <> <1329224266196> <BEA-320001> <The ServerDebug service initialized successfully.
