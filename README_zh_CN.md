@@ -1,23 +1,30 @@
 # LogSpout: 一个简单的日志生成工具
 
 ## 简介
-LogSpout可根据用户提供的样本日志, 通过正则表达式配置需要替换的文本, 并指定替换规则, 最终生成新的日志events.
+LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替换特定位置的文本, 并指定产生速率, 最终生成新的日志流.
 
 目前支持的特性:
 
-1. 控制日志产生速度(毫秒级), 也可设置hightide=true使用压测模式(没有思考时间)
-2. 产生的日志输出到stdout, 用户可自行重定向到文件或其他输出端
-3. 支持通过外部文件配置样本日志以及替换值列表
-4. 支持通过正则表达式指定要做替换的字段
+1. 控制日志产生速度(毫秒级), 也可设置hightide=true使用压测模式(每条日志中间没有间隔时间).
+2. 产生的日志输出到stdout, 用户可自行重定向到文件或其他输出端.
+3. 支持通过外部文件配置样本日志以及替换值列表.
+4. 支持通过正则表达式指定要做替换的字段.
 5. 支持对每个字段单独配置替换规则.
-6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), 其他为TODO(如随机产生合法的IP地址/电话号码等)
+6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), 其他为TODO(如随机产生合法的IP地址/电话号码等).
 7. 支持以随机/递增/递减方式获取替换字段值.
 
 ## 使用方式
-logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行`./logspout`就会输出生成的日志到stdout.
-如果想将日志重定向到某个文件, 则可以使用`./logspout > my.log`
+logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行:
 
-可以使用-h选项获取帮助:
+```./logspout```
+
+就会输出生成的日志到stdout.
+
+如果想将日志重定向到某个文件, 则可以使用:
+
+```./logspout > my.log```
+
+可以使用-h选项获取命令帮助:
 ```
 ➜  logspout git:(master) ✗ ./logspout -h
 Usage of ./logspout:
@@ -27,14 +34,16 @@ Usage of ./logspout:
     	Print level: debug, info, warning, error. (default "warning")
 ```
 
-简单来说, 可以用-f选项指定你的配置文件, 以及使用-v debug/info/warning/error指定该工具自己的日志打印级别. 如果你发现程序运行
-和预想的不同, 可以开启debug模式(`-v debug`), 打印详细日志进行定位.
+简单来说, 可以用-f选项指定你的配置文件, 以及使用-v debug/info/warning/error指定该工具自己的日志打印级别.
+
+如果你发现程序运行和预想的不同, 可以开启debug模式(`-v debug`), 打印详细日志进行定位.
 
 **注意**: 为了与生成的机器日志区分, logspout自己的日志默认是全部输出到stderr的.
 
+
 ## 配置说明
 
-为灵活性考虑, 配置文件以标准json格式提供, 另随代码附带了一个示例配置文件. 因为是json所以不支持注释, 这是一个缺陷.
+为灵活性考虑, 配置文件以标准json格式提供, 另随代码附带了一个示例配置文件. 因为是json所以配置文件不支持注释, 这是一个天然的缺陷.
 
 配置项如下:
 ### hightide
@@ -48,7 +57,8 @@ Usage of ./logspout:
 
 配置生成日志的并发数, 默认为1, 可配置>1的数字, 以便增加日志产生速率. 具体的并发度需要根据服务器硬件情况调整.
 
-一个参考例子: 在我的2014 Macbook Pro上, 配置concurrency=1000, min-interval=100, max-interval=500, 产生日志速率约为10,0000条/min, 注意此数字受限于max/min-interval, 因此时CPU占用只有约15%.
+一个参考例子: 在我的2014 Macbook Pro上, 配置concurrency=1000, min-interval=100, max-interval=500, 产生日志速率约为10,0000条/min,
+注意此数字受限于max/min-interval, 因此时CPU占用只有约15%.
 
 
 
@@ -62,7 +72,8 @@ Usage of ./logspout:
 
 **单位**: ms(毫秒)
 
-**Tips**: 如果想配置规整的日志发送间隔, 可将min-interval和max-interval设置为相同的值, 否则logspout每次产生新日志前会在min/max-interval之间随机选取一个值做为间隔.
+**Tips**: 如果想配置规整的日志发送间隔, 可将min-interval和max-interval设置为相同的值, 否则logspout每次产生新日志前会在min/max-interval之
+间随机选取一个值做为间隔.
 
 
 ### logtype
@@ -88,6 +99,7 @@ Usage of ./logspout:
 ```
   "pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<serve    r>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<    BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)"
 ```
+
 ### replacement
 **说明**:
 
@@ -98,6 +110,7 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 
 每个字段里, 使用type定义替换规则, 对每个不同的type, 有不同的其他字段要求.
 目前支持的替换规则简述如下:
+
 ### timestamp
 ```"type": "timestamp"```
 时间戳, 此时需要定义format, 指定时间戳的格式(支持标准的joda格式时间戳)
