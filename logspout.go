@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -85,25 +86,32 @@ func main() {
 
 	re := regexp.MustCompile(ptn)
 	scanner := bufio.NewScanner(file)
+
+	var buffer bytes.Buffer
 	for scanner.Scan() {
-		LevelLog(DEBUG, "---------------------------------------------------\n")
-		LevelLog(DEBUG, fmt.Sprintf("**Raw**: %s\n\n", scanner.Text()))
+		buffer.WriteString(scanner.Text())
+	}
+	rawMsg := buffer.String()
 
-		matches = re.FindStringSubmatch(scanner.Text())
-		names = re.SubexpNames()
+	LevelLog(DEBUG, "---------------------------------------------------\n")
+	LevelLog(DEBUG, fmt.Sprintf("**Raw**: %s\n\n", rawMsg))
 
+	matches = re.FindStringSubmatch(rawMsg)
+	names = re.SubexpNames()
+
+	if len(matches) == 0 {
+		LevelLog(ERROR, "The re pattern doesn't match the sample log.")
+		return
+	} else {
 		// Remove the first one as it is the whole string.
 		matches = matches[1:]
 		names = names[1:]
-
-		for idx, match := range matches {
-			if idx == 0 {
-				continue
-			}
-			LevelLog(DEBUG, fmt.Sprintf("  - %s: %s\n", names[idx], match))
-		}
-		continue // Currently it supports only one line in a file.
 	}
+
+	for idx, match := range matches {
+		LevelLog(DEBUG, fmt.Sprintf("  - %s: %s\n", names[idx], match))
+	}
+
 	LevelLog(DEBUG, "Check above matches and change patterns if something is wrong.\n")
 	LevelLog(INFO, "Started.\n")
 
