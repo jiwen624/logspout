@@ -39,12 +39,14 @@ const (
 	RANDOM      = "random"
 	FORMAT      = "format"
 	CONCURRENY  = "concurrency"
+	HIGHTIDE    = "hightide"
 )
 
 // Control the speed of log bursts, in milliseconds.
 var minInterval = 1000
 var maxInterval = 1000
 var concurrency = 1
+var highTide = false
 
 // The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
 func main() {
@@ -62,6 +64,10 @@ func main() {
 	if err != nil {
 		LevelLog(ERROR, err)
 		return
+	}
+
+	if h, err := jsonparser.GetBoolean(conf, HIGHTIDE); err == nil {
+		highTide = h
 	}
 
 	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
@@ -246,7 +252,10 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 			sleepMsec = minInterval + rand.Intn(maxInterval-minInterval)
 
 		}
-		time.Sleep(time.Millisecond * time.Duration(sleepMsec))
+		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
+		if highTide == false {
+			time.Sleep(time.Millisecond * time.Duration(sleepMsec))
+		}
 	}
 	// I never quit...
 }
