@@ -31,25 +31,41 @@ const (
 	MININTERVAL = "min-interval"
 	MAXINTERVAL = "max-interval"
 	LISTFILE    = "list-file"
+	FIXEDLIST   = "fixed-list"
+	TIMESTAMP   = "timestamp"
+	INTEGER     = "integer"
+	NEXT        = "next"
+	PREV        = "prev"
+	RANDOM      = "random"
+	FORMAT      = "format"
+	CONCURRENY  = "concurrency"
 )
 
 // Control the speed of log bursts, in milliseconds.
-var minInterval int = 1000
-var maxInterval int = 1000
+var minInterval = 1000
+var maxInterval = 1000
+var concurrency = 1
 
 // The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
 func main() {
 	confPath := flag.String("f", "logspout.json", "specify the config file in json format.")
-	// TODO: not a good idea.
-	level := flag.Int("v", 1, "Print level: 0->debug, 1->info, 2->warn, 3->error.")
+	level := flag.String("v", "warning", "Print level: debug, info, warning, error.")
 	flag.Parse()
 
-	globalLevel = DebugLevel(*level)
+	if val, ok := levelsDbg[*level]; ok {
+		globalLevel = DebugLevel(val)
+	} else {
+		globalLevel = INFO
+	}
 
 	conf, err := ioutil.ReadFile(*confPath)
 	if err != nil {
 		LevelLog(ERROR, err)
 		return
+	}
+
+	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
+		concurrency = int(c)
 	}
 
 	var logType, sampleFile, ptn string
@@ -81,7 +97,7 @@ func main() {
 	}
 	defer file.Close()
 
-	var replacerMap map[string]Replacer = make(map[string]Replacer)
+	var replacerMap = make(map[string]Replacer)
 	var matches, names []string
 
 	re := regexp.MustCompile(ptn)
@@ -113,7 +129,6 @@ func main() {
 	}
 
 	LevelLog(DEBUG, "Check above matches and change patterns if something is wrong.\n")
-	LevelLog(INFO, "Started.\n")
 
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
@@ -131,13 +146,13 @@ func main() {
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		var err error = nil
 		k := string(key)
-		t, err := jsonparser.GetString(value, "type")
+		t, err := jsonparser.GetString(value, TYPE)
 		if err != nil {
 			return errors.New(fmt.Sprintf("No type found in %s", string(key)))
 		}
 
 		switch t {
-		case "fixed-list":
+		case FIXEDLIST:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No method found in %s", string(key)))
@@ -145,7 +160,7 @@ func main() {
 			var vr []string = make([]string, 0)
 			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 				vr = append(vr, string(value))
-			}, "list")
+			}, LIST)
 			// No list found
 			if err != nil {
 				if f, err := jsonparser.GetString(value, LISTFILE); err != nil {
@@ -165,14 +180,14 @@ func main() {
 			}
 			replacerMap[k] = newFixedListReplacer(c, vr, 0)
 
-		case "timestamp":
-			if tsFmt, err := jsonparser.GetString(value, "format"); err == nil {
+		case TIMESTAMP:
+			if tsFmt, err := jsonparser.GetString(value, FORMAT); err == nil {
 				replacerMap[k] = newTimeStampReplacer(tsFmt)
 			} else {
 				return err
 			}
 
-		case "integer":
+		case INTEGER:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
@@ -197,8 +212,12 @@ func main() {
 
 	// goroutine for future use, not necessary for now.
 	var wg sync.WaitGroup
-	wg.Add(1) // Add it before you start the goroutine.
-	go PopNewLogs(replacerMap, matches, names, wg)
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1) // Add it before you start the goroutine.
+		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
+		go PopNewLogs(replacerMap, matches, names, wg)
+	}
+	LevelLog(INFO, "Started.\n")
 	wg.Wait()
 }
 
@@ -255,10 +274,10 @@ func (fl *FixedListReplacer) ReplacedValue() (string, error) {
 	var newVal string
 
 	switch fl.method {
-	case "next":
+	case NEXT:
 		fl.currIdx = (fl.currIdx + 1) % len(fl.valRange)
 
-	case "random":
+	case RANDOM:
 		fallthrough
 	default:
 		fl.currIdx = rand.Intn(len(fl.valRange))
@@ -299,17 +318,17 @@ func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 
 func (i *IntegerReplacer) ReplacedValue() (string, error) {
 	switch i.method {
-	case "next":
+	case NEXT:
 		i.currVal += 1
 		if i.currVal > i.max {
 			i.currVal = i.min
 		}
-	case "prev":
+	case PREV:
 		i.currVal -= 1
 		if i.currVal < i.min {
 			i.currVal = i.max
 		}
-	case "random":
+	case RANDOM:
 		fallthrough
 	default: // Use random by default
 		i.currVal = rand.Int63n(i.max-i.min) + i.min

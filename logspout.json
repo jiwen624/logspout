@@ -1,9 +1,10 @@
 {
+	"concurrency": 10,
 	"min-interval": 100,
 	"max-interval": 1010,
 	"logtype": "weblogic",
 	"file": "sample.log",
-	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
+	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
 			"type": "timestamp",
@@ -12,7 +13,22 @@
 		"severity": {
 			"type": "fixed-list",
 			"method": "random",
-			"list-file": "severity.sample"
+			"list": ["Debug", "Info", "Warning", "Error"]
+		},
+		"subsystem": {
+			"type": "fixed-list",
+			"method": "random",
+			"list": ["Management", "WebLogicServer", "WorkManager", "EJB", "Security"]
+		},
+		"machine": {
+			"type": "fixed-list",
+			"method": "random",
+			"list": ["machineA", "machineB", "machineC"]
+		},
+		"server": {
+			"type": "fixed-list",
+			"method": "random",
+			"list": ["wls1", "wls2", "wls3"]
 		},
 		"user": {
 			"type": "fixed-list",
@@ -23,13 +39,19 @@
 			"type": "integer",
 			"method": "prev",
 			"min": 0,
-			"max": 100
+			"max": 10
 		},
 		"transaction": {
 			"type": "integer",
 			"method": "random",
 			"min": 0,
 			"max": 1000000
+		},
+		"msgid": {
+			"type": "integer",
+			"method": "random",
+			"min": 0,
+			"max": 2000000
 		}
 	}
 

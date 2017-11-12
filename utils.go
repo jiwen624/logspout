@@ -27,6 +27,14 @@ var dbgLevels = map[DebugLevel]string{
 	ERROR:   "ERROR",
 }
 
+// Reversed map
+var levelsDbg = map[string]DebugLevel{
+	"debug":   DEBUG,
+	"info":    INFO,
+	"warning": WARNING,
+	"error":   ERROR,
+}
+
 var globalLevel DebugLevel = INFO
 var logger = log.New(os.Stderr, "", log.LstdFlags)
 
