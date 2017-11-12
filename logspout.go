@@ -27,7 +27,13 @@ const (
 	LIST        = "list"
 	MIN         = "min"
 	MAX         = "max"
+	MININTERVAL = "min-interval"
+	MAXINTERVAL = "max-interval"
 )
+
+// Control the speed of log bursts, in milliseconds.
+var minInterval int = 1000
+var maxInterval int = 1000
 
 // The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
 func main() {
@@ -103,6 +109,13 @@ func main() {
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
 		LevelLog(ERROR, err)
+	}
+
+	if minI, err := jsonparser.GetInt(conf, MININTERVAL); err == nil {
+		minInterval = int(minI)
+	}
+	if maxI, err := jsonparser.GetInt(conf, MAXINTERVAL); err == nil {
+		maxInterval = int(maxI)
 	}
 
 	// Build the replacer map
@@ -181,7 +194,14 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 		newLog = strings.Join(matches, "")
 		// Print to stdout, you may redirect it to anywhere else you want
 		fmt.Fprintln(os.Stdout, newLog)
-		time.Sleep(time.Second * 1) // TODO: configurable
+		var sleepMsec int = 1000
+		if maxInterval == minInterval {
+			sleepMsec = minInterval
+		} else {
+			sleepMsec = minInterval + rand.Intn(maxInterval-minInterval)
+
+		}
+		time.Sleep(time.Millisecond * time.Duration(sleepMsec))
 	}
 	// I never quit...
 }
@@ -209,10 +229,13 @@ func (fl *FixedListReplacer) ReplacedValue() (string, error) {
 	var newVal string
 
 	switch fl.method {
+	case "next":
+		fl.currIdx = (fl.currIdx + 1) % len(fl.valRange)
+
 	case "random":
+		fallthrough
+	default:
 		fl.currIdx = rand.Intn(len(fl.valRange))
-	case "inorder":
-		fl.currIdx = (fl.currIdx + 1) / len(fl.valRange)
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
@@ -250,20 +273,20 @@ func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 
 func (i *IntegerReplacer) ReplacedValue() (string, error) {
 	switch i.method {
-	case "increase":
+	case "next":
 		i.currVal += 1
 		if i.currVal > i.max {
 			i.currVal = i.min
 		}
-	case "decrease":
+	case "prev":
 		i.currVal -= 1
 		if i.currVal < i.min {
 			i.currVal = i.max
 		}
 	case "random":
-	default:
+		fallthrough
+	default: // Use random by default
 		i.currVal = rand.Int63n(i.max-i.min) + i.min
-
 	}
 	return strconv.FormatInt(i.currVal, 10), nil
 }

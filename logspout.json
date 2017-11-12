@@ -1,22 +1,35 @@
 {
+	"min-interval": 100,
+	"max-interval": 1010,
 	"logtype": "weblogic",
 	"file": "sample.log",
 	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
 			"type": "timestamp",
-			"format": "MMM dd, yyyy hh:mm:ss a z"
+			"format": "MMM dd, yyyy hh:mm:ss.SSS a z"
 		},
 		"severity": {
 			"type": "fixed-list",
 			"method": "random",
 			"list": ["Info", "Warning", "Error"]
 		},
+		"user": {
+			"type": "fixed-list",
+			"method": "next",
+			"list": ["GuoJing", "HuangRong", "ZhangSanfeng", "ZhangWuji"]
+		},
 		"thread": {
 			"type": "integer",
-			"method": "increase",
+			"method": "prev",
 			"min": 0,
 			"max": 100
+		},
+		"transaction": {
+			"type": "integer",
+			"method": "random",
+			"min": 0,
+			"max": 1000000
 		}
 	}
 
