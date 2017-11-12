@@ -20,10 +20,12 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置需要�
 配置项如下:
 ### min-interval
 说明: 产生下一条新日志的最小时间间隔
+
 单位: ms
 
 ### max-interval
 说明: 产生下一条新日志的最大时间间隔
+
 单位: ms
 
 ### logtype
@@ -34,10 +36,12 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置需要�
 
 ### pattern
 说明: 从样本日志抽取字段的正则表达式.
+
 注意: 目前此工具要求raw message里所有的文本均配置成captured group, 即使你不需要替换它. 对于不需要替换的部分, 可以只用()包围起来, 不用起名字.
 
 ### replacement
 说明: 替换规则 (详细描述暂时缺失)
+
 replacement内的每个key都是pattern里的一个captured group, 通过此处配置替换规则.
 具体可以参考样板配置文件logspout.json
 
