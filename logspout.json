@@ -3,15 +3,20 @@
 	"file": "sample.log",
 	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
+		"timestamp": {
+			"type": "timestamp",
+			"format": "MMM dd, yyyy hh:mm:ss a z"
+		},
 		"severity": {
 			"type": "fixed-list",
-			"choose": "random",
-			"range": ["Info", "Warning", "Error"]
+			"method": "random",
+			"list": ["Info", "Warning", "Error"]
 		},
 		"thread": {
 			"type": "integer",
-			"choose": "increase",
-			"range": [0, 100]
+			"method": "increase",
+			"min": 0,
+			"max": 100
 		}
 	}
 

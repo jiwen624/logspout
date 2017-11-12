@@ -6,10 +6,12 @@ import (
 	"flag"
 	"fmt"
 	"github.com/buger/jsonparser"
+	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,8 +23,10 @@ const (
 	PATTERN     = "pattern"
 	REPLACEMENT = "replacement"
 	TYPE        = "type"
-	CHOOSE      = "choose"
-	RANGE       = "range"
+	METHOD      = "method"
+	LIST        = "list"
+	MIN         = "min"
+	MAX         = "max"
 )
 
 // The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
@@ -110,33 +114,49 @@ func main() {
 			return errors.New(fmt.Sprintf("No type found in %s", string(key)))
 		}
 
-		c, err := jsonparser.GetString(value, "choose")
-		if err != nil {
-			return errors.New(fmt.Sprintf("No choose found in %s", string(key)))
-		}
-
-		var vr []string = make([]string, 0)
-
-		jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-			vr = append(vr, string(value))
-		}, "range")
-
 		switch t {
 		case "fixed-list":
-			replacerMap[k] = newFixedList(c, vr, 0)
-		case "timestamp":
-			// TODO
-		case "integer":
-			// TODO
-		}
+			c, err := jsonparser.GetString(value, METHOD)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No method found in %s", string(key)))
+			}
+			var vr []string = make([]string, 0)
+			jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+				vr = append(vr, string(value))
+			}, "list")
+			replacerMap[k] = newFixedListReplacer(c, vr, 0)
 
+		case "timestamp":
+			if tsFmt, err := jsonparser.GetString(value, "format"); err == nil {
+				replacerMap[k] = newTimeStampReplacer(tsFmt)
+			} else {
+				LevelLog(WARNING, err)
+			}
+
+		case "integer":
+			c, err := jsonparser.GetString(value, METHOD)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
+			}
+			min, err := jsonparser.GetInt(value, MIN)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+			}
+			max, err := jsonparser.GetInt(value, MAX)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+			}
+			replacerMap[k] = newIntegerReplacer(c, min, max, min)
+		}
 		return err
 	}
 
-	jsonparser.ObjectEach(replace, handler)
+	if err := jsonparser.ObjectEach(replace, handler); err != nil {
+		LevelLog(ERROR, err)
+		return
+	}
 
 	// goroutine for future use, not necessary for now.
-
 	var wg sync.WaitGroup
 	wg.Add(1) // Add it before you start the goroutine.
 	go PopNewLogs(replacerMap, matches, names, wg)
@@ -171,24 +191,24 @@ type Replacer interface {
 	ReplacedValue() (string, error)
 }
 
-type FixedList struct {
-	choose   string
+type FixedListReplacer struct {
+	method   string
 	valRange []string
 	currIdx  int
 }
 
-func newFixedList(c string, v []string, ci int) Replacer {
-	return &FixedList{
-		choose:   c,
+func newFixedListReplacer(c string, v []string, ci int) Replacer {
+	return &FixedListReplacer{
+		method:   c,
 		valRange: v,
 		currIdx:  ci,
 	}
 }
 
-func (fl *FixedList) ReplacedValue() (string, error) {
+func (fl *FixedListReplacer) ReplacedValue() (string, error) {
 	var newVal string
 
-	switch fl.choose {
+	switch fl.method {
 	case "random":
 		fl.currIdx = rand.Intn(len(fl.valRange))
 	case "inorder":
@@ -196,4 +216,54 @@ func (fl *FixedList) ReplacedValue() (string, error) {
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
+}
+
+type TimeStampReplacer struct {
+	format string
+}
+
+func newTimeStampReplacer(f string) Replacer {
+	return &TimeStampReplacer{
+		format: f,
+	}
+}
+
+func (ts *TimeStampReplacer) ReplacedValue() (string, error) {
+	return jodaTime.Format(ts.format, time.Now()), nil
+}
+
+type IntegerReplacer struct {
+	method  string
+	min     int64
+	max     int64
+	currVal int64
+}
+
+func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
+	return &IntegerReplacer{
+		method:  c,
+		min:     minV,
+		max:     maxV,
+		currVal: cv,
+	}
+}
+
+func (i *IntegerReplacer) ReplacedValue() (string, error) {
+	switch i.method {
+	case "increase":
+		i.currVal += 1
+		if i.currVal > i.max {
+			i.currVal = i.min
+		}
+	case "decrease":
+		i.currVal -= 1
+		if i.currVal < i.min {
+			i.currVal = i.max
+		}
+	case "random":
+	default:
+		i.currVal = rand.Int63n(i.max-i.min) + i.min
+
+	}
+	return strconv.FormatInt(i.currVal, 10), nil
 }
