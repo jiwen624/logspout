@@ -12,7 +12,7 @@
 		"severity": {
 			"type": "fixed-list",
 			"method": "random",
-			"list": ["Info", "Warning", "Error"]
+			"list-file": "severity.sample"
 		},
 		"user": {
 			"type": "fixed-list",

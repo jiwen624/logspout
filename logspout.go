@@ -29,6 +29,7 @@ const (
 	MAX         = "max"
 	MININTERVAL = "min-interval"
 	MAXINTERVAL = "max-interval"
+	LISTFILE    = "list-file"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -134,16 +135,33 @@ func main() {
 				return errors.New(fmt.Sprintf("No method found in %s", string(key)))
 			}
 			var vr []string = make([]string, 0)
-			jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 				vr = append(vr, string(value))
 			}, "list")
+			// No list found
+			if err != nil {
+				if f, err := jsonparser.GetString(value, LISTFILE); err != nil {
+					return err
+				} else { //Open sample file and fill into vr
+					fp, err := os.Open(f)
+					if err != nil {
+						return err
+					}
+					defer fp.Close()
+					s := bufio.NewScanner(fp)
+					for s.Scan() {
+						vr = append(vr, s.Text())
+					}
+				}
+
+			}
 			replacerMap[k] = newFixedListReplacer(c, vr, 0)
 
 		case "timestamp":
 			if tsFmt, err := jsonparser.GetString(value, "format"); err == nil {
 				replacerMap[k] = newTimeStampReplacer(tsFmt)
 			} else {
-				LevelLog(WARNING, err)
+				return err
 			}
 
 		case "integer":
