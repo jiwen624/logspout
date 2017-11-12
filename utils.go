@@ -4,7 +4,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -26,8 +26,14 @@ var dbgLevels = map[DebugLevel]string{
 	ERROR:   "ERROR",
 }
 
+var globalLevel DebugLevel = INFO
+
 // LevelLog print logs based on the debug level.
 func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
+	if level < globalLevel {
+		return
+	}
+
 	var msg string
 	switch err.(type) {
 	case error:
@@ -35,13 +41,15 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 	case string:
 		msg = err.(string)
 	default:
-		log.Printf("Unknown err type: %T", err)
+		fmt.Fprintf(os.Stderr, "Unknown err type: %T", err)
 		return
 	}
 
 	var p string
 	pc, f, l, ok := runtime.Caller(1)
-	if ok {
+	if globalLevel > DEBUG {
+		p = ""
+	} else if ok {
 		path := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 		name := path[len(path)-1]
 		p = fmt.Sprintf("%s %s#%d %s(): ", dbgLevels[level], filepath.Base(f), l, name)
@@ -49,8 +57,18 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 		p = fmt.Sprintf("%s %s#%s %s(): ", level, "na", "na", "na")
 	}
 	if len(args) == 0 {
-		log.Printf("%s%s", p, msg)
+		fmt.Fprintf(os.Stderr, "%s%s", p, msg)
 	} else {
-		log.Printf("%s%s %v", p, msg, args)
+		fmt.Fprintf(os.Stderr, "%s%s %v", p, msg, args)
 	}
+}
+
+// Helper function to find the position of a string in a []string
+func StrIndex(vs []string, t string) int {
+	for i, v := range vs {
+		if v == t {
+			return i
+		}
+	}
+	return -1
 }

@@ -1,7 +1,7 @@
 {
 	"logtype": "weblogic",
 	"file": "sample.log",
-	"pattern": "####<(?P<timestamp>.*?)>\\s*<(?P<severity>.*?)>\\s*<(?P<subsystem>.*?)>\\s*<(?P<machine>.*?)>\\s*<(?P<server>.*?)>\\s*<(?P<thread>.*?)>\\s*<(?P<user>.*?)>\\s*<(?P<transaction>.*?)>\\s*<(?P<diagcontext>.*?)>\\s*<(?P<rawtime>.*?)>\\s*<(?P<msgid>.*?)>\\s*<(?P<msgtext>.*?)>",
+	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
 		"severity": {
 			"type": "fixed-list",
