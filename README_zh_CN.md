@@ -142,10 +142,15 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 生成仿真的特性类型数据. 可以使用method指定要生成哪种类型的数据, 目前支持:
 
 `"method": "ipv4"`  - IPv4 地址
+
 `"method": "ipv6"`  - IPv6 地址
+
 `"method": "country"`  - 国家名称
+
 `"method": "email"`  - email地址
+
 `"method": "name"`  - 人名
+
 `"method": "user-agent"`  - 浏览器的User Agent信息
 
 
