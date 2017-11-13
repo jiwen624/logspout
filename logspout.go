@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Pallinder/go-randomdata"
 	"github.com/buger/jsonparser"
 	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
@@ -34,12 +35,23 @@ const (
 	FIXEDLIST   = "fixed-list"
 	TIMESTAMP   = "timestamp"
 	INTEGER     = "integer"
+	LOOKSREAL   = "looks-real"
 	NEXT        = "next"
 	PREV        = "prev"
 	RANDOM      = "random"
 	FORMAT      = "format"
 	CONCURRENY  = "concurrency"
 	HIGHTIDE    = "hightide"
+)
+
+// LooksReal data methods
+const (
+	IPV4    = "ipv4"
+	IPV6    = "ipv6"
+	UA      = "user-agent"
+	COUNTRY = "country"
+	EMAIL   = "email"
+	NAME    = "name"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -207,6 +219,14 @@ func main() {
 				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
 			}
 			replacerMap[k] = newIntegerReplacer(c, min, max, min)
+
+		case LOOKSREAL:
+			// TODO: An empty string will be returned by the ReplacedValue() if the method is invalid.
+			c, err := jsonparser.GetString(value, METHOD)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
+			}
+			replacerMap[k] = newLooksReal(c)
 		}
 		return err
 	}
@@ -343,4 +363,32 @@ func (i *IntegerReplacer) ReplacedValue() (string, error) {
 		i.currVal = rand.Int63n(i.max-i.min) + i.min
 	}
 	return strconv.FormatInt(i.currVal, 10), nil
+}
+
+type LooksReal struct {
+	method string
+}
+
+func newLooksReal(m string) Replacer {
+	return &LooksReal{
+		method: m,
+	}
+}
+
+func (ia *LooksReal) ReplacedValue() (data string, err error) {
+	switch ia.method {
+	case IPV4:
+		data = randomdata.IpV4Address()
+	case IPV6:
+		data = randomdata.IpV6Address()
+	case UA:
+		data = randomdata.UserAgentString()
+	case COUNTRY:
+		data = randomdata.Country(randomdata.FullCountry)
+	case EMAIL:
+		data = randomdata.Email()
+	case NAME:
+		data = randomdata.SillyName()
+	}
+	return data, nil
 }
