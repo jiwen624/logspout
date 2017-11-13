@@ -46,12 +46,13 @@ const (
 
 // LooksReal data methods
 const (
-	IPV4    = "ipv4"
-	IPV6    = "ipv6"
-	UA      = "user-agent"
-	COUNTRY = "country"
-	EMAIL   = "email"
-	NAME    = "name"
+	IPV4      = "ipv4"
+	IPV4CHINA = "ipv4china"
+	IPV6      = "ipv6"
+	UA        = "user-agent"
+	COUNTRY   = "country"
+	EMAIL     = "email"
+	NAME      = "name"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -379,6 +380,8 @@ func (ia *LooksReal) ReplacedValue() (data string, err error) {
 	switch ia.method {
 	case IPV4:
 		data = randomdata.IpV4Address()
+	case IPV4CHINA:
+		data = GetRandomChinaIP()
 	case IPV6:
 		data = randomdata.IpV6Address()
 	case UA:
