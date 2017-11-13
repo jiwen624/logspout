@@ -44,7 +44,7 @@ Usage of ./logspout:
 
 ## 配置说明
 
-为灵活性考虑, 配置文件以标准json格式提供, 另随代码附带了一个示例配置文件. 因为是json所以配置文件不支持注释, 这是一个天然的缺陷.
+为灵活性考虑, 配置文件以标准json格式提供, 另随代码附带了一个[示例配置文件](https://github.com/jiwen624/logspout/blob/master/logspout.json). 因为是json所以配置文件不支持注释, 这是一个天然的缺陷.
 
 配置项如下:
 ### hightide

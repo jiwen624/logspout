@@ -26,9 +26,8 @@
 			"list": ["machineA", "machineB", "machineC"]
 		},
 		"server": {
-			"type": "fixed-list",
-			"method": "random",
-			"list": ["wls1", "wls2", "wls3"]
+			"type": "looks-real",
+			"method": "ipv4",
 		},
 		"user": {
 			"type": "fixed-list",
