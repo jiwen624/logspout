@@ -27,7 +27,7 @@
 		},
 		"server": {
 			"type": "looks-real",
-			"method": "ipv4",
+			"method": "ipv4china"
 		},
 		"user": {
 			"type": "fixed-list",
