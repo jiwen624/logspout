@@ -150,6 +150,8 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 
 `"method": "ipv4"`  - IPv4 地址
 
+`"method": "ipv4china"`  - 中国IPv4地址
+
 `"method": "ipv6"`  - IPv6 地址
 
 `"method": "country"`  - 国家名称
