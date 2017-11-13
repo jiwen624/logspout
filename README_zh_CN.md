@@ -12,6 +12,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 5. 支持对每个字段单独配置替换规则.
 6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), 其他为TODO(如随机产生合法的IP地址/电话号码等).
 7. 支持以随机/递增/递减方式获取替换字段值.
+8. 增加looks-real数据替换选项, 可生成IPv4/IPv6地址, email地址, 人名, 国家, 浏览器User Agent等.
 
 ## 使用方式
 logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行:
@@ -134,6 +135,19 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 可以定义从列表里选取值的方式: 随机/递增/递减
 ```"method": "random"```  (或者`next`, `prev`)
 此时需要定义`"min"`和`"max"`, 提供一个选择范围.
+
+### looks-real
+```"type": "looks-real"```
+
+生成仿真的特性类型数据. 可以使用method指定要生成哪种类型的数据, 目前支持:
+
+`"method": "ipv4"`  - IPv4 地址
+`"method": "ipv6"`  - IPv6 地址
+`"method": "country"`  - 国家名称
+`"method": "email"`  - email地址
+`"method": "name"`  - 人名
+`"method": "user-agent"`  - 浏览器的User Agent信息
+
 
 ## 疑问
 如有疑问或发现可提交issues.
