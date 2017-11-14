@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/buger/jsonparser"
+	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"regexp"
 	"strconv"
@@ -253,13 +253,17 @@ func main() {
 func PopNewLogs(replacers map[string]Replacer, matches []string, names []string, wg sync.WaitGroup) {
 	var newLog string
 	defer wg.Done()
+
+	// Gaussian distribution
+	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
+
 	for {
 		for k, v := range replacers {
 			idx := StrIndex(names, k)
 			if idx == -1 {
 				continue
 			}
-			if s, err := v.ReplacedValue(); err == nil {
+			if s, err := v.ReplacedValue(grng); err == nil {
 				matches[idx] = s
 			}
 		}
@@ -267,12 +271,12 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 		newLog = strings.Join(matches, "")
 		// Print to stdout, you may redirect it to anywhere else you want
 		fmt.Fprintln(os.Stdout, newLog)
-		var sleepMsec int = 1000
+		var sleepMsec = 1000
 		if maxInterval == minInterval {
 			sleepMsec = minInterval
 		} else {
-			sleepMsec = minInterval + rand.Intn(maxInterval-minInterval)
-
+			gap := maxInterval - minInterval
+			sleepMsec = minInterval + SimpleGaussian(grng, gap)
 		}
 		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 		if highTide == false {
@@ -284,7 +288,7 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 
 type Replacer interface {
 	// ReplacedValue returns the new replaced value.
-	ReplacedValue() (string, error)
+	ReplacedValue(*rng.GaussianGenerator) (string, error)
 }
 
 type FixedListReplacer struct {
@@ -301,7 +305,7 @@ func newFixedListReplacer(c string, v []string, ci int) Replacer {
 	}
 }
 
-func (fl *FixedListReplacer) ReplacedValue() (string, error) {
+func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	var newVal string
 
 	switch fl.method {
@@ -311,7 +315,7 @@ func (fl *FixedListReplacer) ReplacedValue() (string, error) {
 	case RANDOM:
 		fallthrough
 	default:
-		fl.currIdx = rand.Intn(len(fl.valRange))
+		fl.currIdx = SimpleGaussian(g, len(fl.valRange))
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
@@ -327,7 +331,7 @@ func newTimeStampReplacer(f string) Replacer {
 	}
 }
 
-func (ts *TimeStampReplacer) ReplacedValue() (string, error) {
+func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, error) {
 	return jodaTime.Format(ts.format, time.Now()), nil
 }
 
@@ -347,7 +351,7 @@ func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 	}
 }
 
-func (i *IntegerReplacer) ReplacedValue() (string, error) {
+func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	switch i.method {
 	case NEXT:
 		i.currVal += 1
@@ -362,7 +366,7 @@ func (i *IntegerReplacer) ReplacedValue() (string, error) {
 	case RANDOM:
 		fallthrough
 	default: // Use random by default
-		i.currVal = rand.Int63n(i.max-i.min) + i.min
+		i.currVal = int64(SimpleGaussian(g, int(i.max-i.min))) + i.min
 	}
 	return strconv.FormatInt(i.currVal, 10), nil
 }
@@ -377,12 +381,12 @@ func newLooksReal(m string) Replacer {
 	}
 }
 
-func (ia *LooksReal) ReplacedValue() (data string, err error) {
+func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err error) {
 	switch ia.method {
 	case IPV4:
 		data = randomdata.IpV4Address()
 	case IPV4CHINA:
-		data = GetRandomChinaIP()
+		data = GetRandomChinaIP(g)
 	case IPV6:
 		data = randomdata.IpV6Address()
 	case UA:
@@ -394,7 +398,7 @@ func (ia *LooksReal) ReplacedValue() (data string, err error) {
 	case NAME:
 		data = randomdata.SillyName()
 	case CELLPHONECHINA:
-		data = GetRandomChinaCellPhoneNo()
+		data = GetRandomChinaCellPhoneNo(g)
 	}
 	return data, nil
 }

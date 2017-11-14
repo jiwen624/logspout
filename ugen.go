@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
+	"github.com/leesper/go_rng"
 	"strconv"
 	"strings"
 )
@@ -21,10 +21,10 @@ var seed = [][]int32{
 }
 
 // GetRandomChinaIP returns a random IP address of China.
-func GetRandomChinaIP() string {
-	d1 := rand.Int31n(int32(len(seed)))
-	d2 := rand.Int31n(seed[d1][1] - seed[d1][0])
-	return int2ip(seed[d1][0] + d2)
+func GetRandomChinaIP(g *rng.GaussianGenerator) string {
+	d1 := SimpleGaussian(g, len(seed))
+	d2 := SimpleGaussian(g, int(seed[d1][1]-seed[d1][0]))
+	return int2ip(seed[d1][0] + int32(d2))
 }
 
 // int2ip is a local helper function to convert the random number to an IP address.
@@ -39,7 +39,7 @@ func int2ip(n int32) string {
 }
 
 // GetRandomChinaCellPhoneNo returns a random cell phone number starts with 130 - 139
-func GetRandomChinaCellPhoneNo() string {
+func GetRandomChinaCellPhoneNo(g *rng.GaussianGenerator) string {
 	var seed = []string{
 		"130", "131", "132", "133", "134", "135", "136", "137", "138", "139",
 		"147", "148", "150", "151", "152", "157", " 158", "159", "178", "182",
@@ -47,7 +47,7 @@ func GetRandomChinaCellPhoneNo() string {
 		"176", "185", "186", "141", "149", "153", "173", "174", "177", "180",
 		"181", "199"}
 	var phone = make([]string, 0)
-	phone = append(phone, seed[rand.Intn(len(seed))])
-	phone = append(phone, fmt.Sprintf("%06d", rand.Intn(100000000)))
+	phone = append(phone, seed[SimpleGaussian(g, len(seed))])
+	phone = append(phone, fmt.Sprintf("%06d", SimpleGaussian(g, 1e8)))
 	return strings.Join(phone, "")
 }

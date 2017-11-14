@@ -4,7 +4,7 @@
 	"max-interval": 1010,
 	"logtype": "weblogic",
 	"file": "sample.log",
-	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<server>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
+	"pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<ipaddress>.*?)(>\\s*<)(?P<phone>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
 			"type": "timestamp",
@@ -20,19 +20,18 @@
 			"method": "random",
 			"list": ["Management", "WebLogicServer", "WorkManager", "EJB", "Security"]
 		},
-		"machine": {
-			"type": "fixed-list",
-			"method": "random",
-			"list": ["machineA", "machineB", "machineC"]
+		"ipaddress": {
+			"type": "looks-real",
+			"method": "ipv4china"
 		},
-		"server": {
+		"phone": {
 			"type": "looks-real",
 			"method": "cellphone-china"
 		},
 		"user": {
 			"type": "fixed-list",
-			"method": "next",
-			"list": ["GuoJing", "HuangRong", "ZhangSanfeng", "ZhangWuji"]
+			"method": "random",
+			"list": ["GuoJing", "HuangRong", "ZhangSanfeng", "ZhangWuji","LiMochou", "OuyangFeng", "HongQigong", "LinghuChong", "RenYingying", "DuanTiande"]
 		},
 		"thread": {
 			"type": "integer",

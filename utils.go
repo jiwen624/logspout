@@ -4,7 +4,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/leesper/go_rng"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -80,4 +82,9 @@ func StrIndex(vs []string, t string) int {
 		}
 	}
 	return -1
+}
+
+// mean=0.5*the_range, stddev=0.2*the_range
+func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
+	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
 }
