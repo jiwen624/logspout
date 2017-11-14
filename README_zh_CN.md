@@ -163,6 +163,8 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 
 `"method": "name"`  - 人名
 
+`"method": "chinese-name"`  - 中国人名
+
 `"method": "user-agent"`  - 浏览器的User Agent信息
 
 

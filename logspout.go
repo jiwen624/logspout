@@ -55,6 +55,7 @@ const (
 	COUNTRY        = "country"
 	EMAIL          = "email"
 	NAME           = "name"
+	CHINESENAME    = "chinese-name"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -267,6 +268,10 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	for {
+		fmt.Println(GetRandomChineseName(grng))
+	}
+
+	for {
 		for k, v := range replacers {
 			idx := StrIndex(names, k)
 			if idx == -1 {
@@ -425,6 +430,8 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 		data = randomdata.SillyName()
 	case CELLPHONECHINA:
 		data = GetRandomChinaCellPhoneNo(g)
+	case CHINESENAME:
+		data = GetRandomChineseName(g)
 	}
 	return data, nil
 }
