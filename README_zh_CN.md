@@ -15,6 +15,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 8. 增加looks-real数据替换选项, 可生成IPv4/IPv6地址, email地址, 人名, 国家, 浏览器User Agent等.
 
 ## 使用方式
+
 logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行:
 
 ```./logspout```
@@ -102,7 +103,7 @@ Usage of ./logspout:
 
 **示例**:
 
-(注意捕获的字段用(?P<name>)而不是(?<name>), 另外`\`需要用双斜杠取消转义`\\`)
+(注意捕获的字段用(?P<name>)而不是(?<name>), 这是Python/Perl/Go的re语法)
 
 ```
   "pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<serve    r>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<    BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)"

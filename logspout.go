@@ -99,7 +99,7 @@ func main() {
 		return
 	}
 
-	if ptn, err = jsonparser.GetString(conf, PATTERN); err != nil {
+	if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
 		LevelLog(ERROR, err)
 		return
 	}
@@ -119,7 +119,6 @@ func main() {
 
 	var replacerMap = make(map[string]Replacer)
 	var matches, names []string
-
 	re := regexp.MustCompile(ptn)
 	scanner := bufio.NewScanner(file)
 
