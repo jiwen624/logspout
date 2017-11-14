@@ -5,7 +5,7 @@
 	"max-interval": 1010,
 	"logtype": "weblogic",
 	"sample-file": "sample.log",
-	"pattern": "(####<)(?P<timestamp>.*?)(>\s*<)(?P<severity>.*?)(>\s*<)(?P<subsystem>.*?)(>\s*<)(?P<ipaddress>.*?)(>\s*<)(?P<phone>.*?)(>\s*<)(?P<thread>.*?)(>\s*<)(?P<user>.*?)(>\s*<)(?P<transaction>.*?)(>\s*<)(?P<diagcontext>.*?)(>\s*<)(?P<rawtime>.*?)(>\s*<BEA-)(?P<msgid>.*?)(>\s*<)(?P<msgtext>.*?)(>)",
+	"pattern": "(####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
 			"type": "timestamp",

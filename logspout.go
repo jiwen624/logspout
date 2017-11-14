@@ -42,6 +42,7 @@ const (
 	FORMAT      = "format"
 	CONCURRENY  = "concurrency"
 	HIGHTIDE    = "hightide"
+	RECONVERT   = "re-convert"
 )
 
 // LooksReal data methods
@@ -61,6 +62,7 @@ var minInterval = 1000
 var maxInterval = 1000
 var concurrency = 1
 var highTide = false
+var reconvert = true
 
 // The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
 func main() {
@@ -78,6 +80,10 @@ func main() {
 	if err != nil {
 		LevelLog(ERROR, err)
 		return
+	}
+
+	if h, err := jsonparser.GetBoolean(conf, RECONVERT); err == nil {
+		reconvert = h
 	}
 
 	if h, err := jsonparser.GetBoolean(conf, HIGHTIDE); err == nil {
@@ -102,6 +108,10 @@ func main() {
 	if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
 		LevelLog(ERROR, err)
 		return
+	}
+
+	if reconvert == true {
+		ptn = reConvert(ptn)
 	}
 
 	LevelLog(INFO, fmt.Sprintf("Loaded configurations from %s\n", *confPath))
@@ -283,6 +293,23 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 		}
 	}
 	// I never quit...
+}
+
+// reConvert does the pre-process of the regular expression literal.
+// It does the following things:
+// 1. Remove P before captured group names
+// 2. Add parenthesises to the other parts of the log event string.
+
+func reConvert(ptn string) string {
+	s := strings.Split(ptn, "")
+	for i := 1; i < len(s)-1; i++ {
+		if s[i] == "?" && s[i-1] == "(" && s[i+1] == "<" {
+			// Replace "?" with "?P", it has a bug but works for 99% of the cases.
+			// TODO: I'll keep it before I have time to write a better one.
+			s[i] = "?P"
+		}
+	}
+	return strings.Join(s, "")
 }
 
 type Replacer interface {
