@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -35,4 +36,18 @@ func int2ip(n int32) string {
 	ip = append(ip, strconv.Itoa(int(n&0xff)))
 
 	return strings.Join(ip, ".")
+}
+
+// GetRandomChinaCellPhoneNo returns a random cell phone number starts with 130 - 139
+func GetRandomChinaCellPhoneNo() string {
+	var seed = []string{
+		"130", "131", "132", "133", "134", "135", "136", "137", "138", "139",
+		"147", "148", "150", "151", "152", "157", " 158", "159", "178", "182",
+		"183", "184", "187", "188", "145", "146", "155", "156", "166", "175",
+		"176", "185", "186", "141", "149", "153", "173", "174", "177", "180",
+		"181", "199"}
+	var phone = make([]string, 0)
+	phone = append(phone, seed[rand.Intn(len(seed))])
+	phone = append(phone, fmt.Sprintf("%06d", rand.Intn(100000000)))
+	return strings.Join(phone, "")
 }

@@ -10,7 +10,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 3. 支持通过外部文件配置样本日志以及替换值列表.
 4. 支持通过正则表达式指定要做替换的字段.
 5. 支持对每个字段单独配置替换规则.
-6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), 其他为TODO(如随机产生合法的IP地址/电话号码等).
+6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), IPv4/v6地址(区分国内外), 国内手机号码等.
 7. 支持以随机/递增/递减方式获取替换字段值.
 8. 增加looks-real数据替换选项, 可生成IPv4/IPv6地址, email地址, 人名, 国家, 浏览器User Agent等.
 
@@ -151,6 +151,8 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 `"method": "ipv4"`  - IPv4 地址
 
 `"method": "ipv4china"`  - 中国IPv4地址
+
+`"method": "cellphone-china"`  - 中国手机号码
 
 `"method": "ipv6"`  - IPv6 地址
 

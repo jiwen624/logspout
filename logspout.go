@@ -46,13 +46,14 @@ const (
 
 // LooksReal data methods
 const (
-	IPV4      = "ipv4"
-	IPV4CHINA = "ipv4china"
-	IPV6      = "ipv6"
-	UA        = "user-agent"
-	COUNTRY   = "country"
-	EMAIL     = "email"
-	NAME      = "name"
+	IPV4           = "ipv4"
+	IPV4CHINA      = "ipv4china"
+	CELLPHONECHINA = "cellphone-china"
+	IPV6           = "ipv6"
+	UA             = "user-agent"
+	COUNTRY        = "country"
+	EMAIL          = "email"
+	NAME           = "name"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -392,6 +393,8 @@ func (ia *LooksReal) ReplacedValue() (data string, err error) {
 		data = randomdata.Email()
 	case NAME:
 		data = randomdata.SillyName()
+	case CELLPHONECHINA:
+		data = GetRandomChinaCellPhoneNo()
 	}
 	return data, nil
 }
