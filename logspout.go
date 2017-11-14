@@ -21,7 +21,7 @@ import (
 
 const (
 	LOGTYPE     = "logtype"
-	FILE        = "file"
+	SAMPLEFILE  = "sample-file"
 	PATTERN     = "pattern"
 	REPLACEMENT = "replacement"
 	TYPE        = "type"
@@ -94,7 +94,7 @@ func main() {
 		return
 	}
 
-	if sampleFile, err = jsonparser.GetString(conf, FILE); err != nil {
+	if sampleFile, err = jsonparser.GetString(conf, SAMPLEFILE); err != nil {
 		LevelLog(ERROR, err)
 		return
 	}

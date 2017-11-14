@@ -1,9 +1,10 @@
 {
+	"hightide": false,
 	"concurrency": 10,
 	"min-interval": 100,
 	"max-interval": 1010,
 	"logtype": "weblogic",
-	"file": "sample.log",
+	"sample-file": "sample.log",
 	"pattern": "(####<)(?P<timestamp>.*?)(>\s*<)(?P<severity>.*?)(>\s*<)(?P<subsystem>.*?)(>\s*<)(?P<ipaddress>.*?)(>\s*<)(?P<phone>.*?)(>\s*<)(?P<thread>.*?)(>\s*<)(?P<user>.*?)(>\s*<)(?P<transaction>.*?)(>\s*<)(?P<diagcontext>.*?)(>\s*<)(?P<rawtime>.*?)(>\s*<BEA-)(?P<msgid>.*?)(>\s*<)(?P<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
