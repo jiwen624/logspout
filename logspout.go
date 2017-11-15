@@ -272,10 +272,6 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	for {
-		fmt.Println(GetRandomChineseName(grng))
-	}
-
-	for {
 		for k, v := range replacers {
 			idx := StrIndex(names, k)
 			if idx == -1 {
