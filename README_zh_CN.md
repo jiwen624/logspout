@@ -159,6 +159,8 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 
 `"method": "ipv6"`  - IPv6 地址
 
+`"method": "mac"`  - Mac 地址
+
 `"method": "country"`  - 国家名称
 
 `"method": "email"`  - email地址
@@ -169,6 +171,7 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 
 `"method": "user-agent"`  - 浏览器的User Agent信息
 
+`"method": "uuid"`  - UUID
 
 ## 疑问
 如有疑问或发现可提交issues.

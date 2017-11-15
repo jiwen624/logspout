@@ -1,8 +1,10 @@
-package main
+package gen
 
 import (
 	"fmt"
 	"github.com/leesper/go_rng"
+	"github.com/twinj/uuid"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -19,6 +21,10 @@ var seed = [][]int32{
 	{-1236271104, -1235419137}, //182.80.0.0-182.92.255.255
 	{-770113536, -768606209},   //210.25.0.0-210.47.255.255
 	{-569376768, -564133889},   //222.16.0.0-222.95.255.255
+}
+
+func init() {
+	uuid.Init()
 }
 
 // GetRandomChinaIP returns a random IP address of China.
@@ -53,6 +59,11 @@ func GetRandomChinaCellPhoneNo(g *rng.GaussianGenerator) string {
 	return strings.Join(phone, "")
 }
 
+// GetRandomUUID returns a random UUID V4.
+func GetRandomUUID() string {
+	return uuid.NewV4().String()
+}
+
 // GetRandomChineseName generates random (in gaussian distribution) Chinese name
 // picked from the seed.
 func GetRandomChineseName(g *rng.GaussianGenerator) string {
@@ -79,4 +90,10 @@ func GetRandomChineseName(g *rng.GaussianGenerator) string {
 		"王树淳", "陈大彪", "孙万升", "陈俊凝", "叶昊滨", "唐保燕", "冯家华", "吴玉益", "韩州浩", "安希南",
 	}
 	return seed[SimpleGaussian(g, len(seed))]
+}
+
+// SimpleGaussian returns a random value of Gaussian distribution.
+// mean=0.5*the_range, stddev=0.2*the_range
+func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
+	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
 }

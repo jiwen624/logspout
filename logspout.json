@@ -1,6 +1,6 @@
 {
 	"hightide": false,
-	"concurrency": 10,
+	"concurrency": 100,
 	"min-interval": 100,
 	"max-interval": 1010,
 	"logtype": "weblogic",
@@ -41,10 +41,8 @@
 			"max": 10
 		},
 		"transaction": {
-			"type": "integer",
-			"method": "random",
-			"min": 0,
-			"max": 1000000
+			"type": "looks-real",
+			"method": "uuid"
 		},
 		"msgid": {
 			"type": "integer",

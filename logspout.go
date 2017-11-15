@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/buger/jsonparser"
+	"github.com/jiwen624/logspout/gen"
 	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
@@ -55,11 +56,13 @@ const (
 	IPV4CHINA      = "ipv4china"
 	CELLPHONECHINA = "cellphone-china"
 	IPV6           = "ipv6"
+	MAC            = "mac"
 	UA             = "user-agent"
 	COUNTRY        = "country"
 	EMAIL          = "email"
 	NAME           = "name"
 	CHINESENAME    = "chinese-name"
+	UUID           = "uuid"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -292,7 +295,7 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 			sleepMsec = minInterval
 		} else {
 			gap := maxInterval - minInterval
-			sleepMsec = minInterval + SimpleGaussian(grng, gap)
+			sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
 		}
 		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 		if highTide == false {
@@ -351,7 +354,7 @@ func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, er
 	case RANDOM:
 		fallthrough
 	default:
-		fl.currIdx = SimpleGaussian(g, len(fl.valRange))
+		fl.currIdx = gen.SimpleGaussian(g, len(fl.valRange))
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
@@ -406,7 +409,7 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 	case RANDOM:
 		fallthrough
 	default: // Use random by default
-		i.currVal = int64(SimpleGaussian(g, int(i.max-i.min))) + i.min
+		i.currVal = int64(gen.SimpleGaussian(g, int(i.max-i.min))) + i.min
 	}
 	return strconv.FormatInt(i.currVal, 10), nil
 }
@@ -429,7 +432,7 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case IPV4:
 		data = randomdata.IpV4Address()
 	case IPV4CHINA:
-		data = GetRandomChinaIP(g)
+		data = gen.GetRandomChinaIP(g)
 	case IPV6:
 		data = randomdata.IpV6Address()
 	case UA:
@@ -441,9 +444,13 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case NAME:
 		data = randomdata.SillyName()
 	case CELLPHONECHINA:
-		data = GetRandomChinaCellPhoneNo(g)
+		data = gen.GetRandomChinaCellPhoneNo(g)
 	case CHINESENAME:
-		data = GetRandomChineseName(g)
+		data = gen.GetRandomChineseName(g)
+	case MAC:
+		data = randomdata.MacAddress()
+	case UUID:
+		data = gen.GetRandomUUID()
 	}
 	return data, nil
 }
