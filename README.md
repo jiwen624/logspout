@@ -6,6 +6,11 @@
 
 LogSpout: a tiny tool to generate machine logs in specified format.
 
+### Tutorial
+
+A simple tutorial in Chinese can be found here: [教程](docs/README_ZH_CN.md)
+
+The English version of this tutorial is still working in progress.
 
 ### Contributing
 
