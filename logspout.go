@@ -1,3 +1,6 @@
+// Package logspout implements a tiny tool to generate machine logs in accordance with
+// the format of a sample log and the replacement policies defined in the config file.
+// It can be used to generate logs in very high speed as well to do stress tests.
 package main
 
 import (
