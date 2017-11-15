@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"fmt"
@@ -19,16 +19,16 @@ const (
 	ERROR
 )
 
-// dbgLevels is a map of level macros and strings.
-var dbgLevels = map[DebugLevel]string{
+// DbgLevels is a map of level macros and strings.
+var DbgLevels = map[DebugLevel]string{
 	DEBUG:   "DEBUG",
 	INFO:    "INFO ",
 	WARNING: "WARN ",
 	ERROR:   "ERROR",
 }
 
-// levelsDbg is a reversed map of level macros and strings.
-var levelsDbg = map[string]DebugLevel{
+// LevelsDbg is a reversed map of level macros and strings.
+var LevelsDbg = map[string]DebugLevel{
 	"debug":   DEBUG,
 	"info":    INFO,
 	"warning": WARNING,
@@ -36,7 +36,15 @@ var levelsDbg = map[string]DebugLevel{
 }
 
 // globalLevel is the global variable for global debug level.
-var globalLevel DebugLevel = INFO
+var globalLevel = INFO
+
+func SetGlobalDebugLevel(level DebugLevel) {
+	globalLevel = level
+}
+
+func GlobalDebugLevel() DebugLevel {
+	return globalLevel
+}
 
 // logger is the global log print object.
 var logger = log.New(os.Stderr, "", log.LstdFlags)
@@ -58,12 +66,12 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 		return
 	}
 
-	var p string = fmt.Sprintf("%s ", dbgLevels[level])
+	var p string = fmt.Sprintf("%s ", DbgLevels[level])
 	if globalLevel == DEBUG {
 		if pc, f, l, ok := runtime.Caller(1); ok {
 			path := strings.Split(runtime.FuncForPC(pc).Name(), ".")
 			name := path[len(path)-1]
-			p = fmt.Sprintf("%s %s#%d %s(): ", dbgLevels[level], filepath.Base(f), l, name)
+			p = fmt.Sprintf("%s %s#%d %s(): ", DbgLevels[level], filepath.Base(f), l, name)
 		} else {
 			p = fmt.Sprintf("%s %s#%s %s(): ", level, "na", "na", "na")
 		}

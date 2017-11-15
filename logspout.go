@@ -12,6 +12,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/buger/jsonparser"
 	"github.com/jiwen624/logspout/gen"
+	. "github.com/jiwen624/logspout/utils"
 	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
@@ -78,10 +79,10 @@ func main() {
 	level := flag.String("v", "warning", "Print level: debug, info, warning, error.")
 	flag.Parse()
 
-	if val, ok := levelsDbg[*level]; ok {
-		globalLevel = DebugLevel(val)
+	if val, ok := LevelsDbg[*level]; ok {
+		SetGlobalDebugLevel(DebugLevel(val))
 	} else {
-		globalLevel = INFO
+		SetGlobalDebugLevel(INFO)
 	}
 
 	conf, err := ioutil.ReadFile(*confPath)
