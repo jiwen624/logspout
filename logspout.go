@@ -140,8 +140,10 @@ func main() {
 	var buffer bytes.Buffer
 	for scanner.Scan() {
 		buffer.WriteString(scanner.Text())
+		buffer.WriteString("\n") //Multi-line log support
 	}
-	rawMsg := buffer.String()
+
+	rawMsg := strings.TrimRight(buffer.String(), "\n")
 
 	LevelLog(DEBUG, "---------------------------------------------------\n")
 	LevelLog(DEBUG, fmt.Sprintf("**Raw**: %s\n\n", rawMsg))
