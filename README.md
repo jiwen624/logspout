@@ -2,6 +2,7 @@
 
 ![circleci](https://circleci.com/gh/jiwen624/logspout.svg?&style=shield&circle-token=03cbb9928f598c18e45b96161e4bb254ac90bfab "circleci")
 [![GitHub license](https://img.shields.io/badge/license-Apache%202-blue.svg)](https://github.com/jiwen624/logspout/blob/master/LICENSE)
+[![GoDoc](https://godoc.org/github.com/jiwen624/logspout?status.svg)](https://godoc.org/github.com/jiwen624/logspout)
 
 LogSpout: a tiny tool to generate machine logs in specified format.
 
