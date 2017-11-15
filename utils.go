@@ -1,5 +1,3 @@
-// Utils
-
 package main
 
 import (
@@ -15,6 +13,7 @@ import (
 
 type DebugLevel uint8
 
+// The debug levels
 const (
 	DEBUG DebugLevel = iota
 	INFO
@@ -22,6 +21,7 @@ const (
 	ERROR
 )
 
+// dbgLevels is a map of level macros and strings.
 var dbgLevels = map[DebugLevel]string{
 	DEBUG:   "DEBUG",
 	INFO:    "INFO ",
@@ -29,7 +29,7 @@ var dbgLevels = map[DebugLevel]string{
 	ERROR:   "ERROR",
 }
 
-// Reversed map
+// levelsDbg is a reversed map of level macros and strings.
 var levelsDbg = map[string]DebugLevel{
 	"debug":   DEBUG,
 	"info":    INFO,
@@ -37,10 +37,13 @@ var levelsDbg = map[string]DebugLevel{
 	"error":   ERROR,
 }
 
+// globalLevel is the global variable for global debug level.
 var globalLevel DebugLevel = INFO
+
+// logger is the global log print object.
 var logger = log.New(os.Stderr, "", log.LstdFlags)
 
-// LevelLog print logs based on the debug level.
+// LevelLog prints logs based on the debug level.
 func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 	if level < globalLevel {
 		return
@@ -74,7 +77,7 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 	}
 }
 
-// Helper function to find the position of a string in a []string
+// StrIndex is the helper function to find the position of a string in a []string
 func StrIndex(vs []string, t string) int {
 	for i, v := range vs {
 		if v == t {
@@ -84,6 +87,7 @@ func StrIndex(vs []string, t string) int {
 	return -1
 }
 
+// SimpleGaussian returns a random value of Gaussian distribution.
 // mean=0.5*the_range, stddev=0.2*the_range
 func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap

@@ -22,6 +22,7 @@ import (
 	"time"
 )
 
+// Options in the configure file.
 const (
 	LOGTYPE     = "logtype"
 	SAMPLEFILE  = "sample-file"
@@ -307,7 +308,6 @@ func PopNewLogs(replacers map[string]Replacer, matches []string, names []string,
 // It does the following things:
 // 1. Remove P before captured group names
 // 2. Add parenthesises to the other parts of the log event string.
-
 func reConvert(ptn string) string {
 	s := strings.Split(ptn, "")
 	for i := 1; i < len(s)-1; i++ {
@@ -320,17 +320,20 @@ func reConvert(ptn string) string {
 	return strings.Join(s, "")
 }
 
+// Replacer is the interface which must be implemented by a particular replacement policy.
 type Replacer interface {
 	// ReplacedValue returns the new replaced value.
 	ReplacedValue(*rng.GaussianGenerator) (string, error)
 }
 
+// FixedListReplacer is a struct to record config options of a fixed-list replacement type.
 type FixedListReplacer struct {
 	method   string
 	valRange []string
 	currIdx  int
 }
 
+// newFixedListReplacer returns a new FixedListReplacer struct instance
 func newFixedListReplacer(c string, v []string, ci int) Replacer {
 	return &FixedListReplacer{
 		method:   c,
@@ -339,6 +342,7 @@ func newFixedListReplacer(c string, v []string, ci int) Replacer {
 	}
 }
 
+// ReplacedValue returns a new replacement value of fixed-list type.
 func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	var newVal string
 
@@ -359,12 +363,14 @@ type TimeStampReplacer struct {
 	format string
 }
 
+// newTimeStampReplacer returns a new TimeStampReplacer struct instance.
 func newTimeStampReplacer(f string) Replacer {
 	return &TimeStampReplacer{
 		format: f,
 	}
 }
 
+// ReplacedValue populates a new timestamp with current time.
 func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, error) {
 	return jodaTime.Format(ts.format, time.Now()), nil
 }
@@ -376,6 +382,7 @@ type IntegerReplacer struct {
 	currVal int64
 }
 
+// newIntegerReplacer returns a new IntegerReplacer struct instance
 func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 	return &IntegerReplacer{
 		method:  c,
@@ -385,6 +392,7 @@ func newIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 	}
 }
 
+// ReplacedValue is the main function to populate replacement value of an integer type.
 func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	switch i.method {
 	case NEXT:
@@ -405,16 +413,19 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 	return strconv.FormatInt(i.currVal, 10), nil
 }
 
+// LooksReal is a struct to record the configured method to generate data.
 type LooksReal struct {
 	method string
 }
 
+// newLooksReal returns a new LooksReal struct instance
 func newLooksReal(m string) Replacer {
 	return &LooksReal{
 		method: m,
 	}
 }
 
+// ReplacedValue returns random data based on the data type selection.
 func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err error) {
 	switch ia.method {
 	case IPV4:

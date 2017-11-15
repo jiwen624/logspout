@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// seed is the seed data to generate China IP addresses.
 var seed = [][]int32{
 	{607649792, 608174079},     //36.56.0.0-36.63.255.255
 	{1038614528, 1039007743},   //61.232.0.0-61.237.255.255
