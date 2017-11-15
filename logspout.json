@@ -4,7 +4,7 @@
 	"min-interval": 100,
 	"max-interval": 1010,
 	"logtype": "weblogic",
-	"sample-file": "sample.log",
+	"sample-file": "samples/sample.log",
 	"pattern": "(####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {
@@ -14,7 +14,7 @@
 		"severity": {
 			"type": "fixed-list",
 			"method": "random",
-			"list": ["Debug", "Info", "Warning", "Error"]
+			"list-file": "samples/severity.sample"
 		},
 		"subsystem": {
 			"type": "fixed-list",
