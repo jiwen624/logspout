@@ -56,7 +56,6 @@ var concurrency = 1
 var highTide = false
 var reconvert = true
 
-// The silly big all-in-one main function. Yes I will refactor it when I have some time. :-P
 func main() {
 	confPath := flag.String("f", "logspout.json", "specify the config file in json format.")
 	level := flag.String("v", "warning", "Print level: debug, info, warning, error.")
@@ -119,7 +118,6 @@ func main() {
 	}
 	defer file.Close()
 
-	var replacerMap = make(map[string]gen.Replacer)
 	var matches, names []string
 	re := regexp.MustCompile(ptn)
 	scanner := bufio.NewScanner(file)
@@ -132,8 +130,7 @@ func main() {
 
 	rawMsg := strings.TrimRight(buffer.String(), "\n")
 
-	LevelLog(DEBUG, "---------------------------------------------------\n")
-	LevelLog(DEBUG, fmt.Sprintf("**Raw**: %s\n\n", rawMsg))
+	LevelLog(DEBUG, fmt.Sprintf("**Raw message**: %s\n\n", rawMsg))
 
 	matches = re.FindStringSubmatch(rawMsg)
 	names = re.SubexpNames()
@@ -165,7 +162,27 @@ func main() {
 		maxInterval = int(maxI)
 	}
 
-	// Build the replacer map
+	var replacerMap map[string]gen.Replacer
+	if replacerMap, err = BuildReplacerMap(replace); err != nil {
+		LevelLog(ERROR, err)
+		return
+	}
+
+	// goroutine for future use, not necessary for now.
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1) // Add it before you start the goroutine.
+		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
+		go PopNewLogs(replacerMap, matches, names, wg)
+	}
+	LevelLog(INFO, "Started.\n")
+	wg.Wait()
+}
+
+// BuildReplacerMap builds and returns an string-Replacer map for future use.
+func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
+	var replacerMap = make(map[string]gen.Replacer)
+
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		var err error = nil
 		k := string(key)
@@ -180,7 +197,7 @@ func main() {
 			if err != nil {
 				return errors.New(fmt.Sprintf("No method found in %s", string(key)))
 			}
-			var vr []string = make([]string, 0)
+			var vr = make([]string, 0)
 			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 				vr = append(vr, string(value))
 			}, LIST)
@@ -267,20 +284,8 @@ func main() {
 		return err
 	}
 
-	if err := jsonparser.ObjectEach(replace, handler); err != nil {
-		LevelLog(ERROR, err)
-		return
-	}
-
-	// goroutine for future use, not necessary for now.
-	var wg sync.WaitGroup
-	for i := 0; i < concurrency; i++ {
-		wg.Add(1) // Add it before you start the goroutine.
-		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
-		go PopNewLogs(replacerMap, matches, names, wg)
-	}
-	LevelLog(INFO, "Started.\n")
-	wg.Wait()
+	err := jsonparser.ObjectEach(replace, handler)
+	return replacerMap, err
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
