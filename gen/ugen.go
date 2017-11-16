@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
 const (
 	lIdxBits = 6               // 6 bits to represent a letter index
 	idxMask  = 1<<lIdxBits - 1 // All 1-bits, as many as lIdxBits
@@ -31,6 +29,8 @@ var seed = [][]int32{
 	{-770113536, -768606209},   //210.25.0.0-210.47.255.255
 	{-569376768, -564133889},   //222.16.0.0-222.95.255.255
 }
+
+var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func init() {
 	uuid.Init()
@@ -108,14 +108,18 @@ func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 }
 
 // GetRandomString generates a random string of length n.
-func GetRandomString(length int) string {
+func GetRandomString(chars string, length int) string {
+	if chars != "" {
+		cset = chars
+	}
+
 	b := make([]byte, length)
 	for i, cache, remain := length-1, rand.Int63(), idxMax; i >= 0; {
 		if remain == 0 {
 			cache, remain = rand.Int63(), idxMax
 		}
-		if idx := int(cache & idxMask); idx < len(letterBytes) {
-			b[i] = letterBytes[idx]
+		if idx := int(cache & idxMask); idx < len(cset) {
+			b[i] = cset[idx]
 			i--
 		}
 		cache >>= lIdxBits

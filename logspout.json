@@ -43,6 +43,7 @@
 		},
 		"transaction": {
 			"type": "string",
+			"chars": "abcde12345",
 			"min": 10,
 			"max": 20
 		},

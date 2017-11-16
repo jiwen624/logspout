@@ -45,6 +45,7 @@ const (
 	FLOAT       = "float"
 	PRECISION   = "precision"
 	STRING      = "string"
+	CHARS       = "chars"
 	LOOKSREAL   = "looks-real"
 	NEXT        = "next"
 	PREV        = "prev"
@@ -263,6 +264,7 @@ func main() {
 			replacerMap[k] = newFloatReplacer(min, max, precision)
 
 		case STRING:
+			var chars = ""
 			min, err := jsonparser.GetInt(value, MIN)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
@@ -271,7 +273,11 @@ func main() {
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
 			}
-			replacerMap[k] = newStringReplacer(min, max)
+
+			if c, err := jsonparser.GetString(value, CHARS); err == nil {
+				chars = c
+			}
+			replacerMap[k] = newStringReplacer(chars, min, max)
 
 		case LOOKSREAL:
 			c, err := jsonparser.GetString(value, METHOD)
@@ -408,14 +414,16 @@ func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, erro
 }
 
 type StringReplacer struct {
-	min int64
-	max int64
+	chars string
+	min   int64
+	max   int64
 }
 
-func newStringReplacer(min int64, max int64) Replacer {
+func newStringReplacer(chars string, min int64, max int64) Replacer {
 	return &StringReplacer{
-		min: min,
-		max: max,
+		chars: chars,
+		min:   min,
+		max:   max,
 	}
 }
 
@@ -423,10 +431,10 @@ func (s *StringReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error)
 	var str string
 	var err error
 	if s.min == s.max {
-		str = gen.GetRandomString(int(s.min))
+		str = gen.GetRandomString(s.chars, int(s.min))
 	} else {
 		l := rand.Intn(int(s.max-s.min)) + int(s.min)
-		str = gen.GetRandomString(l)
+		str = gen.GetRandomString(s.chars, l)
 	}
 	return str, err
 }
