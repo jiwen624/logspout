@@ -5,8 +5,17 @@ import (
 	"github.com/leesper/go_rng"
 	"github.com/twinj/uuid"
 	"math"
+	"math/rand"
 	"strconv"
 	"strings"
+)
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+const (
+	lIdxBits = 6               // 6 bits to represent a letter index
+	idxMask  = 1<<lIdxBits - 1 // All 1-bits, as many as lIdxBits
+	idxMax   = 63 / lIdxBits   // # of letter indices fitting in 63 bits
 )
 
 // seed is the seed data to generate China IP addresses.
@@ -96,4 +105,21 @@ func GetRandomChineseName(g *rng.GaussianGenerator) string {
 // mean=0.5*the_range, stddev=0.2*the_range
 func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
+}
+
+// GetRandomString generates a random string of length n.
+func GetRandomString(length int) string {
+	b := make([]byte, length)
+	for i, cache, remain := length-1, rand.Int63(), idxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = rand.Int63(), idxMax
+		}
+		if idx := int(cache & idxMask); idx < len(letterBytes) {
+			b[i] = letterBytes[idx]
+			i--
+		}
+		cache >>= lIdxBits
+		remain--
+	}
+	return string(b)
 }

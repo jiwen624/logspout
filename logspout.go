@@ -16,6 +16,7 @@ import (
 	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"regexp"
 	"strconv"
@@ -41,6 +42,9 @@ const (
 	FIXEDLIST   = "fixed-list"
 	TIMESTAMP   = "timestamp"
 	INTEGER     = "integer"
+	FLOAT       = "float"
+	PRECISION   = "precision"
+	STRING      = "string"
 	LOOKSREAL   = "looks-real"
 	NEXT        = "next"
 	PREV        = "prev"
@@ -242,8 +246,34 @@ func main() {
 			}
 			replacerMap[k] = newIntegerReplacer(c, min, max, min)
 
+		case FLOAT:
+			min, err := jsonparser.GetInt(value, MIN)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+			}
+			max, err := jsonparser.GetInt(value, MAX)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+			}
+
+			precision, err := jsonparser.GetInt(value, PRECISION)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+			}
+			replacerMap[k] = newFloatReplacer(min, max, precision)
+
+		case STRING:
+			min, err := jsonparser.GetInt(value, MIN)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+			}
+			max, err := jsonparser.GetInt(value, MAX)
+			if err != nil {
+				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+			}
+			replacerMap[k] = newStringReplacer(min, max)
+
 		case LOOKSREAL:
-			// TODO: An empty string will be returned by the ReplacedValue() if the method is invalid.
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
@@ -375,6 +405,50 @@ func newTimeStampReplacer(f string) Replacer {
 // ReplacedValue populates a new timestamp with current time.
 func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, error) {
 	return jodaTime.Format(ts.format, time.Now()), nil
+}
+
+type StringReplacer struct {
+	min int64
+	max int64
+}
+
+func newStringReplacer(min int64, max int64) Replacer {
+	return &StringReplacer{
+		min: min,
+		max: max,
+	}
+}
+
+func (s *StringReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+	var str string
+	var err error
+	if s.min == s.max {
+		str = gen.GetRandomString(int(s.min))
+	} else {
+		l := rand.Intn(int(s.max-s.min)) + int(s.min)
+		str = gen.GetRandomString(l)
+	}
+	return str, err
+}
+
+type FloatReplacer struct {
+	min       int64
+	max       int64
+	precision int64
+}
+
+func newFloatReplacer(min int64, max int64, precision int64) Replacer {
+	return &FloatReplacer{
+		min:       min,
+		max:       max,
+		precision: precision,
+	}
+}
+
+func (f *FloatReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+	v := float64(f.min) + rand.Float64()*float64(f.max-f.min)
+	s := fmt.Sprintf("%%.%df", f.precision)
+	return fmt.Sprintf(s, v), nil
 }
 
 type IntegerReplacer struct {

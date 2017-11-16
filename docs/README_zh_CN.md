@@ -143,8 +143,27 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 用数字做为该字段的替换值.
 
 可以定义从列表里选取值的方式: 随机/递增/递减
+
 ```"method": "random"```  (或者`next`, `prev`)
 此时需要定义`"min"`和`"max"`, 提供一个选择范围.
+
+### float
+```"type": "float"```
+用浮点数做为该字段的替换值. 此类型只能使用随机值.
+可配置的选项:
+```"min": 100,
+   "max": 1000,
+   "precision": 10,
+```
+precision表示浮点数精度, 小数点后保留几位数字.
+
+### string
+```"type": "string"```
+用字符串做为该字段的替换值. 此类型只能使用随机值, 可定义字符串的最大最小长度.
+可配置的选项:
+```"min": 10,
+   "max": 20,
+```
 
 ### looks-real
 ```"type": "looks-real"```

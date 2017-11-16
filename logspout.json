@@ -17,9 +17,10 @@
 			"list-file": "samples/severity.sample"
 		},
 		"subsystem": {
-			"type": "fixed-list",
-			"method": "random",
-			"list": ["Management", "WebLogicServer", "WorkManager", "EJB", "Security"]
+			"type": "float",
+			"min": 100,
+			"max": 10000,
+			"precision": 20
 		},
 		"ipaddress": {
 			"type": "looks-real",
@@ -41,8 +42,9 @@
 			"max": 10
 		},
 		"transaction": {
-			"type": "looks-real",
-			"method": "uuid"
+			"type": "string",
+			"min": 10,
+			"max": 20
 		},
 		"msgid": {
 			"type": "integer",
