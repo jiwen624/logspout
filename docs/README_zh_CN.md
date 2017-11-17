@@ -114,14 +114,14 @@ Usage of ./logspout:
 **注意**:
 
 正则表达式源远流长, 流派众多, 即使是PCRE之类用途广泛的, 各个语言的支持也有些不同. logspout正则使用的是Go/Python的格式(就目前所见).
-但是有在考虑做一层预处理, 减轻用户工作量.
+但是做了一层预处理, 减轻用户工作量.
 
-目前此工具要求raw message里所有的文本均配置成captured group, 即使你不需要替换它. 对于不需要替换的部分, 可以只用()包围起来, 不用起名字.
+**目前此工具要求raw message里所有的文本均配置成captured group, 即使你不需要替换它. 对于不需要替换的部分, 可以只用()包围起来, 不用起名字.**
 
 
 **示例**:
 
-(注意捕获的字段用(?P<name>)而不是(?<name>), 这是Python/Perl/Go的re语法)
+(下面示例中捕captured group用(?P<name>)而不是(?<name>), 这是Python/Perl/Go的re语法, 不过也可以写成(?<name>), logspout内部会做预处理.)
 
 ```
   "pattern": "(####<)(?P<timestamp>.*?)(>\\s*<)(?P<severity>.*?)(>\\s*<)(?P<subsystem>.*?)(>\\s*<)(?P<machine>.*?)(>\\s*<)(?P<serve    r>.*?)(>\\s*<)(?P<thread>.*?)(>\\s*<)(?P<user>.*?)(>\\s*<)(?P<transaction>.*?)(>\\s*<)(?P<diagcontext>.*?)(>\\s*<)(?P<rawtime>.*?)(>\\s*<    BEA-)(?P<msgid>.*?)(>\\s*<)(?P<msgtext>.*?)(>)"
