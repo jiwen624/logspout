@@ -13,7 +13,9 @@ import (
 	"github.com/jiwen624/logspout/gen"
 	. "github.com/jiwen624/logspout/utils"
 	"github.com/leesper/go_rng"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"io/ioutil"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -24,6 +26,7 @@ import (
 // Options in the configure file.
 const (
 	LOGTYPE     = "logtype"
+	OUTPUT      = "output-file"
 	SAMPLEFILE  = "sample-file"
 	PATTERN     = "pattern"
 	REPLACEMENT = "replacement"
@@ -49,12 +52,23 @@ const (
 	RECONVERT   = "re-convert"
 )
 
+const (
+	FILENAME   = "file-name"
+	MAXSIZE    = "max-size"
+	MAXBACKUPS = "max-backups"
+	MAXAGE     = "max-age"
+	COMPRESS   = "compress"
+)
+
 // Control the speed of log bursts, in milliseconds.
 var minInterval = 1000
 var maxInterval = 1000
 var concurrency = 1
 var highTide = false
 var reconvert = true
+
+// The default log event output stream: stdout
+var logger = log.New(os.Stdout, "", 0)
 
 func main() {
 	confPath := flag.String("f", "logspout.json", "specify the config file in json format.")
@@ -79,6 +93,10 @@ func main() {
 
 	if h, err := jsonparser.GetBoolean(conf, HIGHTIDE); err == nil {
 		highTide = h
+	}
+
+	if out, _, _, err := jsonparser.Get(conf, OUTPUT); err == nil {
+		BuildOutputParmsMap(out, logger)
 	}
 
 	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
@@ -173,7 +191,7 @@ func main() {
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1) // Add it before you start the goroutine.
 		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
-		go PopNewLogs(replacerMap, matches, names, wg)
+		go PopNewLogs(logger, replacerMap, matches, names, wg)
 	}
 	LevelLog(INFO, "Started.\n")
 	wg.Wait()
@@ -288,8 +306,42 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 	return replacerMap, err
 }
 
+// BuildOutputParmsMap extracts output parameters from the config file, if any.
+func BuildOutputParmsMap(out []byte, log *log.Logger) {
+	var fileName = "logspout_default.log"
+	var maxSize = 100  // 100 Megabytes
+	var maxBackups = 5 // 5 backups
+	var maxAge = 7     // 7 days
+	var compress = false
+	var localTime = true
+
+	if f, err := jsonparser.GetString(out, FILENAME); err == nil {
+		fileName = f
+	}
+	if ms, err := jsonparser.GetInt(out, MAXSIZE); err == nil {
+		maxSize = int(ms)
+	}
+	if mb, err := jsonparser.GetInt(out, MAXBACKUPS); err == nil {
+		maxBackups = int(mb)
+	}
+	if ma, err := jsonparser.GetInt(out, MAXAGE); err == nil {
+		maxAge = int(ma)
+	}
+	if c, err := jsonparser.GetBoolean(out, COMPRESS); err == nil {
+		compress = c
+	}
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   fileName,
+		MaxSize:    maxSize, // megabytes
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,   //days
+		Compress:   compress, // disabled by default
+		LocalTime:  localTime,
+	})
+}
+
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(replacers map[string]gen.Replacer, matches []string, names []string, wg sync.WaitGroup) {
+func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, matches []string, names []string, wg sync.WaitGroup) {
 	var newLog string
 	defer wg.Done()
 
@@ -309,7 +361,7 @@ func PopNewLogs(replacers map[string]gen.Replacer, matches []string, names []str
 
 		newLog = strings.Join(matches, "")
 		// Print to stdout, you may redirect it to anywhere else you want
-		fmt.Fprintln(os.Stdout, newLog)
+		logger.Println(newLog)
 		var sleepMsec = 1000
 		if maxInterval == minInterval {
 			sleepMsec = minInterval

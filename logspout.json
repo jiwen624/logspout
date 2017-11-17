@@ -5,6 +5,13 @@
 	"max-interval": 1010,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
+	"output-file": {
+		"file-name": "default.log",
+		"max-size": 5,
+		"max-backups": 3,
+		"compress": false,
+		"max-age":7
+	},
 	"pattern": "(####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
 	"replacement": {
 		"timestamp": {

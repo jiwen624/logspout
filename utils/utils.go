@@ -46,8 +46,12 @@ func GlobalDebugLevel() DebugLevel {
 	return globalLevel
 }
 
-// logger is the global log print object.
-var logger = log.New(os.Stderr, "", log.LstdFlags)
+func init() {
+
+}
+
+// l is the global log print object.
+var l = log.New(os.Stderr, "", log.LstdFlags)
 
 // LevelLog prints logs based on the debug level.
 func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
@@ -62,7 +66,7 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 	case string:
 		msg = err.(string)
 	default:
-		logger.Printf("Unknown err type: %T\n", err)
+		l.Printf("Unknown err type: %T\n", err)
 		return
 	}
 
@@ -77,9 +81,9 @@ func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 		}
 	}
 	if len(args) == 0 {
-		logger.Printf("%s%s", p, msg)
+		l.Printf("%s%s", p, msg)
 	} else {
-		logger.Printf("%s%s %v", p, msg, args)
+		l.Printf("%s%s %v", p, msg, args)
 	}
 }
 

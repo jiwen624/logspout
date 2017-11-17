@@ -3,8 +3,8 @@ package gen
 import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
-	"github.com/twinj/uuid"
 	"github.com/vjeantet/jodaTime"
 	"math"
 	"math/rand"
