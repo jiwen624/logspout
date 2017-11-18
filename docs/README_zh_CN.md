@@ -45,9 +45,78 @@ Usage of ./logspout:
 
 ## 配置说明
 
-为灵活性考虑, 配置文件以标准json格式提供, 另随代码附带了一个[示例配置文件](https://github.com/jiwen624/logspout/blob/master/logspout.json). 因为是json所以配置文件不支持注释, 这是一个天然的缺陷.
+为灵活性考虑, 配置文件以标准json格式提供(因为是json所以配置文件不支持注释, 这是一个天然的缺陷). 下面是一个完整的配置文件示例, 该文件也可在此处找到: [示例配置文件](https://github.com/jiwen624/logspout/blob/master/logspout.json).
 
-配置项如下:
+```
+{
+	"hightide": false,
+	"concurrency": 100,
+	"min-interval": 100,
+	"max-interval": 1010,
+	"logtype": "weblogic",
+	"sample-file": "samples/sample.log",
+	"output-file": {
+		"file-name": "default.log",
+		"max-size": 5,
+		"max-backups": 3,
+		"compress": false,
+		"max-age":7
+	},
+	"pattern": "(####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
+	"replacement": {
+		"timestamp": {
+			"type": "timestamp",
+			"format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+		},
+		"severity": {
+			"type": "fixed-list",
+			"method": "random",
+			"list-file": "samples/severity.sample"
+		},
+		"subsystem": {
+			"type": "float",
+			"min": 100,
+			"max": 10000,
+			"precision": 20
+		},
+		"ipaddress": {
+			"type": "looks-real",
+			"method": "ipv4china"
+		},
+		"phone": {
+			"type": "looks-real",
+			"method": "cellphone-china"
+		},
+		"user": {
+			"type": "fixed-list",
+			"method": "random",
+			"list": ["GuoJing", "HuangRong", "ZhangSanfeng", "ZhangWuji","LiMochou", "OuyangFeng", "HongQigong", "LinghuChong", "RenYingying", "DuanTiande"]
+		},
+		"thread": {
+			"type": "integer",
+			"method": "prev",
+			"min": 0,
+			"max": 10
+		},
+		"transaction": {
+			"type": "string",
+			"chars": "abcde12345",
+			"min": 10,
+			"max": 20
+		},
+		"msgid": {
+			"type": "integer",
+			"method": "random",
+			"min": 0,
+			"max": 2000000
+		}
+	}
+
+}
+```
+
+
+**配置项详细说明如下:**
 ### hightide
 **说明**:
 
