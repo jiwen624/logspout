@@ -144,12 +144,12 @@ func (s *StringReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error)
 }
 
 type FloatReplacer struct {
-	min       int64
-	max       int64
+	min       float64
+	max       float64
 	precision int64
 }
 
-func NewFloatReplacer(min int64, max int64, precision int64) Replacer {
+func NewFloatReplacer(min float64, max float64, precision int64) Replacer {
 	return &FloatReplacer{
 		min:       min,
 		max:       max,
@@ -158,7 +158,7 @@ func NewFloatReplacer(min int64, max int64, precision int64) Replacer {
 }
 
 func (f *FloatReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
-	v := float64(f.min) + rand.Float64()*float64(f.max-f.min)
+	v := f.min + rand.Float64()*(f.max-f.min)
 	s := fmt.Sprintf("%%.%df", f.precision)
 	return fmt.Sprintf(s, v), nil
 }

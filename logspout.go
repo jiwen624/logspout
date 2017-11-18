@@ -261,11 +261,11 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			replacerMap[k] = gen.NewIntegerReplacer(c, min, max, min)
 
 		case FLOAT:
-			min, err := jsonparser.GetInt(value, MIN)
+			min, err := jsonparser.GetFloat(value, MIN)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
 			}
-			max, err := jsonparser.GetInt(value, MAX)
+			max, err := jsonparser.GetFloat(value, MAX)
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
 			}
