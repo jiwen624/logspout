@@ -25,32 +25,35 @@ import (
 
 // Options in the configure file.
 const (
-	LOGTYPE     = "logtype"
-	OUTPUT      = "output-file"
-	SAMPLEFILE  = "sample-file"
-	PATTERN     = "pattern"
-	REPLACEMENT = "replacement"
-	TYPE        = "type"
-	METHOD      = "method"
-	LIST        = "list"
-	MIN         = "min"
-	MAX         = "max"
-	MININTERVAL = "min-interval"
-	MAXINTERVAL = "max-interval"
-	LISTFILE    = "list-file"
-	FIXEDLIST   = "fixed-list"
-	TIMESTAMP   = "timestamp"
-	INTEGER     = "integer"
-	FLOAT       = "float"
-	PRECISION   = "precision"
-	STRING      = "string"
-	CHARS       = "chars"
-	LOOKSREAL   = "looks-real"
-	FORMAT      = "format"
-	CONCURRENY  = "concurrency"
-	UNIFORM     = "uniform"
-	HIGHTIDE    = "hightide"
-	RECONVERT   = "re-convert"
+	LOGTYPE              = "logtype"
+	OUTPUT               = "output-file"
+	SAMPLEFILE           = "sample-file"
+	PATTERN              = "pattern"
+	REPLACEMENT          = "replacement"
+	TYPE                 = "type"
+	METHOD               = "method"
+	LIST                 = "list"
+	MIN                  = "min"
+	MAX                  = "max"
+	MININTERVAL          = "min-interval"
+	MAXINTERVAL          = "max-interval"
+	LISTFILE             = "list-file"
+	FIXEDLIST            = "fixed-list"
+	TIMESTAMP            = "timestamp"
+	INTEGER              = "integer"
+	FLOAT                = "float"
+	PRECISION            = "precision"
+	STRING               = "string"
+	CHARS                = "chars"
+	LOOKSREAL            = "looks-real"
+	FORMAT               = "format"
+	CONCURRENY           = "concurrency"
+	UNIFORM              = "uniform"
+	HIGHTIDE             = "hightide"
+	RECONVERT            = "re-convert"
+	TRANSACTION          = "transaction"
+	TRANSACTIONIDS       = "transaction-ids"
+	MAXINTRATRANSLATENCY = "max-intra-transaction-latency"
 )
 
 const (
@@ -68,6 +71,10 @@ var concurrency = 1
 var highTide = false
 var reconvert = true
 var uniform = true
+var trans = false
+var transIds = make([]string, 0)
+var rawMsgs = make([]string, 0)
+var intraTransLat = 10
 
 // The default log event output stream: stdout
 var logger = log.New(os.Stdout, "", 0)
@@ -109,7 +116,7 @@ func main() {
 		uniform = b
 	}
 
-	var logType, sampleFile, ptn string
+	var logType, sampleFile string
 	if logType, err = jsonparser.GetString(conf, LOGTYPE); err != nil {
 		LevelLog(ERROR, err)
 		return
@@ -120,20 +127,45 @@ func main() {
 		return
 	}
 
-	if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
-		LevelLog(ERROR, err)
-		return
+	if t, err := jsonparser.GetBoolean(conf, TRANSACTION); err != nil {
+		trans = t
+	}
+
+	if i, err := jsonparser.GetInt(conf, MAXINTRATRANSLATENCY); err != nil {
+		intraTransLat = int(i)
+	}
+
+	_, err = jsonparser.ArrayEach(conf, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		transIds = append(transIds, string(value))
+	}, TRANSACTIONIDS)
+
+	var ptns = make([]string, 0)
+	_, err = jsonparser.ArrayEach(conf, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+		ptns = append(ptns, string(value))
+	}, PATTERN)
+
+	if err != nil && trans == false {
+		var ptn string
+		if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
+			LevelLog(ERROR, err)
+			return
+		}
+		ptns = append(ptns, ptn)
 	}
 
 	if reconvert == true {
-		ptn = ReConvert(ptn)
+		for idx, ptn := range ptns {
+			ptns[idx] = ReConvert(ptn)
+		}
 	}
 
 	LevelLog(INFO, fmt.Sprintf("Loaded configurations from %s\n", *confPath))
 
 	LevelLog(DEBUG, fmt.Sprintf("  - logtype = %s\n", logType))
 	LevelLog(DEBUG, fmt.Sprintf("  - file = %s\n", sampleFile))
-	LevelLog(DEBUG, fmt.Sprintf("  - pattern = %s", ptn))
+	for idx, ptn := range ptns {
+		LevelLog(DEBUG, fmt.Sprintf("  - pattern #%d = %s", idx, ptn))
+	}
 
 	file, err := os.Open(sampleFile)
 	if err != nil {
@@ -142,39 +174,56 @@ func main() {
 	}
 	defer file.Close()
 
-	var matches, names []string
-	re := regexp.MustCompile(ptn)
 	scanner := bufio.NewScanner(file)
 
 	var buffer bytes.Buffer
 	var vs string
 	for scanner.Scan() {
 		// Use blank line as the delimiter of a log event.
-		if vs = scanner.Text(); vs == "\n" {
-			break
+		if vs = scanner.Text(); vs == "" {
+			rawMsgs = append(rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+			buffer.Reset()
+			continue
 		}
 		buffer.WriteString(scanner.Text())
 		buffer.WriteString("\n") //Multi-line log support
 	}
 
-	rawMsg := strings.TrimRight(buffer.String(), "\n")
+	if buffer.Len() != 0 {
+		rawMsgs = append(rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+	}
 
-	LevelLog(DEBUG, fmt.Sprintf("**Raw message**: %s\n\n", rawMsg))
+	if len(rawMsgs) != len(ptns) {
+		LevelLog(ERROR, fmt.Sprintf("Mismatch: You have %d sample events and %d patterns.", len(rawMsgs), len(ptns)))
+	}
 
-	matches = re.FindStringSubmatch(rawMsg)
-	names = re.SubexpNames()
+	for idx, rawMsg := range rawMsgs {
+		LevelLog(DEBUG, fmt.Sprintf("**Raw message#%d**: %s\n\n", idx, rawMsg))
+	}
 
-	if len(matches) == 0 {
-		LevelLog(ERROR, "The re pattern doesn't match the sample log.")
-		return
-	} else {
-		// Remove the first one as it is the whole string.
-		matches = matches[1:]
-		names = names[1:]
+	var matches = make([][]string, 0)
+	var names = make([][]string, 0)
+
+	for idx, ptn := range ptns {
+		re := regexp.MustCompile(ptn)
+		matches = append(matches, re.FindStringSubmatch(rawMsgs[idx]))
+		names = append(names, re.SubexpNames())
+
+		if len(matches[idx]) == 0 {
+			LevelLog(ERROR, fmt.Sprintf("The re pattern doesn't match the sample log in #%d.", idx))
+			return
+		} else {
+			// Remove the first one as it is the whole string.
+			matches[idx] = matches[idx][1:]
+			names[idx] = names[idx][1:]
+		}
 	}
 
 	for idx, match := range matches {
-		LevelLog(DEBUG, fmt.Sprintf("  - %s: %s\n", names[idx], match))
+		LevelLog(DEBUG, fmt.Sprintf("   Pattern #%d", idx))
+		for i, group := range match {
+			LevelLog(DEBUG, fmt.Sprintf("       - %s: %s\n", names[idx][i], group))
+		}
 	}
 
 	LevelLog(DEBUG, "Check above matches and change patterns if something is wrong.\n")
@@ -352,43 +401,57 @@ func BuildOutputParmsMap(out []byte, log *log.Logger) {
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, matches []string, names []string, wg sync.WaitGroup) {
+func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string, names [][]string, wg sync.WaitGroup) {
 	var newLog string
 	defer wg.Done()
 
 	// Gaussian distribution
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
+	matches := StrSlice2DCopy(m)
+
+	var currMsg = 0
 
 	for {
+		// The first message of a transaction
 		for k, v := range replacers {
-			idx := StrIndex(names, k)
+			idx := StrIndex(names[currMsg], k)
 			if idx == -1 {
 				continue
-			}
-			if s, err := v.ReplacedValue(grng); err == nil {
-				matches[idx] = s
+			} else if currMsg == 0 || StrIndex(transIds, k) == -1 {
+				if s, err := v.ReplacedValue(grng); err == nil {
+					matches[currMsg][idx] = s
+				}
+			} else {
+				matches[currMsg][idx] = matches[0][idx]
 			}
 		}
 
-		newLog = strings.Join(matches, "")
+		newLog = strings.Join(matches[currMsg], "")
 		// Print to stdout, you may redirect it to anywhere else you want
 		logger.Println(newLog)
 
-		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
-		if highTide == false {
-			// Sleep for a short while.
-			var sleepMsec = 1000
-			if maxInterval == minInterval {
-				sleepMsec = minInterval
-			} else {
-				gap := maxInterval - minInterval
-				if uniform == true {
-					sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
-				} else { // There should be a better algorithm here.
-					// TODO: periodic trend + noise
+		time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
+
+		currMsg += 1
+		if currMsg >= len(rawMsgs) {
+			currMsg = 0
+
+			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
+			if highTide == false {
+				// Sleep for a short while.
+				var sleepMsec = 1000
+				if maxInterval == minInterval {
+					sleepMsec = minInterval
+				} else {
+					gap := maxInterval - minInterval
+					if uniform == true {
+						sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
+					} else { // There should be a better algorithm here.
+						// TODO: periodic trend + noise
+					}
 				}
+				time.Sleep(time.Millisecond * time.Duration(sleepMsec))
 			}
-			time.Sleep(time.Millisecond * time.Duration(sleepMsec))
 		}
 	}
 	// I never quit...

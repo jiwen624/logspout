@@ -1,1 +1,3 @@
-####<Feb 14, 2012 4:57:45 AM PST> <Info> <Log Management> <kc-app-01.medrec.com> <> <[ACTIVE] ExecuteThread: '0' for queue: 'weblogic.kernel.Default (self-tuning)'> <> <> <> <1329224265929> <BEA-170023> <The Server Logging is initialized with Java Logging API implementation.>
+Start####<Feb 14, 2012 4:57:45 AM PST> <Info> <Log Management> <kc-app-01.medrec.com> <> <[ACTIVE] ExecuteThread: '0' for queue: 'weblogic.kernel.Default (self-tuning)'> <> <> <> <1329224265929> <BEA-170023> <The Server Logging is initialized with Java Logging API implementation.>
+
+End####<Feb 14, 2012 4:57:45 AM PST> <Info> <Log Management> <kc-app-01.medrec.com> <> <[ACTIVE] ExecuteThread: '0' for queue: 'weblogic.kernel.Default (self-tuning)'> <> <> <> <1329224265929> <BEA-170023> <The Server Logging is initialized with Java Logging API implementation.>

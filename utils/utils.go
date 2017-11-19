@@ -112,3 +112,13 @@ func ReConvert(ptn string) string {
 	}
 	return strings.Join(s, "")
 }
+
+// StrSlice2DCopy is a simple helper function to make a deep copy of a 2-dimensional string slice.
+func StrSlice2DCopy(src [][]string) (cpy [][]string) {
+	cpy = make([][]string, len(src))
+	for i := range src {
+		cpy[i] = make([]string, len(src[i]))
+		copy(cpy[i], src[i])
+	}
+	return
+}

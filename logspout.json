@@ -1,8 +1,8 @@
 {
 	"hightide": false,
-	"concurrency": 100,
-	"min-interval": 100,
-	"max-interval": 1010,
+	"concurrency": 2,
+	"min-interval": 10,
+	"max-interval": 10,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
 	"output-file": {
@@ -12,7 +12,11 @@
 		"compress": false,
 		"max-age":7
 	},
-	"pattern": "(####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
+	"transaction": true,
+	"transaction-ids": ["thread", "msgid"],
+	"max-intra-transaction-latency": 40,
+	"pattern": ["(Start####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
+	"(End####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)"],
 	"replacement": {
 		"timestamp": {
 			"type": "timestamp",
