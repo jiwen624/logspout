@@ -16,6 +16,8 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io/ioutil"
 	"log"
+	"math"
+	"math/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -48,6 +50,7 @@ const (
 	LOOKSREAL   = "looks-real"
 	FORMAT      = "format"
 	CONCURRENY  = "concurrency"
+	UNIFORM     = "uniform"
 	HIGHTIDE    = "hightide"
 	RECONVERT   = "re-convert"
 )
@@ -66,6 +69,7 @@ var maxInterval = 1000
 var concurrency = 1
 var highTide = false
 var reconvert = true
+var uniform = true
 
 // The default log event output stream: stdout
 var logger = log.New(os.Stdout, "", 0)
@@ -101,6 +105,10 @@ func main() {
 
 	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
 		concurrency = int(c)
+	}
+
+	if b, err := jsonparser.GetBoolean(conf, UNIFORM); err == nil {
+		uniform = b
 	}
 
 	var logType, sampleFile, ptn string
@@ -367,7 +375,11 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, matches [
 			sleepMsec = minInterval
 		} else {
 			gap := maxInterval - minInterval
-			sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
+			if uniform == true {
+				sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
+			} else { // There should be a better algorithm here.
+				// TODO:
+			}
 		}
 		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 		if highTide == false {
