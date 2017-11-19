@@ -16,8 +16,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io/ioutil"
 	"log"
-	"math"
-	"math/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -149,7 +147,12 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	var buffer bytes.Buffer
+	var vs string
 	for scanner.Scan() {
+		// Use blank line as the delimiter of a log event.
+		if vs = scanner.Text(); vs == "\n" {
+			break
+		}
 		buffer.WriteString(scanner.Text())
 		buffer.WriteString("\n") //Multi-line log support
 	}
@@ -370,19 +373,21 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, matches [
 		newLog = strings.Join(matches, "")
 		// Print to stdout, you may redirect it to anywhere else you want
 		logger.Println(newLog)
-		var sleepMsec = 1000
-		if maxInterval == minInterval {
-			sleepMsec = minInterval
-		} else {
-			gap := maxInterval - minInterval
-			if uniform == true {
-				sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
-			} else { // There should be a better algorithm here.
-				// TODO:
-			}
-		}
+
 		// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 		if highTide == false {
+			// Sleep for a short while.
+			var sleepMsec = 1000
+			if maxInterval == minInterval {
+				sleepMsec = minInterval
+			} else {
+				gap := maxInterval - minInterval
+				if uniform == true {
+					sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
+				} else { // There should be a better algorithm here.
+					// TODO: periodic trend + noise
+				}
+			}
 			time.Sleep(time.Millisecond * time.Duration(sleepMsec))
 		}
 	}
