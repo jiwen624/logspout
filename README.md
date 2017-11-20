@@ -12,6 +12,10 @@ A simple tutorial in Chinese can be found here: [教程](https://github.com/jiwe
 
 The English version of this tutorial is still working in progress.
 
+### Issues
+
+Please open an issue and post the `logspout.json` and log sample you are using if you find a bug. 
+
 ### Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Please make sure to update tests as appropriate.
