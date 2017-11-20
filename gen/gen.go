@@ -310,6 +310,9 @@ func GetRandomChineseName(g *rng.GaussianGenerator) string {
 // SimpleGaussian returns a random value of Gaussian distribution.
 // mean=0.5*the_range, stddev=0.2*the_range
 func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
+	if gap == 0 {
+		return 0
+	}
 	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
 }
 

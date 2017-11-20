@@ -127,11 +127,11 @@ func main() {
 		return
 	}
 
-	if t, err := jsonparser.GetBoolean(conf, TRANSACTION); err != nil {
+	if t, err := jsonparser.GetBoolean(conf, TRANSACTION); err == nil {
 		trans = t
 	}
 
-	if i, err := jsonparser.GetInt(conf, MAXINTRATRANSLATENCY); err != nil {
+	if i, err := jsonparser.GetInt(conf, MAXINTRATRANSLATENCY); err == nil && i != 0 {
 		intraTransLat = int(i)
 	}
 
@@ -194,7 +194,8 @@ func main() {
 	}
 
 	if len(rawMsgs) != len(ptns) {
-		LevelLog(ERROR, fmt.Sprintf("Mismatch: You have %d sample events and %d patterns.", len(rawMsgs), len(ptns)))
+		LevelLog(ERROR, fmt.Sprintf("Mismatch: You have %d sample event(s) and %d pattern(s).", len(rawMsgs), len(ptns)))
+		return
 	}
 
 	for idx, rawMsg := range rawMsgs {
@@ -430,7 +431,9 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		// Print to stdout, you may redirect it to anywhere else you want
 		logger.Println(newLog)
 
-		time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
+		if trans == true {
+			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
+		}
 
 		currMsg += 1
 		if currMsg >= len(rawMsgs) {

@@ -13,6 +13,8 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 6. 目前支持的替换规则: 时间戳(timestamp), 固定列表(fixed-list), 数字(integer), IPv4/v6地址(区分国内外), 国内手机号码等.
 7. 支持以随机/递增/递减方式获取替换字段值. 随机方式目前用近似高斯分布, 更贴近实际数据分布情况.
 8. 增加looks-real数据替换选项, 可生成IPv4/IPv6地址, email地址, 人名, 国家, 浏览器User Agent等.
+9. 支持事务模式(配置多条events组成一个事务)
+10. 支持多线程打印日志, 可通过`concurrency`配置并发线程数.
 
 ## 使用方式
 
@@ -174,6 +176,28 @@ Usage of ./logspout:
     "max-age":7         (最大保留天数)
  }
 ```
+
+## 事务(transaction)支持
+使用如下配置.
+
+```
+ 15         "transaction": true,
+ 16         "transaction-ids": ["thread", "msgid"],
+ 17         "max-intra-transaction-latency": 40,
+ 18         "pattern": ["(Start####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>    .*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid    >.*?)(>\s*<)(?<msgtext>.*?)(>)",
+ 19         "(End####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<    thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?    <msgtext>.*?)(>)"],
+```
+
+注意:
+1. sample log文件里的一笔事务的多条日志要使用空行分开, 否则会被认为是一条多行日志.
+
+2. pattern使用数组方式按顺序指定每条日志的正则匹配方式. (非事务模式下可以直接使用字符串)
+
+3. `transaction_ids`配置事务的关联id (一笔事务的各条日志中, 这些字段值是一样的)
+
+4. `max-intra-transaction-latency` 配置一笔事务中各条日志之间的最大时间间隔, 实际间隔会随机在该范围内选一个数值
+
+5. 使用事务模式, 需要把`transaction`设置为`true`.
 
 ### pattern
 **说明**:
