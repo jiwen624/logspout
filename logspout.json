@@ -2,7 +2,7 @@
 	"hightide": false,
 	"concurrency": 2,
 	"min-interval": 10,
-	"max-interval": 10,
+	"max-interval": 10000,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
 	"output-file": {

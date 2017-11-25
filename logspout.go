@@ -16,6 +16,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -65,8 +66,8 @@ const (
 )
 
 // Control the speed of log bursts, in milliseconds.
-var minInterval = 1000
-var maxInterval = 1000
+var minInterval = 1000.0
+var maxInterval = 1000.0
 var concurrency = 1
 var highTide = false
 var reconvert = true
@@ -235,10 +236,14 @@ func main() {
 	}
 
 	if minI, err := jsonparser.GetInt(conf, MININTERVAL); err == nil {
-		minInterval = int(minI)
+		minInterval = float64(minI)
 	}
 	if maxI, err := jsonparser.GetInt(conf, MAXINTERVAL); err == nil {
-		maxInterval = int(maxI)
+		maxInterval = float64(maxI)
+	}
+
+	if minInterval > maxInterval {
+		LevelLog(ERROR, errors.New("minInterval should not be larger than maxInterval"))
 	}
 
 	var replacerMap map[string]gen.Replacer
@@ -411,6 +416,8 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 	matches := StrSlice2DCopy(m)
 
 	var currMsg = 0
+	var currLatBase = (maxInterval - minInterval) / 2
+	var currCountDown = int(1000 / minInterval)
 
 	for {
 		// The first message of a transaction
@@ -431,7 +438,8 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		// Print to stdout, you may redirect it to anywhere else you want
 		logger.Println(newLog)
 
-		if trans == true {
+		// It never sleeps in hightide mode.
+		if trans == true && highTide == false {
 			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
 		}
 
@@ -444,13 +452,19 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 				// Sleep for a short while.
 				var sleepMsec = 1000
 				if maxInterval == minInterval {
-					sleepMsec = minInterval
+					sleepMsec = int(minInterval)
 				} else {
-					gap := maxInterval - minInterval
 					if uniform == true {
-						sleepMsec = minInterval + gen.SimpleGaussian(grng, gap)
+						sleepMsec = int(minInterval) + gen.SimpleGaussian(grng, int(maxInterval-minInterval))
 					} else { // There should be a better algorithm here.
-						// TODO: periodic trend + noise
+						currCountDown -= 1
+						if currCountDown == 0 {
+							// Recalculate a new LatBase
+							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
+							currLatBase = currLatBase + float64(gen.SimpleGaussian(grng, 2*distance)-distance)
+							currCountDown = gen.SimpleGaussian(grng, 2*currCountDown)
+						}
+						sleepMsec = int(math.Max(minInterval, float64(gen.SimpleGaussian(grng, int(currLatBase)))))
 					}
 				}
 				time.Sleep(time.Millisecond * time.Duration(sleepMsec))
