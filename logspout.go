@@ -465,6 +465,9 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 						if currCountDown == 0 {
 							// Recalculate a new LatBase
 							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
+							if distance == 0 {
+								distance = int(minInterval + (maxInterval-minInterval)/2)
+							}
 							currLatBase = currLatBase + float64(urand.Intn(2*distance)-distance)
 							currCountDown = urand.Intn(int(4000 / minInterval))
 						}
