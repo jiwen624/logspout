@@ -17,7 +17,6 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
-	"math/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -415,13 +414,9 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 	// Gaussian distribution
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
-	// Uniform random distribution
-	urand := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	matches := StrSlice2DCopy(m)
 
 	var currMsg = 0
-	var currLatBase = (maxInterval - minInterval) / 2
-	var currCountDown = int(1000 / minInterval)
 
 	for {
 		// The first message of a transaction
@@ -454,28 +449,22 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 			if highTide == false {
 				// Sleep for a short while.
-				var sleepMsec = int(minInterval)
+				var sleepMsec = minInterval
 				if maxInterval == minInterval {
-					sleepMsec = int(minInterval)
+					sleepMsec = minInterval
 				} else {
 					if uniform == true {
-						sleepMsec = int(minInterval) + gen.SimpleGaussian(grng, int(maxInterval-minInterval))
+						sleepMsec = minInterval + float64(gen.SimpleGaussian(grng, int(maxInterval-minInterval)))
 					} else { // There should be a better algorithm here.
-						currCountDown -= 1
-						if currCountDown == 0 {
-							// Recalculate a new LatBase
-							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
-							if distance == 0 {
-								distance = int(maxInterval - minInterval)
-							}
-							currLatBase = math.Abs(currLatBase+float64(urand.Intn(2*distance+1)-distance)) + 1
-							currCountDown = int(1000 / currLatBase)
-							sleepMsec = int(currLatBase)
-
+						x := float64((time.Now().Unix() % 86400) / 13751)
+						y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
+						sleepMsec = minInterval / y
+						if sleepMsec > maxInterval {
+							sleepMsec = maxInterval
 						}
 					}
 				}
-				time.Sleep(time.Millisecond * time.Duration(sleepMsec))
+				time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
 			}
 		}
 	}
