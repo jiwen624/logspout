@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"math/rand"
 	"os"
 	"regexp"
 	"strings"
@@ -413,6 +414,9 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 
 	// Gaussian distribution
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
+
+	// Uniform random distribution
+	urand := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	matches := StrSlice2DCopy(m)
 
 	var currMsg = 0
@@ -461,10 +465,10 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 						if currCountDown == 0 {
 							// Recalculate a new LatBase
 							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
-							currLatBase = currLatBase + float64(gen.SimpleGaussian(grng, 2*distance)-distance)
-							currCountDown = gen.SimpleGaussian(grng, int(4000/minInterval))
+							currLatBase = currLatBase + float64(urand.Intn(2*distance)-distance)
+							currCountDown = urand.Intn(int(4000 / minInterval))
 						}
-						sleepMsec = int(math.Max(minInterval, float64(gen.SimpleGaussian(grng, int(currLatBase)))))
+						sleepMsec = int(math.Max(minInterval, float64(urand.Intn(int(currLatBase)))))
 					}
 				}
 				time.Sleep(time.Millisecond * time.Duration(sleepMsec))
