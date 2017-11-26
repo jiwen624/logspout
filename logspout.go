@@ -462,7 +462,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 							// Recalculate a new LatBase
 							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
 							currLatBase = currLatBase + float64(gen.SimpleGaussian(grng, 2*distance)-distance)
-							currCountDown = gen.SimpleGaussian(grng, 2*currCountDown)
+							currCountDown = gen.SimpleGaussian(grng, int(4000/minInterval))
 						}
 						sleepMsec = int(math.Max(minInterval, float64(gen.SimpleGaussian(grng, int(currLatBase)))))
 					}
