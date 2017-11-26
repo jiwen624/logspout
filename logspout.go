@@ -454,7 +454,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 			if highTide == false {
 				// Sleep for a short while.
-				var sleepMsec = 1000
+				var sleepMsec = int(minInterval)
 				if maxInterval == minInterval {
 					sleepMsec = int(minInterval)
 				} else {
