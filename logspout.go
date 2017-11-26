@@ -465,10 +465,14 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 						if currCountDown == 0 {
 							// Recalculate a new LatBase
 							distance := int(math.Min(math.Abs(maxInterval-currLatBase), math.Abs(minInterval-currLatBase)))
-							currLatBase = currLatBase + float64(urand.Intn(2*distance+1)-distance)
-							currCountDown = urand.Intn(int(4000 / minInterval))
+							if distance == 0 {
+								distance = int(maxInterval - minInterval)
+							}
+							currLatBase = math.Abs(currLatBase+float64(urand.Intn(2*distance+1)-distance)) + 1
+							currCountDown = int(1000 / currLatBase)
+							sleepMsec = int(currLatBase)
+
 						}
-						sleepMsec = int(math.Max(minInterval, float64(urand.Intn(int(currLatBase))))) % int(maxInterval)
 					}
 				}
 				time.Sleep(time.Millisecond * time.Duration(sleepMsec))
