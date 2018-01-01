@@ -195,7 +195,7 @@ func main() {
 	}
 
 	if len(rawMsgs) != len(ptns) {
-		LevelLog(ERROR, fmt.Sprintf("Mismatch: You have %d sample event(s) and %d pattern(s).", len(rawMsgs), len(ptns)))
+		LevelLog(ERROR, fmt.Sprintf("%d sample event(s) but %d pattern(s) found.", len(rawMsgs), len(ptns)))
 		return
 	}
 
