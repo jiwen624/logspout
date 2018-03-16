@@ -1,0 +1,10 @@
+package: github.com/jiwen624/logspout
+import:
+- package: github.com/Pallinder/go-randomdata
+- package: github.com/buger/jsonparser
+- package: github.com/jiwen624/uuid
+  version: v1.0.0
+- package: github.com/leesper/go_rng
+- package: github.com/vjeantet/jodaTime
+- package: gopkg.in/natefinch/lumberjack.v2
+  version: v2.1
