@@ -233,6 +233,7 @@ func main() {
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
 		LevelLog(ERROR, err)
+		return
 	}
 
 	if minI, err := jsonparser.GetInt(conf, MININTERVAL); err == nil {
@@ -244,6 +245,7 @@ func main() {
 
 	if minInterval > maxInterval {
 		LevelLog(ERROR, errors.New("minInterval should not be larger than maxInterval"))
+		return
 	}
 
 	var replacerMap map[string]gen.Replacer
