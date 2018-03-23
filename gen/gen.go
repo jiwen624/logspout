@@ -267,7 +267,7 @@ func GetRandomChinaCellPhoneNo(g *rng.GaussianGenerator) string {
 		"147", "148", "150", "151", "152", "157", " 158", "159", "178", "182",
 		"183", "184", "187", "188", "145", "146", "155", "156", "166", "175",
 		"176", "185", "186", "141", "149", "153", "173", "174", "177", "180",
-		"181", "199"}
+		"181"}
 	var phone = make([]string, 0)
 	phone = append(phone, seed[SimpleGaussian(g, len(seed))])
 	phone = append(phone, fmt.Sprintf("%06d", SimpleGaussian(g, 1e8)))
