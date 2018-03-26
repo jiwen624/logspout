@@ -244,7 +244,7 @@ func main() {
 	}
 
 	if minInterval > maxInterval {
-		LevelLog(ERROR, errors.New("minInterval should not be larger than maxInterval"))
+		LevelLog(ERROR, errors.New("minInterval should be less than maxInterval"))
 		return
 	}
 
@@ -261,7 +261,7 @@ func main() {
 		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
 		go PopNewLogs(logger, replacerMap, matches, names, wg)
 	}
-	LevelLog(INFO, "Started.\n")
+	LevelLog(INFO, "LogSpout Started.\n")
 	wg.Wait()
 }
 
