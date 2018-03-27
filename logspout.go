@@ -82,7 +82,7 @@ var logger = log.New(os.Stdout, "", 0)
 
 func main() {
 	confPath := flag.String("f", "logspout.json", "specify the config file in json format.")
-	level := flag.String("v", "warning", "Print level: debug, info, warning, error.")
+	level := flag.String("v", "info", "Print level: debug, info, warning, error.")
 	flag.Parse()
 
 	if val, ok := LevelsDbg[*level]; ok {
