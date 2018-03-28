@@ -35,7 +35,7 @@ Usage of ./logspout:
   -f string
     	specify the config file in json format. (default "logspout.json")
   -v string
-    	Print level: debug, info, warning, error. (default "warning")
+    	Print level: debug, info, warning, error. (default "info")
 ```
 
 简单来说, 可以用-f选项指定你的配置文件, 以及使用-v debug/info/warning/error指定该工具自己的日志打印级别.
