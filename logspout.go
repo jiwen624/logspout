@@ -160,7 +160,7 @@ func main() {
 		}
 	}
 
-	LevelLog(INFO, fmt.Sprintf("Loaded configurations from %s\n", *confPath))
+	LevelLog(INFO, fmt.Sprintf("loaded configurations from %s\n", *confPath))
 
 	LevelLog(DEBUG, fmt.Sprintf("  - logtype = %s\n", logType))
 	LevelLog(DEBUG, fmt.Sprintf("  - file = %s\n", sampleFile))
@@ -200,7 +200,7 @@ func main() {
 	}
 
 	for idx, rawMsg := range rawMsgs {
-		LevelLog(DEBUG, fmt.Sprintf("**Raw message#%d**: %s\n\n", idx, rawMsg))
+		LevelLog(DEBUG, fmt.Sprintf("**raw message#%d**: %s\n\n", idx, rawMsg))
 	}
 
 	var matches = make([][]string, 0)
@@ -212,7 +212,7 @@ func main() {
 		names = append(names, re.SubexpNames())
 
 		if len(matches[idx]) == 0 {
-			LevelLog(ERROR, fmt.Sprintf("The re pattern doesn't match the sample log in #%d.", idx))
+			LevelLog(ERROR, fmt.Sprintf("the re pattern doesn't match the sample log in #%d.", idx))
 			return
 		} else {
 			// Remove the first one as it is the whole string.
@@ -222,13 +222,13 @@ func main() {
 	}
 
 	for idx, match := range matches {
-		LevelLog(DEBUG, fmt.Sprintf("   Pattern #%d", idx))
+		LevelLog(DEBUG, fmt.Sprintf("   pattern #%d", idx))
 		for i, group := range match {
 			LevelLog(DEBUG, fmt.Sprintf("       - %s: %s\n", names[idx][i], group))
 		}
 	}
 
-	LevelLog(DEBUG, "Check above matches and change patterns if something is wrong.\n")
+	LevelLog(DEBUG, "check above matches and change patterns if something is wrong.\n")
 
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
@@ -258,10 +258,10 @@ func main() {
 	var wg sync.WaitGroup
 	for i := 0; i < concurrency; i++ {
 		wg.Add(1) // Add it before you start the goroutine.
-		LevelLog(DEBUG, fmt.Sprintf("Spawned worker #%d\n", i))
+		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
 		go PopNewLogs(logger, replacerMap, matches, names, wg)
 	}
-	LevelLog(INFO, "LogSpout Started.\n")
+	LevelLog(INFO, "LogSpout started.\n")
 	wg.Wait()
 }
 
@@ -274,14 +274,14 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		k := string(key)
 		t, err := jsonparser.GetString(value, TYPE)
 		if err != nil {
-			return errors.New(fmt.Sprintf("No type found in %s", string(key)))
+			return errors.New(fmt.Sprintf("no type found in %s", string(key)))
 		}
 
 		switch t {
 		case FIXEDLIST:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No method found in %s", string(key)))
+				return errors.New(fmt.Sprintf("no method found in %s", string(key)))
 			}
 			var vr = make([]string, 0)
 			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
