@@ -15,6 +15,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 8. 增加looks-real数据替换选项, 可生成IPv4/IPv6地址, email地址, 人名, 国家, 浏览器User Agent等.
 9. 支持事务模式(配置多条events组成一个事务)
 10. 支持多线程打印日志, 可通过`concurrency`配置并发线程数.
+11. 支持以udp/tcp方式输出到syslog (目前日志级别暂时固定为INFO)
 
 ## 使用方式
 
@@ -63,7 +64,6 @@ Usage of ./logspout:
 	"output-syslog": {
 		"protocol": "udp",
 		"netaddr": "localhost:514",
-		"max-backups": 3,
 		"tag": "logspout"
 	},
 	"output-file": {
@@ -180,10 +180,22 @@ Usage of ./logspout:
 
 只放一条样本日志在此文件内. 如果有多条, logspout也会一次性全部读入内存, 并当做一条日志进行正则匹配.
 
+### output-syslog
+**说明**:
+
+日志输出到syslog, 目前级别固定为INFO
+```
+"output-syslog": {
+    "protocol": "udp",   (可配置为udp或tcp)
+    "netaddr": "localhost:514",   (syslog接收地址)
+    "tag": "logspout"      (标签)
+}
+```
+
 ### output-file
 **说明**:
 
-日志输出文件, 如果不配置,则默认输出到stdout.
+日志输出文件.
 
 可配置如下几个参数, 控制输出文件的滚动, 最大文件大小, 最大保留天数等:
 ```
