@@ -42,6 +42,7 @@ const (
 	MAX                  = "max"
 	MININTERVAL          = "min-interval"
 	MAXINTERVAL          = "max-interval"
+	DURATION             = "duration"
 	LISTFILE             = "list-file"
 	FIXEDLIST            = "fixed-list"
 	TIMESTAMP            = "timestamp"
@@ -80,6 +81,7 @@ const (
 // Control the speed of log bursts, in milliseconds.
 var minInterval = 1000.0
 var maxInterval = 1000.0
+var duration = 0
 var concurrency = 1
 var highTide = false
 var reconvert = true
@@ -279,6 +281,9 @@ func main() {
 	if maxI, err := jsonparser.GetInt(conf, MAXINTERVAL); err == nil {
 		maxInterval = float64(maxI)
 	}
+	if d, err := jsonparser.GetInt(conf, DURATION); err == nil {
+		duration = int(d) //I suppose you won't set a large number that makes an int overflow.
+	}
 
 	if minInterval > maxInterval {
 		LevelLog(ERROR, errors.New("minInterval should be less than maxInterval"))
@@ -293,14 +298,16 @@ func main() {
 
 	// goroutine for future use, not necessary for now.
 	var wg sync.WaitGroup
+	wg.Add(concurrency) // Add it before you start the goroutine.
+
 	for i := 0; i < concurrency; i++ {
-		wg.Add(1) // Add it before you start the goroutine.
 		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
-		go PopNewLogs(logger, replacerMap, matches, names, wg)
+		go PopNewLogs(logger, replacerMap, matches, names, &wg)
 	}
+
 	LevelLog(DEBUG, "LogSpout started.\n")
-	// TODO: add a timeout parameter to exit this program.
 	wg.Wait()
+	LevelLog(DEBUG, fmt.Sprintf("LogSpout ended after %d seconds.", duration))
 }
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -475,7 +482,7 @@ func BuildOutputFileParms(out []byte) io.Writer {
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string, names [][]string, wg sync.WaitGroup) {
+func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string, names [][]string, wg *sync.WaitGroup) {
 	var newLog string
 	defer wg.Done()
 
@@ -483,7 +490,10 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	matches := StrSlice2DCopy(m)
-
+	var timeout <-chan time.Time = nil
+	if duration != 0 {
+		timeout = time.After(time.Second * time.Duration(duration))
+	}
 	var currMsg = 0
 
 	for {
@@ -535,6 +545,11 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 				time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
 			}
 		}
+
+		select {
+		case <-timeout:
+			return
+		default:
+		}
 	}
-	// I never quit...
 }
