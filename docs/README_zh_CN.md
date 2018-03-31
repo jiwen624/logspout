@@ -58,6 +58,7 @@ Usage of ./logspout:
 	"concurrency": 100,
 	"min-interval": 100,
 	"max-interval": 1010,
+	"duration": 3600,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
 	"output-stdout": true,
@@ -167,6 +168,13 @@ Usage of ./logspout:
 **Tips**: 如果想配置规整的日志发送间隔, 可将min-interval和max-interval设置为相同的值, 否则logspout每次产生新日志前会在min/max-interval之
 间随机选取一个值做为间隔.
 
+
+### duration
+**说明**: 程序运行时长
+
+**单位**: s(秒)
+
+**Tips**: 默认值为0, 表示无限期运行, 永不停止.
 
 ### logtype
 **说明**:
