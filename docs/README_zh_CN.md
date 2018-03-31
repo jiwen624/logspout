@@ -59,6 +59,13 @@ Usage of ./logspout:
 	"max-interval": 1010,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
+	"output-stdout": true,
+	"output-syslog": {
+		"protocol": "udp",
+		"netaddr": "localhost:514",
+		"max-backups": 3,
+		"tag": "logspout"
+	},
 	"output-file": {
 		"file-name": "default.log",
 		"max-size": 5,

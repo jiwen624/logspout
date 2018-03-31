@@ -14,8 +14,10 @@ import (
 	. "github.com/jiwen624/logspout/utils"
 	"github.com/leesper/go_rng"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"io"
 	"io/ioutil"
 	"log"
+	"log/syslog"
 	"math"
 	"os"
 	"regexp"
@@ -27,7 +29,9 @@ import (
 // Options in the configure file.
 const (
 	LOGTYPE              = "logtype"
-	OUTPUT               = "output-file"
+	OUTPUTSTDOUT         = "output-stdout"
+	OUTPUTFILE           = "output-file"
+	OUTPUTSYSLOG         = "output-syslog"
 	SAMPLEFILE           = "sample-file"
 	PATTERN              = "pattern"
 	REPLACEMENT          = "replacement"
@@ -57,12 +61,20 @@ const (
 	MAXINTRATRANSLATENCY = "max-intra-transaction-latency"
 )
 
+// For output-file
 const (
 	FILENAME   = "file-name"
 	MAXSIZE    = "max-size"
 	MAXBACKUPS = "max-backups"
 	MAXAGE     = "max-age"
 	COMPRESS   = "compress"
+)
+
+// For output-syslog
+const (
+	PROTOCOL  = "protocol"
+	NETADDR   = "netaddr"
+	SYSLOGTAG = "tag"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -105,9 +117,34 @@ func main() {
 		highTide = h
 	}
 
-	if out, _, _, err := jsonparser.Get(conf, OUTPUT); err == nil {
-		BuildOutputParmsMap(out, logger)
+	var dests []io.Writer
+	// We support regular files, syslog and stdout.
+	if stdo, err := jsonparser.GetBoolean(conf, OUTPUTSTDOUT); err == nil {
+		if stdo {
+			dests = append(dests, os.Stdout)
+		}
 	}
+
+	if ofile, _, _, err := jsonparser.Get(conf, OUTPUTFILE); err == nil {
+		dests = append(dests, BuildOutputFileParms(ofile))
+	}
+
+	if osyslog, _, _, err := jsonparser.Get(conf, OUTPUTSYSLOG); err == nil {
+		dests = append(dests, BuildOutputSyslogParms(osyslog))
+	}
+
+	defer func(dst []io.Writer) {
+		for _, d := range dst {
+			if d != nil {
+				if dc, ok := d.(io.Closer); ok {
+					dc.Close()
+				}
+			}
+		}
+	}(dests)
+
+	// Set multiple destinations, if any
+	logger.SetOutput(io.MultiWriter(dests...))
 
 	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
 		concurrency = int(c)
@@ -160,7 +197,7 @@ func main() {
 		}
 	}
 
-	LevelLog(INFO, fmt.Sprintf("loaded configurations from %s\n", *confPath))
+	LevelLog(DEBUG, fmt.Sprintf("loaded configurations from %s\n", *confPath))
 
 	LevelLog(DEBUG, fmt.Sprintf("  - logtype = %s\n", logType))
 	LevelLog(DEBUG, fmt.Sprintf("  - file = %s\n", sampleFile))
@@ -261,7 +298,8 @@ func main() {
 		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
 		go PopNewLogs(logger, replacerMap, matches, names, wg)
 	}
-	LevelLog(INFO, "LogSpout started.\n")
+	LevelLog(DEBUG, "LogSpout started.\n")
+	// TODO: add a timeout parameter to exit this program.
 	wg.Wait()
 }
 
@@ -374,8 +412,36 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 	return replacerMap, err
 }
 
-// BuildOutputParmsMap extracts output parameters from the config file, if any.
-func BuildOutputParmsMap(out []byte, log *log.Logger) {
+// BuildOutputSyslogParms extracts output parameters from the config file for the syslog output
+func BuildOutputSyslogParms(out []byte) io.Writer {
+	var protocol = "udp"
+	var netaddr = "localhost:514"
+	var level = syslog.LOG_INFO
+	var tag = "logspout"
+
+	if p, err := jsonparser.GetString(out, PROTOCOL); err == nil {
+		protocol = p
+	}
+
+	if n, err := jsonparser.GetString(out, NETADDR); err == nil {
+		netaddr = n
+	}
+	// TODO: The syslog default level is hardcoded for now.
+	//if l, err := jsonparser.GetString(out, SYSLOGLEVEL); err == nil {
+	//	level = l
+	//}
+	if t, err := jsonparser.GetString(out, SYSLOGTAG); err == nil {
+		tag = t
+	}
+	w, err := syslog.Dial(protocol, netaddr, level, tag)
+	if err != nil {
+		LevelLog(ERROR, fmt.Sprintf("failed to connect to syslog destination: %s", netaddr))
+	}
+	return w
+}
+
+// BuildOutputFileParms extracts output parameters from the config file, if any.
+func BuildOutputFileParms(out []byte) io.Writer {
 	var fileName = "logspout_default.log"
 	var maxSize = 100  // 100 Megabytes
 	var maxBackups = 5 // 5 backups
@@ -398,14 +464,14 @@ func BuildOutputParmsMap(out []byte, log *log.Logger) {
 	if c, err := jsonparser.GetBoolean(out, COMPRESS); err == nil {
 		compress = c
 	}
-	log.SetOutput(&lumberjack.Logger{
+	return &lumberjack.Logger{
 		Filename:   fileName,
 		MaxSize:    maxSize, // megabytes
 		MaxBackups: maxBackups,
-		MaxAge:     maxAge,   //days
-		Compress:   compress, // disabled by default
-		LocalTime:  localTime,
-	})
+		MaxAge:     maxAge,    //days
+		Compress:   compress,  // disabled by default.
+		LocalTime:  localTime, // always true for now.
+	}
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
