@@ -3,7 +3,7 @@ import:
 - package: github.com/Pallinder/go-randomdata
 - package: github.com/buger/jsonparser
 - package: github.com/jiwen624/uuid
-  version: v1.0.0
+  version: v1.0.1
 - package: github.com/leesper/go_rng
 - package: github.com/vjeantet/jodaTime
 - package: gopkg.in/natefinch/lumberjack.v2
