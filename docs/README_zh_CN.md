@@ -50,7 +50,9 @@ Usage of ./logspout:
 
 ## 配置说明
 
-为灵活性考虑, 配置文件以标准json格式提供(因为是json所以配置文件不支持注释, 这是一个天然的缺陷). 下面是一个完整的配置文件示例, 该文件也可在此处找到: [示例配置文件](https://github.com/jiwen624/logspout/blob/master/logspout.json).
+为灵活性考虑, 配置文件以标准json格式提供(因为是json所以配置文件不支持注释, 这是一个天然的缺陷, 以后计划改成yaml格式). 
+
+下面是一个完整的配置文件示例, 该文件也可在此处找到: [示例配置文件](https://github.com/jiwen624/logspout/blob/master/logspout.json).
 
 ```
 {
