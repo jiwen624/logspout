@@ -11,7 +11,7 @@ configuration file in json format. With the value replacement rules defined in t
 The features of logspout include:
 
 1. Configurable `think time` in milliseconds, or keeps producing log events with `hightide` mode set to `true`.
-2. The logs can be sent to `stdout` or a regular file, with rotation support.
+2. The logs can be sent to `stdout` or a regular file, with rotation support, or syslog.
 3. Multi-line log support.
 4. Straight-forward replacement rules defined with regular patterns and json KV pairs.
 5. Various data format support: IPv4/IPv6 addresses, Email addresses, Names, Countries, User Agents, Timestamp, Fixed-lists, etc.
