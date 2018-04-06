@@ -5,6 +5,7 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
+	"github.com/pkg/errors"
 	"github.com/vjeantet/jodaTime"
 	"math"
 	"math/rand"
@@ -238,8 +239,10 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 		data = randomdata.MacAddress()
 	case UUID:
 		data = GetRandomUUID()
+	default:
+		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
-	return data, nil
+	return data, err
 }
 
 // GetRandomChinaIP returns a random IP address of China.
