@@ -1,14 +1,15 @@
 {
 	"hightide": false,
 	"concurrency": 2,
+	"duplicate":10,
 	"min-interval": 10,
 	"max-interval": 10000,
 	"logtype": "weblogic",
 	"sample-file": "samples/sample.log",
-	"output-stdout": true,
+	"output-stdout": false,
 	"output-syslog": {
 		"protocol": "udp",
-		"netaddr": "localhost:514",
+		"netaddr": "localhost:516",
 		"max-backups": 3,
 		"tag": "logspout"
 	},

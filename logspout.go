@@ -21,6 +21,7 @@ import (
 	"math"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -54,6 +55,7 @@ const (
 	LOOKSREAL            = "looks-real"
 	FORMAT               = "format"
 	CONCURRENY           = "concurrency"
+	DUPLICATE            = "duplicate"
 	UNIFORM              = "uniform"
 	HIGHTIDE             = "hightide"
 	RECONVERT            = "re-convert"
@@ -83,6 +85,7 @@ var minInterval = 1000.0
 var maxInterval = 1000.0
 var duration = 0
 var concurrency = 1
+var duplicate = 1
 var highTide = false
 var reconvert = true
 var uniform = true
@@ -127,8 +130,14 @@ func main() {
 		}
 	}
 
+	if c, err := jsonparser.GetInt(conf, DUPLICATE); err == nil {
+		duplicate = int(c)
+	}
+
 	if ofile, _, _, err := jsonparser.Get(conf, OUTPUTFILE); err == nil {
-		dests = append(dests, BuildOutputFileParms(ofile))
+		for _, f := range BuildOutputFileParms(ofile) {
+			dests = append(dests, f)
+		}
 	}
 
 	if osyslog, _, _, err := jsonparser.Get(conf, OUTPUTSYSLOG); err == nil {
@@ -448,13 +457,14 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 }
 
 // BuildOutputFileParms extracts output parameters from the config file, if any.
-func BuildOutputFileParms(out []byte) io.Writer {
+func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	var fileName = "logspout_default.log"
 	var maxSize = 100  // 100 Megabytes
 	var maxBackups = 5 // 5 backups
 	var maxAge = 7     // 7 days
 	var compress = false
 	var localTime = true
+	var loggers = make([]*lumberjack.Logger, 0)
 
 	if f, err := jsonparser.GetString(out, FILENAME); err == nil {
 		fileName = f
@@ -471,14 +481,17 @@ func BuildOutputFileParms(out []byte) io.Writer {
 	if c, err := jsonparser.GetBoolean(out, COMPRESS); err == nil {
 		compress = c
 	}
-	return &lumberjack.Logger{
-		Filename:   fileName,
-		MaxSize:    maxSize, // megabytes
-		MaxBackups: maxBackups,
-		MaxAge:     maxAge,    //days
-		Compress:   compress,  // disabled by default.
-		LocalTime:  localTime, // always true for now.
+	for i := 0; i < duplicate; i++ {
+		loggers = append(loggers, &lumberjack.Logger{
+			Filename:   strconv.Itoa(i) + "_" + fileName,
+			MaxSize:    maxSize, // megabytes
+			MaxBackups: maxBackups,
+			MaxAge:     maxAge,    //days
+			Compress:   compress,  // disabled by default.
+			LocalTime:  localTime, // todo: always true for now.
+		})
 	}
+	return loggers
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
