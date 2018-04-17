@@ -16,6 +16,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 9. 支持事务模式(配置多条events组成一个事务)
 10. 支持多线程打印日志, 可通过`concurrency`配置并发线程数.
 11. 支持以udp/tcp方式输出到syslog (目前日志级别暂时固定为INFO)
+12. 支持同时写入多个日志文件(方便压测性能), 通过`duplicate`参数指定, 文件名加入N_前缀
 
 ## 使用方式
 
@@ -155,7 +156,10 @@ Usage of ./logspout:
 一个参考例子: 在我的2014 Macbook Pro上, 配置concurrency=1000, min-interval=100, max-interval=500, 产生日志速率约为10,0000条/min,
 注意此数字受限于max/min-interval, 因此时CPU占用只有约15%.
 
+### duplicate
+**说明**:
 
+设置同时写入的文件数, 默认为1. 通过此参数可以讲同样的一条日志写入多个日志文件, 相当于将日志eps数值放大N倍.
 
 ### min-interval
 **说明**: 产生下一条新日志的最小时间间隔
