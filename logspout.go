@@ -19,11 +19,13 @@ import (
 	"log"
 	"log/syslog"
 	"math"
+	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -33,6 +35,7 @@ const (
 	OUTPUTSTDOUT         = "output-stdout"
 	OUTPUTFILE           = "output-file"
 	OUTPUTSYSLOG         = "output-syslog"
+	CONSOLEPORT          = "console-port"
 	SAMPLEFILE           = "sample-file"
 	PATTERN              = "pattern"
 	REPLACEMENT          = "replacement"
@@ -86,6 +89,7 @@ var maxInterval = 1000.0
 var duration = 0
 var concurrency = 1
 var duplicate = 1
+var consolePort = "10306"
 var highTide = false
 var reconvert = true
 var uniform = true
@@ -93,6 +97,13 @@ var trans = false
 var transIds = make([]string, 0)
 var rawMsgs = make([]string, 0)
 var intraTransLat = 10
+
+// For fetching the counter values
+var wgCounter sync.WaitGroup
+var mCounter = sync.Mutex{}
+var cCounter = sync.NewCond(&mCounter)
+var reqCounter = false
+var resChan = make(chan uint64)
 
 // The default log event output stream: stdout
 var logger = log.New(os.Stdout, "", 0)
@@ -132,6 +143,10 @@ func main() {
 
 	if c, err := jsonparser.GetInt(conf, DUPLICATE); err == nil {
 		duplicate = int(c)
+	}
+
+	if p, err := jsonparser.GetInt(conf, CONSOLEPORT); err == nil {
+		consolePort = strconv.Itoa(int(p))
 	}
 
 	if ofile, _, _, err := jsonparser.Get(conf, OUTPUTFILE); err == nil {
@@ -314,6 +329,8 @@ func main() {
 		go PopNewLogs(logger, replacerMap, matches, names, &wg)
 	}
 
+	go console()
+
 	LevelLog(DEBUG, "LogSpout started.\n")
 	wg.Wait()
 	LevelLog(DEBUG, fmt.Sprintf("LogSpout ended after %d seconds.", duration))
@@ -463,7 +480,6 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	var maxBackups = 5 // 5 backups
 	var maxAge = 7     // 7 days
 	var compress = false
-	var localTime = true
 	var loggers = make([]*lumberjack.Logger, 0)
 
 	if f, err := jsonparser.GetString(out, FILENAME); err == nil {
@@ -486,9 +502,9 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 			Filename:   strconv.Itoa(i) + "_" + fileName,
 			MaxSize:    maxSize, // megabytes
 			MaxBackups: maxBackups,
-			MaxAge:     maxAge,    //days
-			Compress:   compress,  // disabled by default.
-			LocalTime:  localTime, // todo: always true for now.
+			MaxAge:     maxAge,   //days
+			Compress:   compress, // disabled by default.
+			LocalTime:  true,
 		})
 	}
 	return loggers
@@ -508,7 +524,25 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		timeout = time.After(time.Second * time.Duration(duration))
 	}
 	var currMsg = 0
+	var counter uint64 = 0
 
+	var c uint64 = 0
+
+	// This goroutine waits for the request from client to fetch the current counter value.
+	go func(res chan uint64) {
+		for {
+			cCounter.L.Lock()
+			for reqCounter == false {
+				cCounter.Wait()
+			}
+			cCounter.L.Unlock()
+			wgCounter.Done()
+
+			res <- atomic.LoadUint64(&c)
+		}
+	}(resChan)
+
+	cTicker := time.NewTicker(time.Second * 1).C
 	for {
 		// The first message of a transaction
 		for k, v := range replacers {
@@ -527,6 +561,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		newLog = strings.Join(matches[currMsg], "")
 		// Print to stdout, you may redirect it to anywhere else you want
 		logger.Println(newLog)
+		counter++
 
 		// It never sleeps in hightide mode.
 		if trans == true && highTide == false {
@@ -562,7 +597,50 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		select {
 		case <-timeout:
 			return
+		case <-cTicker:
+			atomic.StoreUint64(&c, counter)
+			counter = 0
 		default:
 		}
+	}
+}
+
+func fetchCounter(w http.ResponseWriter, r *http.Request) {
+	details := r.URL.Query().Get("details")
+	if details == "true" {
+		fmt.Fprintln(w, "--------The EPS of each worker in the last second-------")
+	}
+
+	wgCounter.Add(concurrency)
+
+	cCounter.L.Lock()
+	reqCounter = true
+	cCounter.Broadcast()
+	cCounter.L.Unlock()
+
+	wgCounter.Wait()
+	// Change this flag to false only after all the counter goroutines are done.
+	reqCounter = false
+
+	var total uint64 = 0
+	var num = concurrency
+	for c := range resChan {
+		if details == "true" {
+			fmt.Fprintln(w, c)
+		}
+		total += c
+		num -= 1
+		if num <= 0 {
+			break
+		}
+	}
+	fmt.Fprintf(w, "The total EPS (after *duplicate: %d): %d\n", duplicate, total*uint64(duplicate))
+}
+
+func console() {
+	http.HandleFunc("/counter", fetchCounter)
+	err := http.ListenAndServe(":"+consolePort, nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
