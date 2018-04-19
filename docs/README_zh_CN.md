@@ -17,6 +17,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 10. 支持多线程打印日志, 可通过`concurrency`配置并发线程数.
 11. 支持以udp/tcp方式输出到syslog (目前日志级别暂时固定为INFO)
 12. 支持同时写入多个日志文件(方便压测性能), 通过`duplicate`参数指定, 文件名加入N_前缀
+13. 通过web console获取最近1s的EPS.
 
 ## 使用方式
 
@@ -31,6 +32,10 @@ logspout默认使用logspout.json做为配置文件, 如果该文件存在且配
 ```./logspout > my.log```
 
 或者使用```output```参数(参见下文的配置介绍)
+
+可以使用curl http://your-host:10306/counter?details=true 获取当前的eps
+其中10306为默认端口, 如果有冲突, 请修改配置文件中的`console-port`参数
+如果不需要看每个worker的eps, 可以去掉`?details=true`
 
 可以使用-h选项获取命令帮助:
 ```
@@ -160,6 +165,11 @@ Usage of ./logspout:
 **说明**:
 
 设置同时写入的文件数, 默认为1. 通过此参数可以讲同样的一条日志写入多个日志文件, 相当于将日志eps数值放大N倍.
+
+### console-port
+**说明**:
+
+设置此logspout进程的web console的端口, 默认为10306, 如果同时启动多个logspout, 则需要修改此处为其他的端口, 避免互相冲突
 
 ### min-interval
 **说明**: 产生下一条新日志的最小时间间隔
