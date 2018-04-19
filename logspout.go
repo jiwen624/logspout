@@ -113,6 +113,9 @@ var cCounter = sync.NewCond(&mCounter)
 var reqCounter = false
 var resChan = make(chan uint64)
 
+// termChans stores the channels for close requests
+var termChans = make([]chan struct{}, 0, concurrency)
+
 // The default log event output stream: stdout
 var logger = log.New(os.Stdout, "", 0)
 var confPath *string
@@ -335,14 +338,26 @@ func main() {
 
 	for i := 0; i < concurrency; i++ {
 		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
-		go PopNewLogs(logger, replacerMap, matches, names, &wg)
+		termChans = append(termChans, make(chan struct{}))
+		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
 	}
 
 	go console()
 
 	LevelLog(DEBUG, "LogSpout started.\n")
+
+	if duration != 0 {
+		select {
+		case <-time.After(time.Second * time.Duration(duration)):
+			for _, c := range termChans {
+				close(c)
+			}
+			termChans = make([]chan struct{}, 0)
+		}
+	}
+
 	wg.Wait()
-	LevelLog(DEBUG, fmt.Sprintf("LogSpout ended after %d seconds.", duration))
+	LevelLog(DEBUG, fmt.Sprintf("LogSpout ended."))
 }
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -520,7 +535,8 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string, names [][]string, wg *sync.WaitGroup) {
+func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string,
+	names [][]string, wg *sync.WaitGroup, terminate chan struct{}) {
 	var newLog string
 	defer wg.Done()
 
@@ -528,10 +544,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	matches := StrSlice2DCopy(m)
-	var timeout <-chan time.Time = nil
-	if duration != 0 {
-		timeout = time.After(time.Second * time.Duration(duration))
-	}
+
 	var currMsg = 0
 	var counter uint64 = 0
 
@@ -604,7 +617,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		}
 
 		select {
-		case <-timeout:
+		case <-terminate:
 			return
 		case <-cTicker:
 			atomic.StoreUint64(&c, counter)

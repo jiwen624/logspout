@@ -54,6 +54,7 @@ func init() {
 var l = log.New(os.Stderr, "", log.LstdFlags)
 
 // LevelLog prints logs based on the debug level.
+// TODO: replace it with logrus or something alike
 func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
 	if level < globalLevel {
 		return
