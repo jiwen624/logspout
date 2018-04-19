@@ -6,6 +6,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -82,6 +83,13 @@ const (
 	NETADDR   = "netaddr"
 	SYSLOGTAG = "tag"
 )
+
+// Counter stores the counter values returned to the client
+type Counter struct {
+	Workers []uint64 `json:"workers"`
+	Total   uint64   `json:"total"`
+	Conf    string   `json:"config"`
+}
 
 // Control the speed of log bursts, in milliseconds.
 var minInterval = 1000.0
@@ -608,8 +616,11 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 
 func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
-	if details == "true" {
-		fmt.Fprintln(w, "--------The EPS of each worker in the last second-------")
+
+	counter := Counter{
+		Workers: make([]uint64, 0),
+		Total:   0,
+		Conf:    "",
 	}
 
 	wgCounter.Add(concurrency)
@@ -627,7 +638,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	var num = concurrency
 	for c := range resChan {
 		if details == "true" {
-			fmt.Fprintln(w, c)
+			counter.Workers = append(counter.Workers, c)
 		}
 		total += c
 		num -= 1
@@ -635,7 +646,17 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	fmt.Fprintf(w, "Total EPS (%s, after *duplicate: %d): %d\n", *confPath, duplicate, total*uint64(duplicate))
+	counter.Total = total * uint64(duplicate)
+	counter.Conf = *confPath
+
+	var retStr string
+	if b, err := json.Marshal(&counter); err != nil {
+		retStr = err.Error()
+	} else {
+		retStr = string(b)
+	}
+
+	fmt.Fprintln(w, retStr)
 }
 
 func console() {
