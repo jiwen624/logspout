@@ -33,8 +33,9 @@ logspout默认使用logspout.json做为配置文件, 如果该文件存在且配
 
 或者使用```output```参数(参见下文的配置介绍)
 
-可以使用curl http://your-host:10306/counter?details=true 获取当前的eps
-其中10306为默认端口, 如果有冲突, 请修改配置文件中的`console-port`参数
+可以使用`curl http://your-host:10306/counter?details=true` 获取当前的eps.
+其中10306为默认端口, 如果有冲突, 请修改配置文件中的`console-port`参数.
+
 如果不需要看每个worker的eps, 可以去掉`?details=true`
 
 可以使用-h选项获取命令帮助:
@@ -148,7 +149,7 @@ Usage of ./logspout:
 
 默认为true, 表示压力是均匀分布的. 此时采用有尾部截断的高斯分布产生随机数做为随机思考时间.
 
-如果设置为false, 则模拟大多数场景呀压力岁时间波动的情景, 在上午和下午各有一个波峰, 晚上则是一天之中压力最小的时候. 峰值与波谷的压力差
+如果设置为false, 则模拟大多数场景下压力随着时间波动的情景, 在上午和下午各有一个波峰, 晚上则是一天之中压力最小的时候. 峰值与波谷的压力差
 大约为5-6倍左右.
 
 目前没有加入在分钟或者小时粒度上的随机波动.
@@ -160,6 +161,19 @@ Usage of ./logspout:
 
 一个参考例子: 在我的2014 Macbook Pro上, 配置concurrency=1000, min-interval=100, max-interval=500, 产生日志速率约为10,0000条/min,
 注意此数字受限于max/min-interval, 因此时CPU占用只有约15%.
+
+如果单纯想提高eps, 可以通过如下方式进行:
+
+1. 减少`min-interval`和`max-interval`增加日志发送频次
+
+2. 使用`hightide=true`模式, 关闭每条日志之间的think time
+
+3. 通过配置较大的`concurrency`来增加worker的数量
+
+4. 通过`duplicate`参数将日志同时写入多个目标文件
+
+5. 适当减少字段替换, 也可以大幅提升eps 
+
 
 ### duplicate
 **说明**:
@@ -267,8 +281,7 @@ Usage of ./logspout:
 
 1. 目前此工具要求raw message里所有的文本均配置成captured group, 即使你不需要替换它. 对于不需要替换的部分, 可以只用()包围起来, 不用起名字.**
 
-2. 由于json使用双引号包围字符串, 因此当你的正则表达式中有`"`的时候, 需要在前面加反斜杠: `\"`
-
+(在以后的版本中会通过预处理自动化这部分工作, 届时用户可直接将字段解析的正则表达式拷贝过来即可)
 
 **示例**:
 
