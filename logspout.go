@@ -107,9 +107,10 @@ var resChan = make(chan uint64)
 
 // The default log event output stream: stdout
 var logger = log.New(os.Stdout, "", 0)
+var confPath *string
 
 func main() {
-	confPath := flag.String("f", "logspout.json", "specify the config file in json format.")
+	confPath = flag.String("f", "logspout.json", "specify the config file in json format.")
 	level := flag.String("v", "info", "Print level: debug, info, warning, error.")
 	flag.Parse()
 
@@ -634,7 +635,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	fmt.Fprintf(w, "The total EPS (after *duplicate: %d): %d\n", duplicate, total*uint64(duplicate))
+	fmt.Fprintf(w, "Total EPS (%s, after *duplicate: %d): %d\n", *confPath, duplicate, total*uint64(duplicate))
 }
 
 func console() {
