@@ -2,7 +2,11 @@ package utils
 
 import (
 	"fmt"
+	"github.com/Pallinder/go-randomdata"
+	"github.com/beevik/etree"
+	"github.com/pkg/errors"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -34,6 +38,15 @@ var LevelsDbg = map[string]DebugLevel{
 	"warning": WARNING,
 	"error":   ERROR,
 }
+
+var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+// Constants for generating random strings
+const (
+	lIdxBits = 6               // 6 bits to represent a letter index
+	idxMask  = 1<<lIdxBits - 1 // All 1-bits, as many as lIdxBits
+	idxMax   = 63 / lIdxBits   // # of letter indices fitting in 63 bits
+)
 
 // globalLevel is the global variable for global debug level.
 var globalLevel = INFO
@@ -122,4 +135,86 @@ func StrSlice2DCopy(src [][]string) (cpy [][]string) {
 		copy(cpy[i], src[i])
 	}
 	return
+}
+
+// XMLStr returns an XML string with specified maximum depth and elements of each level
+func XMLStr(maxDepth int, maxElements int) (string, error) {
+	if maxDepth == 0 || maxElements == 0 {
+		return "", errors.New("invalid maxDepth or maxElements")
+	}
+
+	doc := etree.NewDocument()
+	doc.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
+	doc.CreateProcInst("xml-stylesheet", `type="text/xsl" href="style.xsl"`)
+	xmlStr(&doc.Element, maxDepth, maxElements, 0)
+	doc.Indent(2)
+	return doc.WriteToString()
+}
+
+// xmlStr is the internal helper function for XMLStr
+func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int) {
+	if currDepth >= maxDepth || doc == nil {
+		return
+	}
+	numElements := rand.Intn(maxElements)
+	for i := 0; i < numElements; i++ {
+		subDoc := doc.CreateElement(randomTag())
+		if needComment() {
+			subDoc.CreateComment(randomComment())
+		}
+		if needAttr() {
+			subDoc.CreateAttr(randomAttrK(), randomAttrV())
+		}
+		xmlStr(subDoc, maxDepth, maxElements, currDepth+1)
+	}
+}
+
+// randomTag is a helper function to generate random tag string
+func randomTag() string {
+	s := randomdata.Country(randomdata.FullCountry)
+	if rand.Intn(11)%10 == 0 {
+		s = strings.Replace(s, " ", "", -1)
+	}
+	return s
+}
+
+func randomAttrK() string {
+	return randomdata.Noun()
+}
+
+func randomAttrV() string {
+	return randomdata.LastName()
+}
+
+func randomComment() string {
+	return randomdata.Adjective()
+}
+
+func needComment() bool {
+	return randomdata.Boolean()
+}
+
+func needAttr() bool {
+	return randomdata.Boolean()
+}
+
+// RandomStr generates a random string within charset `chars` and shorter than length
+func RandomStr(chars string, length int) string {
+	if chars != "" {
+		cset = chars
+	}
+
+	b := make([]byte, length)
+	for i, cache, remain := length-1, rand.Int63(), idxMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = rand.Int63(), idxMax
+		}
+		if idx := int(cache & idxMask); idx < len(cset) {
+			b[i] = cset[idx]
+			i--
+		}
+		cache >>= lIdxBits
+		remain--
+	}
+	return string(b)
 }

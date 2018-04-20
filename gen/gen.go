@@ -3,6 +3,7 @@ package gen
 import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	"github.com/jiwen624/logspout/utils"
 	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"
@@ -27,6 +28,7 @@ const (
 	NAME           = "name"
 	CHINESENAME    = "chinese-name"
 	UUID           = "uuid"
+	XML            = "xml"
 )
 
 // Value selection method
@@ -34,13 +36,6 @@ const (
 	NEXT   = "next"
 	PREV   = "prev"
 	RANDOM = "random"
-)
-
-// Constants for generating random strings
-const (
-	lIdxBits = 6               // 6 bits to represent a letter index
-	idxMask  = 1<<lIdxBits - 1 // All 1-bits, as many as lIdxBits
-	idxMax   = 63 / lIdxBits   // # of letter indices fitting in 63 bits
 )
 
 // seed is the seed data to generate China IP addresses.
@@ -56,8 +51,6 @@ var seed = [][]int32{
 	{-770113536, -768606209},   //210.25.0.0-210.47.255.255
 	{-569376768, -564133889},   //222.16.0.0-222.95.255.255
 }
-
-var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func init() {
 	uuid.Init()
@@ -239,6 +232,8 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 		data = randomdata.MacAddress()
 	case UUID:
 		data = GetRandomUUID()
+	case XML:
+		data = GetRandomXML()
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -321,21 +316,15 @@ func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 
 // GetRandomString generates a random string of length n.
 func GetRandomString(chars string, length int) string {
-	if chars != "" {
-		cset = chars
-	}
+	return utils.RandomStr(chars, length)
+}
 
-	b := make([]byte, length)
-	for i, cache, remain := length-1, rand.Int63(), idxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = rand.Int63(), idxMax
-		}
-		if idx := int(cache & idxMask); idx < len(cset) {
-			b[i] = cset[idx]
-			i--
-		}
-		cache >>= lIdxBits
-		remain--
+// GetXMLStr returns a randomly generated XML doc in string format
+func GetRandomXML() string {
+	doc, err := utils.XMLStr(4, 4) // TODO: make maxDepth and maxElements configurable
+	if err == nil {
+		return doc
+	} else {
+		return ""
 	}
-	return string(b)
 }
