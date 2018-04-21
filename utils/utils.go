@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -148,6 +149,7 @@ func XMLStr(maxDepth int, maxElements int) (string, error) {
 	doc.CreateProcInst("xml-stylesheet", `type="text/xsl" href="style.xsl"`)
 	xmlStr(&doc.Element, maxDepth, maxElements, 0)
 	doc.Indent(2)
+
 	return doc.WriteToString()
 }
 
@@ -156,30 +158,34 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int) {
 	if currDepth >= maxDepth || doc == nil {
 		return
 	}
+
+	if needComment() {
+		doc.CreateComment(randomComment())
+	}
+	if needAttr() {
+		doc.CreateAttr(randomAttrK(), randomAttrV())
+	}
+	if needData() {
+		doc.CreateCharData(randomData())
+	}
+
 	numElements := rand.Intn(maxElements)
 	for i := 0; i < numElements; i++ {
-		subDoc := doc.CreateElement(randomTag())
-		if needComment() {
-			subDoc.CreateComment(randomComment())
-		}
-		if needAttr() {
-			subDoc.CreateAttr(randomAttrK(), randomAttrV())
-		}
-		xmlStr(subDoc, maxDepth, maxElements, currDepth+1)
+		xmlStr(doc.CreateElement(randomTag()), maxDepth, maxElements, currDepth+1)
 	}
 }
 
 // randomTag is a helper function to generate random tag string
 func randomTag() string {
+	return randomdata.Noun()
+}
+
+func randomAttrK() string {
 	s := randomdata.Country(randomdata.FullCountry)
 	if rand.Intn(11)%10 == 0 {
 		s = strings.Replace(s, " ", "", -1)
 	}
 	return s
-}
-
-func randomAttrK() string {
-	return randomdata.Noun()
 }
 
 func randomAttrV() string {
@@ -196,6 +202,18 @@ func needComment() bool {
 
 func needAttr() bool {
 	return randomdata.Boolean()
+}
+
+func needData() bool {
+	return rand.Intn(11)%10 != 0
+}
+
+func randomData() string {
+	if randomdata.Boolean() {
+		return randomdata.Adjective()
+	} else {
+		return strconv.Itoa(rand.Int())
+	}
 }
 
 // RandomStr generates a random string within charset `chars` and shorter than length

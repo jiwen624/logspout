@@ -3,6 +3,7 @@ package gen
 import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
+	xj "github.com/basgys/goxml2json"
 	"github.com/jiwen624/logspout/utils"
 	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
@@ -29,6 +30,7 @@ const (
 	CHINESENAME    = "chinese-name"
 	UUID           = "uuid"
 	XML            = "xml"
+	JSON           = "json"
 )
 
 // Value selection method
@@ -234,6 +236,8 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 		data = GetRandomUUID()
 	case XML:
 		data = GetRandomXML()
+	case JSON:
+		data = GetRandomJSON()
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -321,10 +325,19 @@ func GetRandomString(chars string, length int) string {
 
 // GetXMLStr returns a randomly generated XML doc in string format
 func GetRandomXML() string {
-	doc, err := utils.XMLStr(4, 4) // TODO: make maxDepth and maxElements configurable
+	doc, err := utils.XMLStr(5, 5) // TODO: make maxDepth and maxElements configurable
 	if err == nil {
 		return doc
 	} else {
 		return ""
 	}
+}
+
+// GetRandomJSON returns a randomly generated JSON doc in string format.
+func GetRandomJSON() string {
+	json, err := xj.Convert(strings.NewReader(GetRandomXML()))
+	if err != nil {
+		return ""
+	}
+	return json.String()
 }
