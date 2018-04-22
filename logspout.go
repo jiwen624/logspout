@@ -41,6 +41,7 @@ const (
 	PATTERN              = "pattern"
 	REPLACEMENT          = "replacement"
 	TYPE                 = "type"
+	PARMS                = "parms"
 	METHOD               = "method"
 	LIST                 = "list"
 	MIN                  = "min"
@@ -372,6 +373,26 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			return errors.New(fmt.Sprintf("no type found in %s", string(key)))
 		}
 
+		var parms = make(map[string]interface{})
+
+		pHandler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			if dataType == jsonparser.Number {
+				tn, _ := jsonparser.ParseInt(value)
+				parms[string(key)] = int(tn)
+			} else if dataType == jsonparser.String {
+				ts, _ := jsonparser.ParseString(value)
+				parms[string(key)] = ts
+			}
+			return nil
+		}
+
+		p, _, _, errParms := jsonparser.Get(value, PARMS)
+
+		// It is a normal case if PARMS is not found
+		if errParms == nil {
+			jsonparser.ObjectEach(p, pHandler)
+		}
+
 		switch t {
 		case FIXEDLIST:
 			c, err := jsonparser.GetString(value, METHOD)
@@ -460,7 +481,8 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			if err != nil {
 				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
 			}
-			replacerMap[k] = gen.NewLooksReal(c)
+			gen.InitLooksRealParms(parms, c)
+			replacerMap[k] = gen.NewLooksReal(c, parms)
 		}
 		return err
 	}
@@ -581,7 +603,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		}
 
 		newLog = strings.Join(matches[currMsg], "")
-		// Print to stdout, you may redirect it to anywhere else you want
+		// Print to logger streams, you may redirect it to anywhere else you want
 		logger.Println(newLog)
 		counter++
 

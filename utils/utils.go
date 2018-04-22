@@ -153,7 +153,7 @@ func XMLStr(maxDepth int, maxElements int) (string, error) {
 		elmentsCnt[i] = 0 //len(elementsCnt) == maxDepth + 1
 	}
 
-	xmlStr(&doc.Element, maxDepth, maxElements, 1, elmentsCnt)
+	xmlStr(&doc.Element, maxDepth-1, maxElements, 0, elmentsCnt)
 	doc.Indent(2)
 
 	return doc.WriteToString()

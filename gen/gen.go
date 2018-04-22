@@ -40,6 +40,12 @@ const (
 	RANDOM = "random"
 )
 
+// Looks-real options
+const (
+	MAXDEPTH    = "max-depth"
+	MAXELEMENTS = "max-elements"
+)
+
 // seed is the seed data to generate China IP addresses.
 var seed = [][]int32{
 	{607649792, 608174079},     //36.56.0.0-36.63.255.255
@@ -199,13 +205,15 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 
 // LooksReal is a struct to record the configured method to generate data.
 type LooksReal struct {
-	method string
+	method  string
+	options map[string]interface{} // The options of a specific looks-real type
 }
 
 // NewLooksReal returns a new LooksReal struct instance
-func NewLooksReal(m string) Replacer {
+func NewLooksReal(m string, p map[string]interface{}) Replacer {
 	return &LooksReal{
-		method: m,
+		method:  m,
+		options: p,
 	}
 }
 
@@ -235,9 +243,9 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case UUID:
 		data = GetRandomUUID()
 	case XML:
-		data = GetRandomXML()
+		data = GetRandomXML(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int))
 	case JSON:
-		data = GetRandomJSON()
+		data = GetRandomJSON(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int))
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -324,8 +332,8 @@ func GetRandomString(chars string, length int) string {
 }
 
 // GetXMLStr returns a randomly generated XML doc in string format
-func GetRandomXML() string {
-	doc, err := utils.XMLStr(5, 5) // TODO: make maxDepth and maxElements configurable
+func GetRandomXML(maxDepth int, maxElements int) string {
+	doc, err := utils.XMLStr(maxDepth, maxElements) // TODO: make maxDepth and maxElements configurable
 	if err == nil {
 		return doc
 	} else {
@@ -334,10 +342,24 @@ func GetRandomXML() string {
 }
 
 // GetRandomJSON returns a randomly generated JSON doc in string format.
-func GetRandomJSON() string {
-	json, err := xj.Convert(strings.NewReader(GetRandomXML()))
+func GetRandomJSON(maxDepth int, maxElements int) string {
+	json, err := xj.Convert(strings.NewReader(GetRandomXML(maxDepth, maxElements)))
 	if err != nil {
 		return ""
 	}
 	return json.String()
+}
+
+// InitLooksRealParms initiate the parameters map with the default values
+func InitLooksRealParms(parms map[string]interface{}, t string) {
+	switch t {
+	case XML, JSON:
+		if _, ok := parms[MAXDEPTH]; !ok {
+			parms[MAXDEPTH] = 10
+		}
+		if _, ok := parms[MAXELEMENTS]; !ok {
+			parms[MAXELEMENTS] = 100
+		}
+	default:
+	}
 }
