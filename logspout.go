@@ -87,9 +87,9 @@ const (
 
 // Counter stores the counter values returned to the client
 type Counter struct {
-	Workers []uint64 `json:"workers"`
-	Total   uint64   `json:"total"`
-	Conf    string   `json:"config"`
+	Workers []uint64 `json:"Workers"`
+	Total   uint64   `json:"TotalEPS"`
+	Conf    string   `json:"ConfigFile"`
 }
 
 // Control the speed of log bursts, in milliseconds.
