@@ -18,7 +18,7 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 11. 支持以udp/tcp方式输出到syslog (目前日志级别暂时固定为INFO)
 12. 支持同时写入多个日志文件(方便压测性能), 通过`duplicate`参数指定, 文件名加入N_前缀
 13. 通过web console获取最近1s的EPS.
-14. 支持随机生成XML和JSON文档.
+14. 支持随机生成XML和JSON文档, 且其maximum depth和maximum elements可配置.
 
 ## 使用方式
 
@@ -381,6 +381,18 @@ precision表示浮点数精度, 小数点后保留几位数字.
 `"method": "uuid"`  - UUID
 `"method": "xml"`   - 随机生成XML文档
 `"method: "json"`   - 随机生成JSON文档
+
+其中`xml`和`json`支持配置最大嵌套深度以及每个层次的最大元素个数:
+
+```
+"msgtext": {
+        "type": "looks-real",
+        "method": "xml"
+        "parms": {
+               "max-depth":10,
+               "max-elements":100
+},
+```
 
 ## 疑问/Bugs
 如有疑问或发现Bug可提交issues, 并附上问题出现时的样本日志和logspout.json配置.
