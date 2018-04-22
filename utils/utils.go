@@ -147,21 +147,30 @@ func XMLStr(maxDepth int, maxElements int) (string, error) {
 	doc := etree.NewDocument()
 	doc.CreateProcInst("xml", `version="1.0" encoding="UTF-8"`)
 	doc.CreateProcInst("xml-stylesheet", `type="text/xsl" href="style.xsl"`)
-	xmlStr(&doc.Element, maxDepth, maxElements, 0)
+
+	elmentsCnt := make(map[int]int)
+	for i := 1; i <= maxDepth; i++ {
+		elmentsCnt[i] = 0 //len(elementsCnt) == maxDepth + 1
+	}
+
+	xmlStr(&doc.Element, maxDepth, maxElements, 1, elmentsCnt)
 	doc.Indent(2)
 
 	return doc.WriteToString()
 }
 
 // xmlStr is the internal helper function for XMLStr
-func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int) {
-	if currDepth >= maxDepth || doc == nil {
-		return
+func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, elementsCnt map[int]int) int {
+	if doc == nil {
+		return 0
 	}
 
-	if needComment() {
-		doc.CreateComment(randomComment())
-	}
+	// TODO: sometimes we don't need a comment
+	//if needComment() {
+	//	doc.CreateComment(randomComment())
+	//}
+	doc.CreateComment(strconv.Itoa(currDepth) + "," + strconv.Itoa(elementsCnt[currDepth]))
+
 	if needAttr() {
 		doc.CreateAttr(randomAttrK(), randomAttrV())
 	}
@@ -169,10 +178,18 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int) {
 		doc.CreateCharData(randomData())
 	}
 
-	numElements := rand.Intn(maxElements)
-	for i := 0; i < numElements; i++ {
-		xmlStr(doc.CreateElement(randomTag()), maxDepth, maxElements, currDepth+1)
+	if currDepth >= maxDepth {
+		return 1
 	}
+
+	childDepth := currDepth + 1
+	// The number of children would be in the range of 1 - 10
+	numChildren := rand.Intn(maxElements)%10 + 1
+	// The maximum elements for each level would be less then maxElements
+	for i := 0; i < numChildren && elementsCnt[childDepth] < maxElements; i++ {
+		elementsCnt[childDepth] += xmlStr(doc.CreateElement(randomTag()), maxDepth, maxElements, childDepth, elementsCnt)
+	}
+	return 1
 }
 
 // randomTag is a helper function to generate random tag string
