@@ -198,15 +198,11 @@ func randomTag() string {
 }
 
 func randomAttrK() string {
-	s := randomdata.Country(randomdata.FullCountry)
-	if rand.Intn(11)%10 == 0 {
-		s = strings.Replace(s, " ", "", -1)
-	}
-	return s
+	return strings.Replace(randomdata.State(randomdata.Large), " ", "", -1)
 }
 
 func randomAttrV() string {
-	return randomdata.LastName()
+	return randomdata.Country(randomdata.ThreeCharCountry)
 }
 
 func randomComment() string {
