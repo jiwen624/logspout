@@ -170,14 +170,14 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	//	doc.CreateComment(randomComment())
 	//}
 	doc.CreateComment(strconv.Itoa(currDepth) + "," + strconv.Itoa(elementsCnt[currDepth]))
-
-	if needAttr() {
-		doc.CreateAttr(randomAttrK(), randomAttrV())
+	if currDepth != 0 {
+		if needAttr() {
+			doc.CreateAttr(randomAttrK(), randomAttrV())
+		}
+		if needData() {
+			doc.CreateCharData(randomData())
+		}
 	}
-	if needData() {
-		doc.CreateCharData(randomData())
-	}
-
 	if currDepth >= maxDepth {
 		return 1
 	}
@@ -188,6 +188,9 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	// The maximum elements for each level would be less then maxElements
 	for i := 0; i < numChildren && elementsCnt[childDepth] < maxElements; i++ {
 		elementsCnt[childDepth] += xmlStr(doc.CreateElement(randomTag()), maxDepth, maxElements, childDepth, elementsCnt)
+		if currDepth == 0 {
+			break
+		}
 	}
 	return 1
 }
