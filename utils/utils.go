@@ -149,11 +149,11 @@ func XMLStr(maxDepth int, maxElements int) (string, error) {
 	doc.CreateProcInst("xml-stylesheet", `type="text/xsl" href="style.xsl"`)
 
 	elmentsCnt := make(map[int]int)
-	for i := 1; i <= maxDepth; i++ {
+	for i := 0; i <= maxDepth; i++ {
 		elmentsCnt[i] = 0 //len(elementsCnt) == maxDepth + 1
 	}
 
-	xmlStr(&doc.Element, maxDepth-1, maxElements, 0, elmentsCnt)
+	xmlStr(&doc.Element, maxDepth, maxElements, 0, elmentsCnt)
 	doc.Indent(2)
 
 	return doc.WriteToString()
@@ -164,7 +164,6 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	if doc == nil {
 		return 0
 	}
-
 	// TODO: sometimes we don't need a comment
 	//if needComment() {
 	//	doc.CreateComment(randomComment())
