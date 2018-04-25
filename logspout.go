@@ -389,7 +389,7 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 				ts, _ := jsonparser.ParseString(value)
 				parms[k] = ts
 			} else if dataType == jsonparser.Array {
-				ts := make([]string, 0)
+				var ts []string
 				jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 					ts = append(ts, string(value)) // `value` should be a string value but no checks here.
 				})
