@@ -139,7 +139,7 @@ func StrSlice2DCopy(src [][]string) (cpy [][]string) {
 }
 
 // XMLStr returns an XML string with specified maximum depth and elements of each level
-func XMLStr(maxDepth int, maxElements int) (string, error) {
+func XMLStr(maxDepth int, maxElements int, seed []string) (string, error) {
 	if maxDepth == 0 || maxElements == 0 {
 		return "", errors.New("invalid maxDepth or maxElements")
 	}
@@ -153,14 +153,15 @@ func XMLStr(maxDepth int, maxElements int) (string, error) {
 		elmentsCnt[i] = 0 //len(elementsCnt) == maxDepth + 1
 	}
 
-	xmlStr(&doc.Element, maxDepth, maxElements, 0, elmentsCnt)
+	xmlStr(&doc.Element, maxDepth, maxElements, 0, elmentsCnt, seed)
 	doc.Indent(2)
 
 	return doc.WriteToString()
 }
 
 // xmlStr is the internal helper function for XMLStr
-func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, elementsCnt map[int]int) int {
+// In future we may use a different seed for each recursion.
+func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, elementsCnt map[int]int, seed []string) int {
 	if doc == nil {
 		return 0
 	}
@@ -186,7 +187,7 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	numChildren := rand.Intn(maxElements)%10 + 1
 	// The maximum elements for each level would be less then maxElements
 	for i := 0; i < numChildren && elementsCnt[childDepth] < maxElements; i++ {
-		elementsCnt[childDepth] += xmlStr(doc.CreateElement(randomTag()), maxDepth, maxElements, childDepth, elementsCnt)
+		elementsCnt[childDepth] += xmlStr(doc.CreateElement(randomTag(seed)), maxDepth, maxElements, childDepth, elementsCnt, seed)
 		if currDepth == 0 {
 			break
 		}
@@ -195,8 +196,12 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 }
 
 // randomTag is a helper function to generate random tag string
-func randomTag() string {
-	return randomdata.Noun()
+func randomTag(seed []string) string {
+	if l := len(seed); l == 0 {
+		return randomdata.Noun()
+	} else {
+		return seed[rand.Intn(l)]
+	}
 }
 
 func randomAttrK() string {

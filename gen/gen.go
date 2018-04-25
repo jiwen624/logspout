@@ -44,6 +44,7 @@ const (
 const (
 	MAXDEPTH    = "max-depth"
 	MAXELEMENTS = "max-elements"
+	TAGSEED     = "tag-seed"
 )
 
 // seed is the seed data to generate China IP addresses.
@@ -243,9 +244,9 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case UUID:
 		data = GetRandomUUID()
 	case XML:
-		data = GetRandomXML(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int))
+		data = GetRandomXML(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int), ia.options[TAGSEED].([]string))
 	case JSON:
-		data = GetRandomJSON(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int))
+		data = GetRandomJSON(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int), ia.options[TAGSEED].([]string))
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -332,8 +333,8 @@ func GetRandomString(chars string, length int) string {
 }
 
 // GetXMLStr returns a randomly generated XML doc in string format
-func GetRandomXML(maxDepth int, maxElements int) string {
-	doc, err := utils.XMLStr(maxDepth, maxElements) // TODO: make maxDepth and maxElements configurable
+func GetRandomXML(maxDepth int, maxElements int, seed []string) string {
+	doc, err := utils.XMLStr(maxDepth, maxElements, seed) // TODO: make maxDepth and maxElements configurable
 	if err == nil {
 		return doc
 	} else {
@@ -342,8 +343,8 @@ func GetRandomXML(maxDepth int, maxElements int) string {
 }
 
 // GetRandomJSON returns a randomly generated JSON doc in string format.
-func GetRandomJSON(maxDepth int, maxElements int) string {
-	json, err := xj.Convert(strings.NewReader(GetRandomXML(maxDepth, maxElements)))
+func GetRandomJSON(maxDepth int, maxElements int, seed []string) string {
+	json, err := xj.Convert(strings.NewReader(GetRandomXML(maxDepth, maxElements, seed)))
 	if err != nil {
 		return ""
 	}
@@ -359,6 +360,9 @@ func InitLooksRealParms(parms map[string]interface{}, t string) {
 		}
 		if _, ok := parms[MAXELEMENTS]; !ok {
 			parms[MAXELEMENTS] = 100
+		}
+		if _, ok := parms[TAGSEED]; !ok {
+			parms[TAGSEED] = []string{}
 		}
 	default:
 	}

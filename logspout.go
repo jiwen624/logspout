@@ -376,12 +376,20 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		var parms = make(map[string]interface{})
 
 		pHandler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+			// We support only int, string or array.
+			k := string(key)
 			if dataType == jsonparser.Number {
 				tn, _ := jsonparser.ParseInt(value)
-				parms[string(key)] = int(tn)
+				parms[k] = int(tn)
 			} else if dataType == jsonparser.String {
 				ts, _ := jsonparser.ParseString(value)
-				parms[string(key)] = ts
+				parms[k] = ts
+			} else if dataType == jsonparser.Array {
+				ts := make([]string, 0)
+				jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+					ts = append(ts, string(value)) // `value` should be a string value but no checks here.
+				})
+				parms[k] = ts
 			}
 			return nil
 		}
