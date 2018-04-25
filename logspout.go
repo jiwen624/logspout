@@ -290,11 +290,11 @@ func main() {
 		if len(matches[idx]) == 0 {
 			LevelLog(ERROR, fmt.Sprintf("the re pattern doesn't match the sample log in #%d.", idx))
 			return
-		} else {
-			// Remove the first one as it is the whole string.
-			matches[idx] = matches[idx][1:]
-			names[idx] = names[idx][1:]
 		}
+
+		// Remove the first one as it is the whole string.
+		matches[idx] = matches[idx][1:]
+		names[idx] = names[idx][1:]
 	}
 
 	for idx, match := range matches {
@@ -366,11 +366,15 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 	var replacerMap = make(map[string]gen.Replacer)
 
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		var err error = nil
+		var err error
 		k := string(key)
+		notFound := func(string) error {
+			return fmt.Errorf("no %s found in %s", MIN, k)
+		}
+
 		t, err := jsonparser.GetString(value, TYPE)
 		if err != nil {
-			return errors.New(fmt.Sprintf("no type found in %s", string(key)))
+			return notFound(TYPE)
 		}
 
 		var parms = make(map[string]interface{})
@@ -405,7 +409,7 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		case FIXEDLIST:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
-				return errors.New(fmt.Sprintf("no method found in %s", string(key)))
+				return notFound(METHOD)
 			}
 			var vr = make([]string, 0)
 			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
@@ -413,18 +417,19 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			}, LIST)
 			// No list found
 			if err != nil {
-				if f, err := jsonparser.GetString(value, LISTFILE); err != nil {
+				f, err := jsonparser.GetString(value, LISTFILE)
+				if err != nil {
 					return err
-				} else { //Open sample file and fill into vr
-					fp, err := os.Open(f)
-					if err != nil {
-						return err
-					}
-					defer fp.Close()
-					s := bufio.NewScanner(fp)
-					for s.Scan() {
-						vr = append(vr, s.Text())
-					}
+				}
+				//Open sample file and fill into vr
+				fp, err := os.Open(f)
+				if err != nil {
+					return err
+				}
+				defer fp.Close()
+				s := bufio.NewScanner(fp)
+				for s.Scan() {
+					vr = append(vr, s.Text())
 				}
 
 			}
@@ -440,31 +445,31 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		case INTEGER:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
+				return notFound(METHOD)
 			}
 			min, err := jsonparser.GetInt(value, MIN)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+				return notFound(MIN)
 			}
 			max, err := jsonparser.GetInt(value, MAX)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+				return notFound(MAX)
 			}
 			replacerMap[k] = gen.NewIntegerReplacer(c, min, max, min)
 
 		case FLOAT:
 			min, err := jsonparser.GetFloat(value, MIN)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+				return notFound(MIN)
 			}
 			max, err := jsonparser.GetFloat(value, MAX)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+				return notFound(MAX)
 			}
 
 			precision, err := jsonparser.GetInt(value, PRECISION)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+				return notFound(MIN)
 			}
 			replacerMap[k] = gen.NewFloatReplacer(min, max, precision)
 
@@ -472,11 +477,11 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			var chars = ""
 			min, err := jsonparser.GetInt(value, MIN)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MIN, string(key)))
+				return notFound(MIN)
 			}
 			max, err := jsonparser.GetInt(value, MAX)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", MAX, string(key)))
+				return notFound(MAX)
 			}
 
 			if c, err := jsonparser.GetString(value, CHARS); err == nil {
@@ -487,7 +492,7 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		case LOOKSREAL:
 			c, err := jsonparser.GetString(value, METHOD)
 			if err != nil {
-				return errors.New(fmt.Sprintf("No %s found in %s", METHOD, string(key)))
+				return notFound(METHOD)
 			}
 			gen.InitLooksRealParms(parms, c)
 			replacerMap[k] = gen.NewLooksReal(c, parms)
@@ -575,10 +580,10 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 
 	matches := StrSlice2DCopy(m)
 
-	var currMsg = 0
-	var counter uint64 = 0
+	var currMsg int
+	var counter uint64
 
-	var c uint64 = 0
+	var c uint64
 
 	// This goroutine waits for the request from client to fetch the current counter value.
 	go func(res chan uint64) {
@@ -620,7 +625,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
 		}
 
-		currMsg += 1
+		currMsg++
 		if currMsg >= len(rawMsgs) {
 			currMsg = 0
 
@@ -677,14 +682,14 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	// Change this flag to false only after all the counter goroutines are done.
 	reqCounter = false
 
-	var total uint64 = 0
+	var total uint64
 	var num = concurrency
 	for c := range resChan {
 		if details == "true" {
 			counter.Workers = append(counter.Workers, c)
 		}
 		total += c
-		num -= 1
+		num--
 		if num <= 0 {
 			break
 		}
