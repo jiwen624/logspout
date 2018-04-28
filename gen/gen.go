@@ -40,7 +40,7 @@ const (
 	RANDOM = "random"
 )
 
-// Looks-real options
+// Looks-real opts
 const (
 	MAXDEPTH    = "max-depth"
 	MAXELEMENTS = "max-elements"
@@ -71,7 +71,7 @@ type Replacer interface {
 	ReplacedValue(*rng.GaussianGenerator) (string, error)
 }
 
-// FixedListReplacer is a struct to record config options of a fixed-list replacement type.
+// FixedListReplacer is a struct to record config opts of a fixed-list replacement type.
 type FixedListReplacer struct {
 	method   string
 	valRange []string
@@ -206,15 +206,15 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 
 // LooksReal is a struct to record the configured method to generate data.
 type LooksReal struct {
-	method  string
-	options map[string]interface{} // The options of a specific looks-real type
+	method string
+	opts   map[string]interface{} // The opts of a specific looks-real type
 }
 
 // NewLooksReal returns a new LooksReal struct instance
 func NewLooksReal(m string, p map[string]interface{}) Replacer {
 	return &LooksReal{
-		method:  m,
-		options: p,
+		method: m,
+		opts:   p,
 	}
 }
 
@@ -244,9 +244,9 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case UUID:
 		data = GetRandomUUID()
 	case XML:
-		data = GetRandomXML(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int), ia.options[TAGSEED].([]string))
+		data = RandomXML(ia.opts[MAXDEPTH].(int), ia.opts[MAXELEMENTS].(int), ia.opts[TAGSEED].([]string))
 	case JSON:
-		data = GetRandomJSON(ia.options[MAXDEPTH].(int), ia.options[MAXELEMENTS].(int), ia.options[TAGSEED].([]string))
+		data = RandomJSON(ia.opts[MAXDEPTH].(int), ia.opts[MAXELEMENTS].(int), ia.opts[TAGSEED].([]string))
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -333,8 +333,8 @@ func GetRandomString(chars string, length int) string {
 }
 
 // GetXMLStr returns a randomly generated XML doc in string format
-func GetRandomXML(maxDepth int, maxElements int, seed []string) string {
-	doc, err := utils.XMLStr(maxDepth, maxElements, seed) // TODO: make maxDepth and maxElements configurable
+func RandomXML(maxDepth int, maxElements int, seed []string) string {
+	doc, err := utils.XMLStr(maxDepth, maxElements, seed)
 	if err == nil {
 		return doc
 	} else {
@@ -342,9 +342,9 @@ func GetRandomXML(maxDepth int, maxElements int, seed []string) string {
 	}
 }
 
-// GetRandomJSON returns a randomly generated JSON doc in string format.
-func GetRandomJSON(maxDepth int, maxElements int, seed []string) string {
-	json, err := xj.Convert(strings.NewReader(GetRandomXML(maxDepth, maxElements, seed)))
+// RandomJSON returns a randomly generated JSON doc in string format.
+func RandomJSON(maxDepth int, maxElements int, seed []string) string {
+	json, err := xj.Convert(strings.NewReader(RandomXML(maxDepth, maxElements, seed)))
 	if err != nil {
 		return ""
 	}

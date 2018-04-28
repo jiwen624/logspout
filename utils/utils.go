@@ -165,10 +165,7 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	if doc == nil {
 		return 0
 	}
-	// TODO: sometimes we don't need a comment
-	//if needComment() {
-	//	doc.CreateComment(randomComment())
-	//}
+
 	doc.CreateComment(strconv.Itoa(currDepth) + "," + strconv.Itoa(elementsCnt[currDepth]))
 	if currDepth != 0 {
 		if needAttr() {

@@ -49,6 +49,7 @@ const (
 	MININTERVAL          = "min-interval"
 	MAXINTERVAL          = "max-interval"
 	DURATION             = "duration"
+	MAXEVENTS            = "max-events"
 	LISTFILE             = "list-file"
 	FIXEDLIST            = "fixed-list"
 	TIMESTAMP            = "timestamp"
@@ -96,6 +97,7 @@ type Counter struct {
 var minInterval = 1000.0
 var maxInterval = 1000.0
 var duration = 0
+var maxEvents = ^uint64(0)
 var concurrency = 1
 var duplicate = 1
 var consolePort = "10306"
@@ -320,6 +322,10 @@ func main() {
 	}
 	if d, err := jsonparser.GetInt(conf, DURATION); err == nil {
 		duration = int(d) //I suppose you won't set a large number that makes an int overflow.
+	}
+
+	if me, err := jsonparser.GetInt(conf, MAXEVENTS); err == nil {
+		maxEvents = uint64(me) // TODO
 	}
 
 	if minInterval > maxInterval {
@@ -582,6 +588,7 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 
 	var currMsg int
 	var counter uint64
+	var totalCnt uint64
 
 	var c uint64
 
@@ -619,6 +626,11 @@ func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]str
 		// Print to logger streams, you may redirect it to anywhere else you want
 		logger.Println(newLog)
 		counter++
+		// Exits after it exceeds the predefined maximum events.
+		totalCnt++
+		if totalCnt >= maxEvents/uint64(concurrency) {
+			return
+		}
 
 		// It never sleeps in hightide mode.
 		if trans == true && highTide == false {
