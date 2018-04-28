@@ -20,9 +20,7 @@ The features of logspout include:
 
 ### Tutorial
 
-A simple tutorial in Chinese can be found here: [教程](https://github.com/jiwen624/logspout/blob/master/docs/README_zh_CN.md)
-
-The English version of this tutorial is still working in progress.
+The tutorial is still working in progress. Leave me a message if there is someone really using it.
 
 ### Issues
 

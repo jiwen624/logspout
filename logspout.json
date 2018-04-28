@@ -1,7 +1,8 @@
 {
-	"hightide": false,
-	"concurrency": 2,
-	"duplicate":2,
+	"hightide": true,
+	"concurrency": 1,
+	"duplicate":1,
+	"max-events":100,
 	"max-events":100,
 	"min-interval": 1,
 	"max-interval": 2,
@@ -57,9 +58,9 @@
 		},
 		"thread": {
 			"type": "integer",
-			"method": "prev",
-			"min": 0,
-			"max": 10
+			"method": "next",
+			"min": 1,
+			"max": 100
 		},
 		"transaction": {
 			"type": "string",
