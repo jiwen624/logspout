@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	xj "github.com/basgys/goxml2json"
-	"github.com/jiwen624/logspout/utils"
+	"github.com/lspout/utils"
 	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
 	"github.com/pkg/errors"

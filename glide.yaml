@@ -1,4 +1,4 @@
-package: github.com/jiwen624/logspout
+package: github.com/ericoq/lspout
 import:
 - package: github.com/Pallinder/go-randomdata
 - package: github.com/buger/jsonparser
