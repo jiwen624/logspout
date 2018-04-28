@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/buger/jsonparser"
@@ -123,20 +122,21 @@ var termChans = make([]chan struct{}, 0, concurrency)
 var logger = log.New(os.Stdout, "", 0)
 var confPath *string
 
+var sugar *Logger
+
 func main() {
 	confPath = flag.String("f", "logspout.json", "specify the config file in json format.")
 	level := flag.String("v", "info", "Print level: debug, info, warning, error.")
 	flag.Parse()
 
-	if val, ok := LevelsDbg[*level]; ok {
-		SetGlobalDebugLevel(DebugLevel(val))
-	} else {
-		SetGlobalDebugLevel(INFO)
-	}
+	SetGlobalDebugLevel(*level)
+
+	sugar = GetSugaredLogger()
+	defer sugar.Sync()
 
 	conf, err := ioutil.ReadFile(*confPath)
 	if err != nil {
-		LevelLog(ERROR, err)
+		sugar.Error(err)
 		return
 	}
 
@@ -197,12 +197,12 @@ func main() {
 
 	var logType, sampleFile string
 	if logType, err = jsonparser.GetString(conf, LOGTYPE); err != nil {
-		LevelLog(ERROR, err)
+		sugar.Error(err)
 		return
 	}
 
 	if sampleFile, err = jsonparser.GetString(conf, SAMPLEFILE); err != nil {
-		LevelLog(ERROR, err)
+		sugar.Error(err)
 		return
 	}
 
@@ -226,7 +226,7 @@ func main() {
 	if err != nil && trans == false {
 		var ptn string
 		if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
-			LevelLog(ERROR, err)
+			sugar.Error(err)
 			return
 		}
 		ptns = append(ptns, ptn)
@@ -238,17 +238,17 @@ func main() {
 		}
 	}
 
-	LevelLog(DEBUG, fmt.Sprintf("loaded configurations from %s\n", *confPath))
+	sugar.Debugf("loaded configurations from %s\n", *confPath)
 
-	LevelLog(DEBUG, fmt.Sprintf("  - logtype = %s\n", logType))
-	LevelLog(DEBUG, fmt.Sprintf("  - file = %s\n", sampleFile))
+	sugar.Debugf("  - logtype = %s\n", logType)
+	sugar.Debugf("  - file = %s\n", sampleFile)
 	for idx, ptn := range ptns {
-		LevelLog(DEBUG, fmt.Sprintf("  - pattern #%d = %s", idx, ptn))
+		sugar.Debugf("  - pattern #%d = %s", idx, ptn)
 	}
 
 	file, err := os.Open(sampleFile)
 	if err != nil {
-		LevelLog(ERROR, err)
+		sugar.Error(err)
 		return
 	}
 	defer file.Close()
@@ -273,12 +273,12 @@ func main() {
 	}
 
 	if len(rawMsgs) != len(ptns) {
-		LevelLog(ERROR, fmt.Sprintf("%d sample event(s) but %d pattern(s) found.", len(rawMsgs), len(ptns)))
+		sugar.Errorf("%d sample event(s) but %d pattern(s) found.", len(rawMsgs), len(ptns))
 		return
 	}
 
 	for idx, rawMsg := range rawMsgs {
-		LevelLog(DEBUG, fmt.Sprintf("**raw message#%d**: %s\n\n", idx, rawMsg))
+		sugar.Debugf("**raw message#%d**: %s\n\n", idx, rawMsg)
 	}
 
 	var matches = make([][]string, 0)
@@ -290,7 +290,7 @@ func main() {
 		names = append(names, re.SubexpNames())
 
 		if len(matches[idx]) == 0 {
-			LevelLog(ERROR, fmt.Sprintf("the re pattern doesn't match the sample log in #%d.", idx))
+			sugar.Errorf("the re pattern doesn't match the sample log in #%d.", idx)
 			return
 		}
 
@@ -300,17 +300,17 @@ func main() {
 	}
 
 	for idx, match := range matches {
-		LevelLog(DEBUG, fmt.Sprintf("   pattern #%d", idx))
+		sugar.Debugf("   pattern #%d", idx)
 		for i, group := range match {
-			LevelLog(DEBUG, fmt.Sprintf("       - %s: %s\n", names[idx][i], group))
+			sugar.Debugf("       - %s: %s\n", names[idx][i], group)
 		}
 	}
 
-	LevelLog(DEBUG, "check above matches and change patterns if something is wrong.\n")
+	sugar.Debug("check above matches and change patterns if something is wrong")
 
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
-		LevelLog(ERROR, err)
+		sugar.Error(err)
 		return
 	}
 
@@ -325,11 +325,11 @@ func main() {
 	}
 
 	if me, err := jsonparser.GetInt(conf, MAXEVENTS); err == nil {
-		maxEvents = uint64(me) // TODO
+		maxEvents = uint64(me)
 	}
 
 	if minInterval > maxInterval {
-		LevelLog(ERROR, errors.New("minInterval should be less than maxInterval"))
+		sugar.Error("minInterval should be less than maxInterval")
 		return
 	}
 
@@ -338,13 +338,13 @@ func main() {
 	wg.Add(concurrency) // Add it before you start the goroutine.
 
 	for i := 0; i < concurrency; i++ {
-		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
+		sugar.Debugf("spawned worker #%d\n", i)
 
 		termChans = append(termChans, make(chan struct{}))
 
 		var replacerMap map[string]gen.Replacer
 		if replacerMap, err = BuildReplacerMap(replace); err != nil {
-			LevelLog(ERROR, err)
+			sugar.Error(err)
 			return
 		}
 		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
@@ -352,7 +352,7 @@ func main() {
 
 	go console()
 
-	LevelLog(DEBUG, "LogSpout started.\n")
+	sugar.Debug("LogSpout started")
 
 	if duration != 0 {
 		select {
@@ -365,7 +365,7 @@ func main() {
 	}
 
 	wg.Wait()
-	LevelLog(DEBUG, fmt.Sprintf("LogSpout ended."))
+	sugar.Debugf("LogSpout ended.")
 }
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -534,7 +534,7 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 	}
 	w, err := syslog.Dial(protocol, netaddr, level, tag)
 	if err != nil {
-		LevelLog(ERROR, fmt.Sprintf("failed to connect to syslog destination: %s", netaddr))
+		sugar.Errorf("failed to connect to syslog destination: %s", netaddr)
 	}
 	return w
 }

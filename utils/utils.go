@@ -1,43 +1,22 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/Pallinder/go-randomdata"
 	"github.com/beevik/etree"
 	"github.com/pkg/errors"
-	"log"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"math/rand"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 )
 
-type DebugLevel uint8
-
-// The debug levels
-const (
-	DEBUG DebugLevel = iota
-	INFO
-	WARNING
-	ERROR
-)
-
-// DbgLevels is a map of level macros and strings.
-var DbgLevels = map[DebugLevel]string{
-	DEBUG:   "DEBUG",
-	INFO:    "INFO ",
-	WARNING: "WARN ",
-	ERROR:   "ERROR",
-}
-
 // LevelsDbg is a reversed map of level macros and strings.
-var LevelsDbg = map[string]DebugLevel{
-	"debug":   DEBUG,
-	"info":    INFO,
-	"warning": WARNING,
-	"error":   ERROR,
+var LevelsDbg = map[string]zapcore.Level{
+	"debug":   zap.DebugLevel,
+	"info":    zap.InfoLevel,
+	"warning": zap.WarnLevel,
+	"error":   zap.ErrorLevel,
 }
 
 var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -49,57 +28,38 @@ const (
 	idxMax   = 63 / lIdxBits   // # of letter indices fitting in 63 bits
 )
 
-// globalLevel is the global variable for global debug level.
-var globalLevel = INFO
+type Logger = zap.SugaredLogger
 
-func SetGlobalDebugLevel(level DebugLevel) {
-	globalLevel = level
+var lgrCfg zap.Config
+var sugar *Logger
+var lgr *zap.Logger
+
+// globalLevel is the global variable for global debug level.
+var globalLevel = zap.InfoLevel
+
+func SetGlobalDebugLevel(lvl string) {
+	if val, ok := LevelsDbg[lvl]; ok {
+		globalLevel = val
+	} else {
+		globalLevel = zapcore.InfoLevel
+	}
+	lgrCfg.Level.SetLevel(globalLevel)
+
 }
 
-func GlobalDebugLevel() DebugLevel {
+func GlobalDebugLevel() zapcore.Level {
 	return globalLevel
 }
 
-func init() {
-
+func GetSugaredLogger() *Logger {
+	return sugar
 }
 
-// l is the global log print object.
-var l = log.New(os.Stderr, "", log.LstdFlags)
-
-// LevelLog prints logs based on the debug level.
-// TODO: replace it with logrus or something alike
-func LevelLog(level DebugLevel, err interface{}, args ...interface{}) {
-	if level < globalLevel {
-		return
-	}
-
-	var msg string
-	switch err.(type) {
-	case error:
-		msg = err.(error).Error()
-	case string:
-		msg = err.(string)
-	default:
-		l.Printf("Unknown err type: %T\n", err)
-		return
-	}
-
-	var p string = fmt.Sprintf("%s ", DbgLevels[level])
-	if globalLevel == DEBUG {
-		if pc, f, l, ok := runtime.Caller(1); ok {
-			path := strings.Split(runtime.FuncForPC(pc).Name(), ".")
-			name := path[len(path)-1]
-			p = fmt.Sprintf("%s %s#%d %s(): ", DbgLevels[level], filepath.Base(f), l, name)
-		} else {
-			p = fmt.Sprintf("%s %s#%s %s(): ", level, "na", "na", "na")
-		}
-	}
-	if len(args) == 0 {
-		l.Printf("%s%s", p, msg)
-	} else {
-		l.Printf("%s%s %v", p, msg, args)
-	}
+func init() {
+	lgrCfg = zap.NewProductionConfig()
+	lgrCfg.Level.SetLevel(GlobalDebugLevel())
+	lgr, _ = lgrCfg.Build()
+	sugar = lgr.Sugar()
 }
 
 // StrIndex is the helper function to find the position of a string in a []string

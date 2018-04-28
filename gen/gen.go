@@ -203,7 +203,6 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 	default: // Use random by default
 		i.currVal = int64(SimpleGaussian(g, int(i.max-i.min))) + i.min
 	}
-	fmt.Println("return: ", i.method, i.currVal, currVal)
 	return strconv.FormatInt(currVal, 10), nil
 }
 
