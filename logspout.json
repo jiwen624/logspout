@@ -2,6 +2,7 @@
 	"hightide": false,
 	"concurrency": 2,
 	"duplicate":2,
+	"max-events":100,
 	"min-interval": 1,
 	"max-interval": 2,
 	"logtype": "weblogic",
