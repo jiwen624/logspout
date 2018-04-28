@@ -214,9 +214,7 @@ Usage of ./logspout:
 
 **单位**: 无
 
-**Tips**: 默认值为最大的uint64值, 如果设置了这个值, 请确保其可以被concurrency参数整除(否则生成的条数可能会有细小偏差)
-比如此处配置了100, 需要产生100条日志, concurrency需配置一个可以整除100的数. (比如10, 则表示每个worker生成10条日志, 总共100条.)
-
+**Tips**: 默认值为最大的uint64值
 
 ### logtype
 **说明**:
@@ -339,6 +337,8 @@ replacement内的每个key都是pattern里的一个captured group, 通过此处�
 可以定义从列表里选取值的方式: 随机/递增/递减
 
 ```"method": "random"```  (或者`next`, `prev`)
+
+注意: 如果想通过`next`, `min`, `max`三个参数生成一个自增ID序列, 请设置`concurrency`参数为1, 目前暂时不支持多个worker共享一个全局的自增ID.
 
 此时需要定义`"min"`和`"max"`, 提供一个选择范围.
 
