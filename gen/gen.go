@@ -185,14 +185,16 @@ func NewIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 
 // ReplacedValue is the main function to populate replacement value of an integer type.
 func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+	var currVal = i.currVal
+
 	switch i.method {
 	case NEXT:
-		i.currVal += 1
+		i.currVal++
 		if i.currVal > i.max {
 			i.currVal = i.min
 		}
 	case PREV:
-		i.currVal -= 1
+		i.currVal--
 		if i.currVal < i.min {
 			i.currVal = i.max
 		}
@@ -201,7 +203,8 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 	default: // Use random by default
 		i.currVal = int64(SimpleGaussian(g, int(i.max-i.min))) + i.min
 	}
-	return strconv.FormatInt(i.currVal, 10), nil
+	fmt.Println("return: ", i.method, i.currVal, currVal)
+	return strconv.FormatInt(currVal, 10), nil
 }
 
 // LooksReal is a struct to record the configured method to generate data.

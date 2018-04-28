@@ -333,19 +333,20 @@ func main() {
 		return
 	}
 
-	var replacerMap map[string]gen.Replacer
-	if replacerMap, err = BuildReplacerMap(replace); err != nil {
-		LevelLog(ERROR, err)
-		return
-	}
-
 	// goroutine for future use, not necessary for now.
 	var wg sync.WaitGroup
 	wg.Add(concurrency) // Add it before you start the goroutine.
 
 	for i := 0; i < concurrency; i++ {
 		LevelLog(DEBUG, fmt.Sprintf("spawned worker #%d\n", i))
+
 		termChans = append(termChans, make(chan struct{}))
+
+		var replacerMap map[string]gen.Replacer
+		if replacerMap, err = BuildReplacerMap(replace); err != nil {
+			LevelLog(ERROR, err)
+			return
+		}
 		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
 	}
 
