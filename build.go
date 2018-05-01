@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/buger/jsonparser"
-	"github.com/lspout/gen"
+	"github.com/jiwen624/logspout/gen"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"log/syslog"
