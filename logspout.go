@@ -118,6 +118,8 @@ var logger = log.New(os.Stdout, "", 0)
 var confPath *string
 
 var sugar *Logger
+var conf []byte
+var err error
 
 func main() {
 	confPath = flag.String("f", "logspout.json", "specify the config file in json format")
@@ -129,7 +131,7 @@ func main() {
 	sugar = GetSugaredLogger()
 	defer sugar.Sync()
 
-	conf, err := ioutil.ReadFile(*confPath)
+	conf, err = ioutil.ReadFile(*confPath)
 	if err != nil {
 		sugar.Error(err)
 		return

@@ -19,7 +19,8 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 12. 支持同时写入多个日志文件(方便压测性能), 通过`duplicate`参数指定, 文件名加入N_前缀
 13. 通过web console获取最近1s的EPS.
 14. 支持随机生成XML和JSON文档, 且其maximum depth和maximum elements, 以及tag-seed可配置.
-15. 支持限定最多可以产生的日志条数, 通过`max-events`参数控制
+15. 支持限定最多可以产生的日志条数, 通过`max-events`参数控制.
+16. 支持查看当前运行的配置文件名称及配置详情.
 
 ## 使用方式
 

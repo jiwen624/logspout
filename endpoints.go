@@ -51,8 +51,19 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, retStr)
 }
 
+func config(w http.ResponseWriter, r *http.Request) {
+	details := r.URL.Query().Get("details")
+	if details == "true" {
+			fmt.Fprintln(w, string(conf))
+	} else {
+		fmt.Fprintln(w, *confPath)
+	}
+}
+
 func console() {
 	http.HandleFunc("/counter", fetchCounter)
+	http.HandleFunc("/config", config)
+
 	err := http.ListenAndServe(":"+consolePort, nil)
 	if err != nil {
 		sugar.Fatal("listen and serve: ", err)
