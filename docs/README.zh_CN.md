@@ -36,7 +36,15 @@ logspout默认使用logspout.json做为配置文件, 如果该文件存在且配
 
 或者使用```output```参数(参见下文的配置介绍)
 
-可以使用`curl http://your-host:10306/counter?details=true` 获取当前的eps.
+LogSpout提供了一些访问接口, 可以查看当前的运行情况:
+
+```
+curl http://your-host:10306/counter?details=true 获取各个worker的当前的eps.
+curl http://your-host:10306/counter 获取当前总的eps.
+curl http://your-host:10306/config  获取当前运行的配置文件名
+curl http://your-host:10306/config?details=true 获取当前运行的配置
+```
+
 其中10306为默认端口, 如果有冲突, 请修改配置文件中的`console-port`参数.
 
 如果不需要看每个worker的eps, 可以去掉`?details=true`
