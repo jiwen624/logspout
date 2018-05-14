@@ -91,7 +91,7 @@ type Counter struct {
 var minInterval = 1000.0
 var maxInterval = 1000.0
 var duration = 0
-var maxEvents = ^uint64(0)
+var maxEvents uint64 = math.MaxUint64
 var concurrency = 1
 var duplicate = 1
 var consolePort = "10306"

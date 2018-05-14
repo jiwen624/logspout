@@ -1,11 +1,11 @@
 default: bin
 
-.PHONY: bin
-bin: clean-bin
+.PHONY: std-bin
+std-bin: clean
 	go build
 
-.PHONY: tiny
-tiny: bin
+.PHONY: bin
+bin: std-bin
 	upx logspout
 
 .PHONY: clean-bin
