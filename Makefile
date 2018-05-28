@@ -50,7 +50,7 @@ tag-and-release: are-you-sure
 	@git fetch origin
 	@git reset --hard origin/master
 	# Replace the version with the value provided by you
-	@sed -i '' -e 's/const logspoutVersion = ".*"/const logspoutVersion = "${VERSION}"/' version.go
+	@sed -i 's/const logspoutVersion = ".*"/const logspoutVersion = "${VERSION}"/' version.go
 	# And commit it
 	@git add version.go
 	@git commit -m "Changed version to ${VERSION}"
