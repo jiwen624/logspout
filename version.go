@@ -1,3 +1,3 @@
 package main
 
-const logspoutVersion = "1.1.0"
+const logspoutVersion = "0.2.4"
