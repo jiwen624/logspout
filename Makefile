@@ -1,4 +1,12 @@
-default: bin
+default: help
+
+.PHONY: help
+help:
+	@echo "What you can do with this Makefile"
+	@echo "    make macos - make the executable for macOS"
+	@echo "    make linux - make the executable for Linux"
+	@echo ""
+	@echo "Check the Makefile for more options, e.g., if you don't like a stripped binary. (Who don't like it?)"
 
 .PHONY: linux
 linux: std-linux-bin
@@ -13,7 +21,7 @@ std-bin: clean
 	go build
 
 .PHONY: bin
-bin: std-bin
+macos: std-bin
 	upx logspout
 
 .PHONY: clean-bin
