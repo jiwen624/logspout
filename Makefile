@@ -1,5 +1,13 @@
 default: bin
 
+.PHONY: linux
+linux: std-linux-bin
+	upx logspout
+
+.PHONY: std-linux-bin
+std-linux-bin: clean
+	env GOOS=linux GOARCH=amd64 go build
+
 .PHONY: std-bin
 std-bin: clean
 	go build
