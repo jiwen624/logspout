@@ -20,6 +20,26 @@ The features of logspout include:
 
 And many others.
 
+### How To Use
+
+A simple way to use it is through Docker, in just a few steps:
+
+1. Clone the repository to your local server/laptop:
+
+```git clone git@github.com:jiwen624/logspout.git```
+
+2. Build the docker image and run the servicei (You need to have docker and docker-compose installed):
+
+```docker-compose up```
+
+Note that you can also use `docker-compose up -d` to make it run in background, and use `docker-compose logs -f` to check out the debug logs (the debug logs of logspout itself, not the simulated machine logs)
+
+Stop it with Ctrl-C if you run it foreground, or `docker-compose down` for background services.
+
+You may change the configuration file `logspout-docker.json` or use your own one by modifying the docker-compose.yml file.
+
+Enjoy it.
+
 ### Tutorial
 
 The tutorial is still working in progress. Leave me a message if there is someone really using it.
