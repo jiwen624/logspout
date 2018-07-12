@@ -27,7 +27,11 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 ## 初次使用
 首先, 你需要将logspout clone到本地:
 
-```git@github.com:jiwen624/logspout.git```
+```git clone git@github.com:jiwen624/logspout.git```
+
+或者:
+```go get github.com/jiwen624/logspout`
+
 
 之后, 可以有两种方式使用logspout:
 
