@@ -29,27 +29,37 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 
 ```git clone git@github.com:jiwen624/logspout.git```
 
-或者:
-```go get github.com/jiwen624/logspout`
+>或者, 如果你对Go比较熟悉, 想对源文件做一些修改, 也可以:
+>```go get github.com/jiwen624/logspout```
 
 
 之后, 可以有两种方式使用logspout:
 
-1. 自己使用`go build`编译成二进制文件. 编译好后可以将其拷贝到其他机器执行, 也可以通过交叉编译, 编译指定平台的二进制文件. 使用此种方式, 假定你对Go的编译, 以及dependencies下载等比较熟悉, 不再赘述.
+1. Docker方式运行. 如果你对Go语言不太熟悉.推荐此种方式. 需要你的机器上安装有docker及docker-compose, 然后启动service.
 
-2. Docker方式运行. 如果你对Go语言不太熟悉.推荐此种方式. 需要你的机器上安装有docker及docker-compose:
+2. 自己使用`go build`编译成二进制文件. 编译好后可以将其拷贝到其他机器执行, 也可以通过交叉编译, 编译指定平台的二进制文件. 使用此种方式, 假定你对Go的编译, 以及dependencies下载等比较熟悉, 不再赘述.
+
+Docker方式运行:
 
 ```docker-compose up -d```
 
-上述命令会build docker image, 并启动, 启动后logspout会读取logspout-docker.json配置文件, 此配置文件默认将示例日志写入到logs/目录下.
+上述命令会build docker image, 并启动service, 启动后logspout会读取logspout-docker.json配置文件, 此配置文件默认将示例日志写入到当前目录下.
 
-如果要修改配置文件, 可以直接修改logspout-docker.json, 或者修改docker-compose.yml, 自己指定另一个json文件即可, 不需要改动docker image.
+其他可能用到的命令:
+
+```docker-compose logs -f```   =>查看logspout的错误输出(注意不是日志输出)
+```docker-compose down```      =>停止logspout service
+
+
+如果要修改配置文件, 可以直接修改logspout-docker.json, 或者修改docker-compose.yml的volumes部分, 自己指定另一个json文件即可, 不需要改动docker image.
+
+如果要指定将日志写入另一个目录, 也可以修改docker-compose.yml实现.  一般情况下docker image文件build好后不需要改动.
 
 可以通过下面文档介绍的参数, 对生成的日志进行格式和吞吐量等的调整.
 
 ## 使用方式
 
-logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行:
+logspout默认使用logspout.json做为配置文件, 如果该文件存在且配置合法, 则直接运行(如果不通过Docker方式):
 
 ```./logspout```
 

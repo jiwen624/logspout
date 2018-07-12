@@ -16,7 +16,9 @@ The features of logspout include:
 4. Straight-forward replacement rules defined with regular patterns and json KV pairs.
 5. Various data format support: IPv4/IPv6 addresses, Email addresses, Names, Countries, User Agents, Timestamp, Fixed-lists, etc.
 6. Transaction mode (A transaction may contain two or more events, each has its own think time).
-7. Multi-threaded log events support. 
+7. Multi-threaded log events support.
+
+And many others.
 
 ### Tutorial
 
