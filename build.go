@@ -10,6 +10,7 @@ import (
 	"log/syslog"
 	"os"
 	"strconv"
+	"path/filepath"
 )
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -186,6 +187,7 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 // BuildOutputFileParms extracts output parameters from the config file, if any.
 func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	var fileName = "logspout_default.log"
+	var directory = "."
 	var maxSize = 100  // 100 Megabytes
 	var maxBackups = 5 // 5 backups
 	var maxAge = 7     // 7 days
@@ -194,6 +196,9 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 
 	if f, err := jsonparser.GetString(out, FILENAME); err == nil {
 		fileName = f
+	}
+	if d, err := jsonparser.GetString(out, DIRECTORY); err == nil {
+		directory = d
 	}
 	if ms, err := jsonparser.GetInt(out, MAXSIZE); err == nil {
 		maxSize = int(ms)
@@ -209,10 +214,10 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	}
 	for i := 0; i < duplicate; i++ {
 		loggers = append(loggers, &lumberjack.Logger{
-			Filename:   strconv.Itoa(i) + "_" + fileName,
+			Filename:   filepath.Join(directory, strconv.Itoa(i) + "_" + fileName),
 			MaxSize:    maxSize, // megabytes
 			MaxBackups: maxBackups,
-			MaxAge:     maxAge,   //days
+			MaxAge:     maxAge,   // days
 			Compress:   compress, // disabled by default.
 			LocalTime:  true,
 		})

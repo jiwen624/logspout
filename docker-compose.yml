@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  logspout:
+    build: .
+    volumes:
+      - ./logspout-docker.json:/logspout.json
+      - .:/logs

@@ -67,6 +67,7 @@ const (
 // For output-file
 const (
 	FILENAME   = "file-name"
+	DIRECTORY = "directory"
 	MAXSIZE    = "max-size"
 	MAXBACKUPS = "max-backups"
 	MAXAGE     = "max-age"

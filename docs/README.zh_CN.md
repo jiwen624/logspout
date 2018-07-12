@@ -21,6 +21,25 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 14. 支持随机生成XML和JSON文档, 且其maximum depth和maximum elements, 以及tag-seed可配置.
 15. 支持限定最多可以产生的日志条数, 通过`max-events`参数控制.
 16. 支持查看当前运行的配置文件名称及配置详情.
+17. 可以指定日志输出的目录
+18. 提供了docker配置文件, 可以通过docker直接启动, 不需要手动编译.
+
+## 初次使用
+首先, 你需要将logspout clone到本地:
+
+```git@github.com:jiwen624/logspout.git```
+
+之后, 可以有两种方式使用logspout:
+
+1. 自己使用`go build`编译成二进制文件. 编译好后可以将其拷贝到其他机器执行, 也可以通过交叉编译, 编译指定平台的二进制文件. 使用此种方式, 假定你对Go的编译, 以及dependencies下载等比较熟悉, 不再赘述.
+
+2. Docker方式运行. 如果你对Go语言不太熟悉.推荐此种方式. 需要你的机器上安装有docker及docker-compose:
+
+```docker-compose up -d```
+
+上述命令会build docker image, 并启动, 启动后logspout会读取logspout-docker.json配置文件, 此配置文件默认将示例日志写入到logs/目录下.
+
+可以通过下面文档介绍的参数, 对生成的日志进行格式和吞吐量等的调整.
 
 ## 使用方式
 
@@ -258,6 +277,7 @@ Usage of ./logspout:
 可配置如下几个参数, 控制输出文件的滚动, 最大文件大小, 最大保留天数等:
 ```
 "output-file": {
+    "directory": "."    (此参数可选, 如不配置, 默认是写入到logspout所在的目录)
     "file-name": "default.log",
     "max-size": 5,      (单位: MB)
     "max-backups": 3,   (如果配置为3, 则加上当前日志文件一共最多保留4个文件, 之后最老的文件会被删除掉)
