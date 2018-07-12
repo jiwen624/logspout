@@ -39,6 +39,8 @@ LogSpout可根据用户提供的样本日志, 通过正则表达式配置来替�
 
 上述命令会build docker image, 并启动, 启动后logspout会读取logspout-docker.json配置文件, 此配置文件默认将示例日志写入到logs/目录下.
 
+如果要修改配置文件, 可以直接修改logspout-docker.json, 或者修改docker-compose.yml, 自己指定另一个json文件即可, 不需要改动docker image.
+
 可以通过下面文档介绍的参数, 对生成的日志进行格式和吞吐量等的调整.
 
 ## 使用方式
