@@ -17,6 +17,7 @@ The features of logspout include:
 5. Various data format support: IPv4/IPv6 addresses, Email addresses, Names, Countries, User Agents, Timestamp, Fixed-lists, etc.
 6. Transaction mode (A transaction may contain two or more events, each has its own think time).
 7. Multi-threaded log events support.
+8. Easy hands-on experience with docker support
 
 And many others.
 
