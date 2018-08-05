@@ -21,6 +21,11 @@ The features of logspout include:
 
 And many others.
 
+### TODO List
+
+There are a couple of new features on the roadmap now.
+
+
 ### How To Use
 
 A simple way to use it is through Docker, in just a few steps:
