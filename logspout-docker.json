@@ -1,78 +1,121 @@
 {
-	"hightide": true,
-	"concurrency": 1,
-	"duplicate":1,
-	"min-interval": 1,
-	"max-interval": 2,
-	"logtype": "weblogic",
-	"sample-file": "samples/sample.log",
-	"output-stdout": false,
-	"output-syslog": {
-		"protocol": "udp",
-		"netaddr": "localhost:516",
-		"max-backups": 3,
-		"tag": "logspout"
-	},
-	"output-file": {
-		"directory": "/logs",
-		"file-name": "default.log",
-		"max-size": 500,
-		"max-backups": 3,
-		"compress": false,
-		"max-age":7
-	},
-	"transaction": true,
-	"transaction-ids": ["thread", "msgid"],
-	"max-intra-transaction-latency": 40,
-	"pattern": ["(Start####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
-	"(End####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)"],
-	"replacement": {
-		"timestamp": {
-			"type": "timestamp",
-			"format": "MMM dd, yyyy hh:mm:ss.SSS a z"
-		},
-		"severity": {
-			"type": "fixed-list",
-			"method": "random",
-			"list-file": "samples/severity.sample"
-		},
-		"subsystem": {
-			"type": "float",
-			"min": 100,
-			"max": 10000,
-			"precision": 20
-		},
-		"ipaddress": {
-			"type": "looks-real",
-			"method": "ipv4china"
-		},
-		"phone": {
-			"type": "looks-real",
-			"method": "cellphone-china"
-		},
-		"user": {
-			"type": "fixed-list",
-			"method": "random",
-			"list": ["GuoJing", "HuangRong", "ZhangSanfeng", "ZhangWuji","LiMochou", "OuyangFeng", "HongQigong", "LinghuChong", "RenYingying", "DuanTiande"]
-		},
-		"thread": {
-			"type": "integer",
-			"method": "next",
-			"min": 1,
-			"max": 100
-		},
-		"transaction": {
-			"type": "string",
-			"chars": "abcde12345",
-			"min": 10,
-			"max": 20
-		},
-		"msgid": {
-			"type": "integer",
-			"method": "random",
-			"min": 0,
-			"max": 2000000
-		}
-	}
-
+  "burstMode": true,
+  "concurrency": 1,
+  "minInterval": 1,
+  "maxInterval": 2,
+  "logType": "weblogic",
+  "sampleFile": "samples/sample.log",
+  "transactionId": [
+    "thread",
+    "msgid"
+  ],
+  "maxIntraTransactionLatency": 40,
+  "output": {
+    "stdout1": {
+      "type": "stdout",
+      "attrs": {}
+    },
+    "syslog1": {
+      "type": "syslog",
+      "attrs": {
+        "protocol": "udp",
+        "netAddr": "localhost:516",
+        "maxBackups": 3,
+        "tag": "logspout"
+      }
+    },
+    "file1": {
+      "type": "file",
+      "attrs": {
+        "directory": "/logs",
+        "fileName": "default.log",
+        "maxSize": 500,
+        "maxBackups": 3,
+        "compress": false,
+        "maxAge": 7,
+        "duplicate": false
+      }
+    }
+  },
+  "pattern": [
+    "(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)",
+    "(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)"
+  ],
+  "replacement": {
+    "timestamp": {
+      "type": "timestamp",
+      "attrs": {
+        "format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+      }
+    },
+    "severity": {
+      "type": "fixed-list",
+      "attrs": {
+        "method": "random",
+        "listFile": "samples/severity.sample"
+      }
+    },
+    "subsystem": {
+      "type": "float",
+      "attrs": {
+        "min": 100,
+        "max": 10000,
+        "precision": 20
+      }
+    },
+    "ipaddress": {
+      "type": "looks-real",
+      "attrs": {
+        "method": "ipv4china"
+      }
+    },
+    "phone": {
+      "type": "looks-real",
+      "attrs": {
+        "method": "cellphone-china"
+      }
+    },
+    "user": {
+      "type": "fixed-list",
+      "attrs": {
+        "method": "random",
+        "list": [
+          "GuoJing",
+          "HuangRong",
+          "ZhangSanfeng",
+          "ZhangWuji",
+          "LiMochou",
+          "OuyangFeng",
+          "HongQigong",
+          "LinghuChong",
+          "RenYingying",
+          "DuanTiande"
+        ]
+      }
+    },
+    "thread": {
+      "type": "integer",
+      "attrs": {
+        "method": "next",
+        "min": 1,
+        "max": 100
+      }
+    },
+    "transaction": {
+      "type": "string",
+      "attrs": {
+        "chars": "abcde12345",
+        "min": 10,
+        "max": 20
+      }
+    },
+    "msgid": {
+      "type": "integer",
+      "attrs": {
+        "method": "random",
+        "min": 0,
+        "max": 2000000
+      }
+    }
+  }
 }

@@ -1,23 +1,14 @@
 package utils
 
 import (
-	"github.com/Pallinder/go-randomdata"
-	"github.com/beevik/etree"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"math/rand"
 	"strconv"
 	"strings"
-)
 
-// LevelsDbg is a reversed map of level macros and strings.
-var LevelsDbg = map[string]zapcore.Level{
-	"debug":   zap.DebugLevel,
-	"info":    zap.InfoLevel,
-	"warning": zap.WarnLevel,
-	"error":   zap.ErrorLevel,
-}
+	"github.com/Pallinder/go-randomdata"
+	"github.com/beevik/etree"
+	"github.com/pkg/errors"
+)
 
 var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -27,40 +18,6 @@ const (
 	idxMask  = 1<<lIdxBits - 1 // All 1-bits, as many as lIdxBits
 	idxMax   = 63 / lIdxBits   // # of letter indices fitting in 63 bits
 )
-
-type Logger = zap.SugaredLogger
-
-var lgrCfg zap.Config
-var sugar *Logger
-var lgr *zap.Logger
-
-// globalLevel is the global variable for global debug level.
-var globalLevel = zap.InfoLevel
-
-func SetGlobalDebugLevel(lvl string) {
-	if val, ok := LevelsDbg[lvl]; ok {
-		globalLevel = val
-	} else {
-		globalLevel = zapcore.InfoLevel
-	}
-	lgrCfg.Level.SetLevel(globalLevel)
-
-}
-
-func GlobalDebugLevel() zapcore.Level {
-	return globalLevel
-}
-
-func GetSugaredLogger() *Logger {
-	return sugar
-}
-
-func init() {
-	lgrCfg = zap.NewProductionConfig()
-	lgrCfg.Level.SetLevel(GlobalDebugLevel())
-	lgr, _ = lgrCfg.Build()
-	sugar = lgr.Sugar()
-}
 
 // StrIndex is the helper function to find the position of a string in a []string
 func StrIndex(vs []string, t string) int {
@@ -110,7 +67,7 @@ func XMLStr(maxDepth int, maxElements int, seed []string) (string, error) {
 
 	elmentsCnt := make(map[int]int)
 	for i := 0; i <= maxDepth; i++ {
-		elmentsCnt[i] = 0 //len(elementsCnt) == maxDepth + 1
+		elmentsCnt[i] = 0 // len(elementsCnt) == maxDepth + 1
 	}
 
 	xmlStr(&doc.Element, maxDepth, maxElements, 0, elmentsCnt, seed)

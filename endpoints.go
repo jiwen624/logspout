@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -54,7 +55,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 func config(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 	if details == "true" {
-			fmt.Fprintln(w, string(conf))
+		fmt.Fprintln(w, string(conf))
 	} else {
 		fmt.Fprintln(w, *confPath)
 	}
@@ -66,6 +67,6 @@ func console() {
 
 	err := http.ListenAndServe(":"+consolePort, nil)
 	if err != nil {
-		sugar.Fatal("listen and serve: ", err)
+		log.Fatal("listen and serve: ", err)
 	}
 }

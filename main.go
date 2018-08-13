@@ -6,14 +6,9 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"flag"
-	"github.com/buger/jsonparser"
-	"github.com/jiwen624/logspout/gen"
-	. "github.com/jiwen624/logspout/utils"
-	"github.com/leesper/go_rng"
 	"io"
 	"io/ioutil"
-	"log"
+	l "log"
 	"math"
 	"os"
 	"regexp"
@@ -22,11 +17,18 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/buger/jsonparser"
+	"github.com/jiwen624/logspout/flag"
+	"github.com/jiwen624/logspout/gen"
+	"github.com/jiwen624/logspout/log"
+	. "github.com/jiwen624/logspout/utils"
+	"github.com/leesper/go_rng"
 )
 
 // Options in the configure file.
 const (
-	LOGTYPE              = "logtype"
+	LOGTYPE              = "logype"
 	OUTPUTSTDOUT         = "output-stdout"
 	OUTPUTFILE           = "output-file"
 	OUTPUTSYSLOG         = "output-syslog"
@@ -67,7 +69,7 @@ const (
 // For output-file
 const (
 	FILENAME   = "file-name"
-	DIRECTORY = "directory"
+	DIRECTORY  = "directory"
 	MAXSIZE    = "max-size"
 	MAXBACKUPS = "max-backups"
 	MAXAGE     = "max-age"
@@ -115,26 +117,20 @@ var resChan = make(chan uint64)
 var termChans = make([]chan struct{}, 0, concurrency)
 
 // The default log event output stream: stdout
-var logger = log.New(os.Stdout, "", 0)
+var logger = l.New(os.Stdout, "", 0)
 var confPath *string
 
-var sugar *Logger
 var conf []byte
 var err error
 
 func main() {
-	confPath = flag.String("f", "logspout.json", "specify the config file in json format")
-	level := flag.String("v", "info", "Print level: debug, info, warning, error")
-	flag.Parse()
+	if err := log.SetLevel(flag.LogLevel); err != nil {
+		log.Warn(err)
+	}
 
-	SetGlobalDebugLevel(*level)
-
-	sugar = GetSugaredLogger()
-	defer sugar.Sync()
-
-	conf, err = ioutil.ReadFile(*confPath)
+	conf, err = ioutil.ReadFile(flag.ConfigPath)
 	if err != nil {
-		sugar.Error(err)
+		log.Error(err)
 		return
 	}
 
@@ -195,12 +191,12 @@ func main() {
 
 	var logType, sampleFile string
 	if logType, err = jsonparser.GetString(conf, LOGTYPE); err != nil {
-		sugar.Error(err)
+		log.Error(err)
 		return
 	}
 
 	if sampleFile, err = jsonparser.GetString(conf, SAMPLEFILE); err != nil {
-		sugar.Error(err)
+		log.Error(err)
 		return
 	}
 
@@ -224,7 +220,7 @@ func main() {
 	if err != nil && trans == false {
 		var ptn string
 		if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
-			sugar.Error(err)
+			log.Error(err)
 			return
 		}
 		ptns = append(ptns, ptn)
@@ -236,17 +232,17 @@ func main() {
 		}
 	}
 
-	sugar.Debugf("loaded configurations from %s", *confPath)
+	log.Debugf("loaded configurations from %s", *confPath)
 
-	sugar.Debugf("  - logtype = %s", logType)
-	sugar.Debugf("  - file = %s", sampleFile)
+	log.Debugf("  - logtype = %s", logType)
+	log.Debugf("  - file = %s", sampleFile)
 	for idx, ptn := range ptns {
-		sugar.Debugf("  - pattern #%d = %s", idx, ptn)
+		log.Debugf("  - pattern #%d = %s", idx, ptn)
 	}
 
 	file, err := os.Open(sampleFile)
 	if err != nil {
-		sugar.Error(err)
+		log.Error(err)
 		return
 	}
 	defer file.Close()
@@ -263,7 +259,7 @@ func main() {
 			continue
 		}
 		buffer.WriteString(scanner.Text())
-		buffer.WriteString("\n") //Multi-line log support
+		buffer.WriteString("\n") // Multi-line log support
 	}
 
 	if buffer.Len() != 0 {
@@ -271,12 +267,12 @@ func main() {
 	}
 
 	if len(rawMsgs) != len(ptns) {
-		sugar.Errorf("%d sample event(s) but %d pattern(s) found", len(rawMsgs), len(ptns))
+		log.Errorf("%d sample event(s) but %d pattern(s) found", len(rawMsgs), len(ptns))
 		return
 	}
 
 	for idx, rawMsg := range rawMsgs {
-		sugar.Debugf("**raw message#%d**: %s", idx, rawMsg)
+		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
 	}
 
 	var matches = make([][]string, 0)
@@ -288,7 +284,7 @@ func main() {
 		names = append(names, re.SubexpNames())
 
 		if len(matches[idx]) == 0 {
-			sugar.Errorf("the re pattern doesn't match the sample log in #%d", idx)
+			log.Errorf("the re pattern doesn't match the sample log in #%d", idx)
 			return
 		}
 
@@ -298,17 +294,17 @@ func main() {
 	}
 
 	for idx, match := range matches {
-		sugar.Debugf("   pattern #%d", idx)
+		log.Debugf("   pattern #%d", idx)
 		for i, group := range match {
-			sugar.Debugf("       - %s: %s", names[idx][i], group)
+			log.Debugf("       - %s: %s", names[idx][i], group)
 		}
 	}
 
-	sugar.Debug("check above matches and change patterns if something is wrong")
+	log.Debug("check above matches and change patterns if something is wrong")
 
 	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
 	if err != nil {
-		sugar.Error(err)
+		log.Error(err)
 		return
 	}
 
@@ -319,7 +315,7 @@ func main() {
 		maxInterval = float64(maxI)
 	}
 	if d, err := jsonparser.GetInt(conf, DURATION); err == nil {
-		duration = int(d) //I suppose you won't set a large number that makes an int overflow.
+		duration = int(d) // I suppose you won't set a large number that makes an int overflow.
 	}
 
 	if me, err := jsonparser.GetInt(conf, MAXEVENTS); err == nil {
@@ -327,7 +323,7 @@ func main() {
 	}
 
 	if minInterval > maxInterval {
-		sugar.Error("minInterval should be less than maxInterval")
+		log.Error("minInterval should be less than maxInterval")
 		return
 	}
 
@@ -336,13 +332,13 @@ func main() {
 	wg.Add(concurrency) // Add it before you start the goroutine.
 
 	for i := 0; i < concurrency; i++ {
-		sugar.Debugf("spawned worker #%d", i)
+		log.Debugf("spawned worker #%d", i)
 
 		termChans = append(termChans, make(chan struct{}))
 
 		var replacerMap map[string]gen.Replacer
 		if replacerMap, err = BuildReplacerMap(replace); err != nil {
-			sugar.Error(err)
+			log.Error(err)
 			return
 		}
 		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
@@ -350,7 +346,7 @@ func main() {
 
 	go console()
 
-	sugar.Debug("LogSpout started")
+	log.Debug("LogSpout started")
 
 	if duration != 0 {
 		select {
@@ -363,11 +359,11 @@ func main() {
 	}
 
 	wg.Wait()
-	sugar.Debugf("LogSpout ended")
+	log.Debugf("LogSpout ended")
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(logger *log.Logger, replacers map[string]gen.Replacer, m [][]string,
+func PopNewLogs(logger *l.Logger, replacers map[string]gen.Replacer, m [][]string,
 	names [][]string, wg *sync.WaitGroup, terminate chan struct{}) {
 	var newLog string
 	defer wg.Done()

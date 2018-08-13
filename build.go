@@ -3,14 +3,16 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/buger/jsonparser"
-	"github.com/jiwen624/logspout/gen"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"log/syslog"
 	"os"
-	"strconv"
 	"path/filepath"
+	"strconv"
+
+	"github.com/buger/jsonparser"
+	"github.com/jiwen624/logspout/gen"
+	"github.com/jiwen624/logspout/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -179,7 +181,7 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 	}
 	w, err := syslog.Dial(protocol, netaddr, level, tag)
 	if err != nil {
-		sugar.Errorf("failed to connect to syslog destination: %s", netaddr)
+		log.Errorf("failed to connect to syslog destination: %s", netaddr)
 	}
 	return w
 }
@@ -214,7 +216,7 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	}
 	for i := 0; i < duplicate; i++ {
 		loggers = append(loggers, &lumberjack.Logger{
-			Filename:   filepath.Join(directory, strconv.Itoa(i) + "_" + fileName),
+			Filename:   filepath.Join(directory, strconv.Itoa(i)+"_"+fileName),
 			MaxSize:    maxSize, // megabytes
 			MaxBackups: maxBackups,
 			MaxAge:     maxAge,   // days

@@ -1,5 +1,5 @@
 {
-  "burst": true,
+  "burstMode": true,
   "concurrency": 1,
   "minInterval": 1,
   "maxInterval": 2,
@@ -11,87 +11,110 @@
   ],
   "maxIntraTransactionLatency": 40,
   "output": {
-    "stdout": {
-      "type": "stdout"
+    "stdout1": {
+      "type": "stdout",
+      "attrs": {}
     },
     "syslog1": {
       "type": "syslog",
-      "protocol": "udp",
-      "netaddr": "localhost:516",
-      "maxBackups": 3,
-      "tag": "logspout"
+      "attrs": {
+        "protocol": "udp",
+        "netAddr": "localhost:516",
+        "maxBackups": 3,
+        "tag": "logspout"
+      }
     },
     "file1": {
       "type": "file",
-      "fileName": "default.log",
-      "maxSize": 500,
-      "maxBackups": 3,
-      "compress": false,
-      "maxAge": 7,
-      "duplicate": false
+      "attrs": {
+        "fileName": "default.log",
+        "maxSize": 500,
+        "maxBackups": 3,
+        "compress": false,
+        "maxAge": 7,
+        "duplicate": false
+      }
     }
   },
   "pattern": [
-    "(Start####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)",
-    "(End####<)(?<timestamp>.*?)(>\s*<)(?<severity>.*?)(>\s*<)(?<subsystem>.*?)(>\s*<)(?<ipaddress>.*?)(>\s*<)(?<phone>.*?)(>\s*<)(?<thread>.*?)(>\s*<)(?<user>.*?)(>\s*<)(?<transaction>.*?)(>\s*<)(?<diagcontext>.*?)(>\s*<)(?<rawtime>.*?)(>\s*<BEA-)(?<msgid>.*?)(>\s*<)(?<msgtext>.*?)(>)"
+    "(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)",
+    "(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)"
   ],
   "replacement": {
     "timestamp": {
       "type": "timestamp",
-      "format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+      "attrs": {
+        "format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+      }
     },
     "severity": {
       "type": "fixed-list",
-      "method": "random",
-      "listFile": "samples/severity.sample"
+      "attrs": {
+        "method": "random",
+        "listFile": "samples/severity.sample"
+      }
     },
     "subsystem": {
       "type": "float",
-      "min": 100,
-      "max": 10000,
-      "precision": 20
+      "attrs": {
+        "min": 100,
+        "max": 10000,
+        "precision": 20
+      }
     },
     "ipaddress": {
       "type": "looks-real",
-      "method": "ipv4china"
+      "attrs": {
+        "method": "ipv4china"
+      }
     },
     "phone": {
       "type": "looks-real",
-      "method": "cellphone-china"
+      "attrs": {
+        "method": "cellphone-china"
+      }
     },
     "user": {
       "type": "fixed-list",
-      "method": "random",
-      "list": [
-        "GuoJing",
-        "HuangRong",
-        "ZhangSanfeng",
-        "ZhangWuji",
-        "LiMochou",
-        "OuyangFeng",
-        "HongQigong",
-        "LinghuChong",
-        "RenYingying",
-        "DuanTiande"
-      ]
+      "attrs": {
+        "method": "random",
+        "list": [
+          "GuoJing",
+          "HuangRong",
+          "ZhangSanfeng",
+          "ZhangWuji",
+          "LiMochou",
+          "OuyangFeng",
+          "HongQigong",
+          "LinghuChong",
+          "RenYingying",
+          "DuanTiande"
+        ]
+      }
     },
     "thread": {
       "type": "integer",
-      "method": "next",
-      "min": 1,
-      "max": 100
+      "attrs": {
+        "method": "next",
+        "min": 1,
+        "max": 100
+      }
     },
     "transaction": {
       "type": "string",
-      "chars": "abcde12345",
-      "min": 10,
-      "max": 20
+      "attrs": {
+        "chars": "abcde12345",
+        "min": 10,
+        "max": 20
+      }
     },
     "msgid": {
       "type": "integer",
-      "method": "random",
-      "min": 0,
-      "max": 2000000
+      "attrs": {
+        "method": "random",
+        "min": 0,
+        "max": 2000000
+      }
     }
   }
 }
