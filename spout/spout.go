@@ -1,8 +1,10 @@
-package main
+package spout
 
 import (
+	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/output"
 	"github.com/jiwen624/logspout/pattern"
+	"github.com/jiwen624/logspout/replacer"
 )
 
 type Spout struct {
@@ -48,5 +50,16 @@ type Spout struct {
 
 	// Replacement defines the replacement policies for the fields extracted by
 	// patterns defined in Pattern
-	Replacement map[string]map[string]interface{}
+	Replacers []replacer.Replacer
+}
+
+func New() *Spout {
+	return &Spout{}
+}
+
+func Build(cfg *config.SpoutConfig) error {
+	s := New()
+
+	// TODO
+	return nil
 }
