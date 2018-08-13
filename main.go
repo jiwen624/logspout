@@ -83,13 +83,6 @@ const (
 	SYSLOGTAG = "tag"
 )
 
-// Counter stores the counter values returned to the client
-type Counter struct {
-	Workers []uint64 `json:"Workers"`
-	Total   uint64   `json:"TotalEPS"`
-	Conf    string   `json:"ConfigFile"`
-}
-
 // Control the speed of log bursts, in milliseconds.
 var minInterval = 1000.0
 var maxInterval = 1000.0

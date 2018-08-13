@@ -42,7 +42,7 @@ type Spout struct {
 
 	// Output defines the output destinations of the logs, which may be the console,
 	// files or some message queues
-	Output []output.Output
+	Output map[string]output.Output
 
 	// Pattern is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.
@@ -50,7 +50,7 @@ type Spout struct {
 
 	// Replacement defines the replacement policies for the fields extracted by
 	// patterns defined in Pattern
-	Replacers []replacer.Replacer
+	Replacers map[string]replacer.Replacer
 }
 
 func New() *Spout {
@@ -60,6 +60,18 @@ func New() *Spout {
 func Build(cfg *config.SpoutConfig) error {
 	s := New()
 
-	// TODO
+	s.BurstMode = cfg.BurstMode
+	s.Concurrency = cfg.Concurrency
+	s.MinInterval = cfg.MinInterval
+	s.MaxInterval = cfg.MaxInterval
+
+	s.LogType = cfg.LogType
+	s.SampleFilePath = cfg.SampleFilePath
+
+	s.TransactionIDs = cfg.TransactionIDs
+	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
+
+	s.Output = output.BuildOutputMap(cfg.Output)
+	// TODO: pattern, replacers
 	return nil
 }

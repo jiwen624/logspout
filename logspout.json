@@ -12,8 +12,10 @@
   "maxIntraTransactionLatency": 40,
   "output": {
     "stdout1": {
-      "type": "stdout",
-      "attrs": {}
+      "type": "console",
+      "attrs": {
+        "fileName": "stdout"
+      }
     },
     "syslog1": {
       "type": "syslog",

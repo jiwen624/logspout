@@ -1,4 +1,4 @@
-package rest
+package main
 
 import (
 	"encoding/json"
@@ -6,6 +6,13 @@ import (
 	"log"
 	"net/http"
 )
+
+// Counter stores the counter values returned to the client
+type Counter struct {
+	Workers []uint64 `json:"Workers"`
+	Total   uint64   `json:"TotalEPS"`
+	Conf    string   `json:"ConfigFile"`
+}
 
 func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
