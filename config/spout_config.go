@@ -3,7 +3,11 @@
 // json strings, which will be consumed by the Logspout initializer.
 package config
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/jiwen624/logspout/output"
+)
 
 // SpoutConfig is the basic struct of Logspout configuration. It handles the
 // marshalling/unmarshalling of the configuration file.
@@ -42,7 +46,7 @@ type SpoutConfig struct {
 
 	// Output defines the output destinations of the logs, which may be the console,
 	// files or some message queues
-	Output map[string]map[string]interface{} `json:"output"`
+	Output map[string]output.Wrapper `json:"output"`
 
 	// Pattern is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.

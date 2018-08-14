@@ -5,5 +5,7 @@ type Console struct {
 }
 
 func (c Console) Write(s string) error {
-	// TODO
+	// TODO: use bufio to avoid excessive I/O
+	// TODO: flush the buffer when program exits
+	return nil
 }

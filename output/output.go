@@ -3,69 +3,62 @@ package output
 import (
 	"encoding/json"
 
-	"github.com/jiwen624/logspout/log"
+	"github.com/jiwen624/logspout/utils"
 )
 
+// Output is the interface defines the operations an output can perform. All the
+// output destinations must implement the methods defined here in order to be
+// accpeted by the spout.
 type Output interface {
 	Write(string) error
 }
 
-func BuildOutputMap(om map[string]map[string]interface{}) map[string]Output {
-	op := map[string]Output{}
-	for k, v := range om {
-		ov := BuildOutpout(v)
-		if ov != nil {
-			op[k] = ov
-		} else {
-			log.Warnf("Invalid output: %s", k)
-		}
-	}
-	return op
+// Wrapper is a wrapper struct that contains the output type and a byte slice
+// which represents the configurations of that type.
+type Wrapper struct {
+	T   Type            `json:"type"`
+	Raw json.RawMessage `json:"attrs"`
 }
 
-func BuildOutpout(m map[string]interface{}) Output {
-	if m == nil {
-		return nil
+// outputMap is the map for the output types and their factory methods
+var outputMap map[Type]func() Output
+
+func init() {
+	registerOutput()
+}
+
+// registerOutput initializes the map of output types and their corresponding
+// struct instances factory methods.
+//
+// This function is not concurrent-safe and should only be called in a init()
+// function
+func registerOutput() {
+	// TODO: scan structs fullfil Output and register it to the output map
+	// TODO: also add a enum (go generate?) to Type
+	outputMap = map[Type]func() Output{
+		console: func() Output { return &Console{} },
+		file:    func() Output { return &File{} },
+		syslog:  func() Output { return &Syslog{} },
+		kafka:   func() Output { return &Kafka{} },
 	}
+}
 
-	t, ok := m["type"]
-	if !ok {
-		log.Warn("Type is missing.")
-		return nil
+// BuildOutputMap builds the outputs based on the configurations wrapped by
+// Wrapper. It iterates all the configurations and creates output instances
+// of various types.
+func BuildOutputMap(ow map[string]Wrapper) map[string]Output {
+	om := map[string]Output{}
+	for k, v := range ow {
+		ov := build(v)
+		om[k] = ov
 	}
+	return om
+}
 
-	typ, ok := t.(string)
-	if !ok {
-		log.Warn("Type is not a string.")
-		return nil
-	}
-
-	attrs, ok := m["attrs"]
-	if !ok {
-		log.Warn("Attrs is missing.")
-		return nil
-	}
-
-	var op Output
-
-	switch typ {
-	case "console":
-		cop := &Console{}
-		if err := json.Unmarshal(attrs.([]byte), cop); err != nil {
-			return nil
-		}
-	case "file":
-		cop := &File{}
-		if err := json.Unmarshal(attrs.([]byte), cop); err != nil {
-			return nil
-		}
-
-	case "syslog":
-	case "kafka":
-	default:
-		log.Warnf("Unknown output type: %s", typ)
-		return nil
-	}
+// build builds a single output instance based on the wrapper.
+func build(m Wrapper) Output {
+	op := outputMap[m.T]()
+	utils.PanicOnErr(json.Unmarshal(m.Raw, op))
 
 	return op
 }

@@ -3,7 +3,7 @@ default: help
 .PHONY: help
 help:
 	@echo "What you can do with this Makefile"
-	@echo "    make macos - make the executable for macOS"
+	@echo "    make mac - make the executable for macOS"
 	@echo "    make linux - make the executable for Linux"
 	@echo ""
 	@echo "Check the Makefile for more options, e.g., if you don't like a stripped binary. (Who don't like it?)"
@@ -13,15 +13,15 @@ linux: std-linux-bin
 	upx logspout
 
 .PHONY: std-linux-bin
-std-linux-bin: clean
+std-linux-bin: clean generate
 	env GOOS=linux GOARCH=amd64 go build
 
 .PHONY: std-bin
-std-bin: clean
+std-bin: clean generate
 	go build
 
 .PHONY: bin
-macos: std-bin
+mac: std-bin
 	upx logspout
 
 .PHONY: clean-bin
@@ -34,6 +34,10 @@ clean-logs:
 
 .PHONY: clean
 clean: clean-bin clean-logs
+
+.PHONY: generate
+generate:
+	go generate ./...
 
 .PHONY: test
 test:
@@ -50,6 +54,7 @@ are-you-sure:
 
 # Change the value of initVersion and tag it with the version number.
 # Usage: make VERSION=blabla tag-and-release
+# TODO: It is deprecated and will be replaced by a safer way soon.
 tag-and-release: are-you-sure
 	# VERSION must be set
 	@if [ -z "$$VERSION" ]; then \

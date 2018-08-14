@@ -11,6 +11,7 @@ type File struct {
 
 // TODO: Write
 func (f File) Write(s string) error {
-	// TODO
+	// TODO: use bufio to avoid excessive I/O
+	// TODO: flush the buffer when program exits
 	return nil
 }
