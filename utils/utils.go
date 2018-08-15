@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
+
 	"github.com/Pallinder/go-randomdata"
 	"github.com/beevik/etree"
-	"github.com/pkg/errors"
 )
 
 var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

@@ -53,12 +53,8 @@ type Spout struct {
 	Replacers map[string]replacer.Replacer
 }
 
-func New() *Spout {
-	return &Spout{}
-}
-
 func Build(cfg *config.SpoutConfig) error {
-	s := New()
+	s := &Spout{}
 
 	s.BurstMode = cfg.BurstMode
 	s.Concurrency = cfg.Concurrency

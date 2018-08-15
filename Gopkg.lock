@@ -38,12 +38,6 @@
   revision = "5344a9259b21627d94279721ab1f27eb029194e7"
 
 [[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/vjeantet/jodaTime"
   packages = ["."]

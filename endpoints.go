@@ -59,7 +59,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, retStr)
 }
 
-func config(w http.ResponseWriter, r *http.Request) {
+func currConfig(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 	if details == "true" {
 		fmt.Fprintln(w, string(conf))
@@ -70,7 +70,7 @@ func config(w http.ResponseWriter, r *http.Request) {
 
 func console() {
 	http.HandleFunc("/counter", fetchCounter)
-	http.HandleFunc("/config", config)
+	http.HandleFunc("/config", currConfig)
 
 	err := http.ListenAndServe(":"+consolePort, nil)
 	if err != nil {

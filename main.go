@@ -19,9 +19,12 @@ import (
 	"time"
 
 	"github.com/buger/jsonparser"
+	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/flag"
 	"github.com/jiwen624/logspout/gen"
 	"github.com/jiwen624/logspout/log"
+
+	"github.com/jiwen624/logspout/spout"
 	. "github.com/jiwen624/logspout/utils"
 	"github.com/leesper/go_rng"
 )
@@ -111,29 +114,45 @@ var termChans = make([]chan struct{}, 0, concurrency)
 
 // The default log event output stream: stdout
 var logger = l.New(os.Stdout, "", 0)
-var confPath *string
 
-var conf []byte
-var err error
-
-func main() {
-	if err := log.SetLevel(flag.LogLevel); err != nil {
+func SetLogLevel(l string) {
+	if err := log.SetLevel(l); err != nil {
 		log.Warn(err)
 	}
+}
 
-	conf, err = ioutil.ReadFile(flag.ConfigPath)
+func ReadFile(path string, sizeLimit int64) []byte {
+	fi, e := os.Stat(path)
+	if e != nil {
+		log.Error("Config file doesn't exist: %s", path)
+		return nil
+	}
+
+	size := fi.Size()
+	if size >= sizeLimit {
+		log.Errorf("Config file is too big: %s bytes", size)
+		return nil
+	}
+
+	cf, err := ioutil.ReadFile(flag.ConfigPath)
 	if err != nil {
 		log.Error(err)
+		return nil
+	}
+
+	return cf
+}
+
+func main() {
+	SetLogLevel(flag.LogLevel)
+
+	conf, err := config.LoadJson(ReadFile(flag.ConfigPath, 1048576))
+	if err != nil {
+		log.Errorf("Error loading config: %s", err)
 		return
 	}
 
-	if h, err := jsonparser.GetBoolean(conf, RECONVERT); err == nil {
-		reconvert = h
-	}
-
-	if h, err := jsonparser.GetBoolean(conf, HIGHTIDE); err == nil {
-		highTide = h
-	}
+	spout := spout.Build(conf)
 
 	var dests []io.Writer
 	// We support regular files, syslog and stdout.

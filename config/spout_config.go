@@ -6,6 +6,8 @@ package config
 import (
 	"encoding/json"
 
+	"errors"
+
 	"github.com/jiwen624/logspout/output"
 )
 
@@ -57,8 +59,15 @@ type SpoutConfig struct {
 	Replacement map[string]map[string]interface{} `json:"replacement"`
 }
 
+var (
+	inputIsNil = errors.New("input data is new")
+)
+
 // LoadJson read from a byte slice and return a new SpoutConfig object
 func LoadJson(data []byte) (*SpoutConfig, error) {
+	if data == nil {
+		return nil, inputIsNil
+	}
 	sc := &SpoutConfig{}
 
 	if err := json.Unmarshal(data, sc); err != nil {

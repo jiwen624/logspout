@@ -33,8 +33,6 @@ func init() {
 // This function is not concurrent-safe and should only be called in a init()
 // function
 func registerOutput() {
-	// TODO: scan structs fullfil Output and register it to the output map
-	// TODO: also add a enum (go generate?) to Type
 	outputMap = map[Type]func() Output{
 		console: func() Output { return &Console{} },
 		file:    func() Output { return &File{} },
