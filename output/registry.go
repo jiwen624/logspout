@@ -116,3 +116,11 @@ func ForOne(apply Apply, typ Type, id ID) error {
 	}
 	return ErrNotFound
 }
+
+// Write is a helper function to write the string to all the outputs
+func Write(str string) []error {
+	return ForAll(func(o Output) error {
+		_, err := o.Write([]byte(str))
+		return err
+	})
+}

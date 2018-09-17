@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -170,4 +171,16 @@ func RandomStr(chars string, length int) string {
 		remain--
 	}
 	return string(b)
+}
+
+// CombineErrs combines multiple errors
+func CombineErrs(errs []error) error {
+	var cmb []string
+	for _, err := range errs {
+		if err == nil {
+			continue
+		}
+		cmb = append(cmb, err.Error())
+	}
+	return fmt.Errorf(strings.Join(cmb, "\n"))
 }

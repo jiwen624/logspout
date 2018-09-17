@@ -3,6 +3,8 @@ package spout
 import (
 	"fmt"
 
+	"github.com/jiwen624/logspout/utils"
+
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/output"
 	"github.com/jiwen624/logspout/pattern"
@@ -117,4 +119,14 @@ func (s *Spout) StartAllOutput() []error {
 // StopAllOutput stops all the outputs
 func (s *Spout) StopAllOutputs() []error {
 	return s.touchAllOutput(output.Unregister)
+}
+
+// Start kicks off the spout
+func (s *Spout) Start() error {
+	return utils.CombineErrs(s.StartAllOutput())
+}
+
+// Stop stops the spout
+func (s *Spout) Stop() error {
+	return utils.CombineErrs(s.StopAllOutputs())
 }
