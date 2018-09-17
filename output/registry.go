@@ -6,15 +6,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
+var where struct {
 	// Where the data is written to. There may be multiple destinations for a
 	// specific output type.
-	where map[Type]map[ID]Output
+	m map[Type]map[ID]Output
 	// The mutex to protect the global map above
-	whereMu sync.RWMutex
+	sync.RWMutex
 	// Make sure the global registry is initialized only once
-	once sync.Once
-)
+	sync.Once
+}
 
 var (
 	ErrDuplicate = errors.New("duplicate ID found")
@@ -29,22 +29,22 @@ type Predicate func(Output) bool
 
 // Register registers an output destination
 func Register(output Output) error {
-	whereMu.Lock()
-	defer whereMu.Unlock()
+	where.Lock()
+	defer where.Unlock()
 
 	if err := output.Activate(); err != nil {
 		return errors.Wrap(err, "register failed:")
 	}
 
-	once.Do(func() {
-		where = make(map[Type]map[ID]Output)
+	where.Do(func() {
+		where.m = make(map[Type]map[ID]Output)
 	})
 
 	typ := output.Type()
-	tm, ok := where[typ]
+	tm, ok := where.m[typ]
 	if !ok {
 		tm = make(map[ID]Output, 1)
-		where[typ] = tm
+		where.m[typ] = tm
 	}
 
 	id := output.ID()
@@ -57,14 +57,14 @@ func Register(output Output) error {
 
 // Unregister unregisters an output from the global registry
 func Unregister(output Output) error {
-	whereMu.Lock()
-	defer whereMu.Unlock()
+	where.Lock()
+	defer where.Unlock()
 
 	if err := output.Deactivate(); err != nil {
 		return errors.Wrap(err, "unregister failed:")
 	}
 
-	tm, ok := where[output.Type()]
+	tm, ok := where.m[output.Type()]
 	if !ok {
 		return ErrNotFound
 	}
@@ -80,11 +80,11 @@ func Unregister(output Output) error {
 // ForEach applies the operation to each output which matches the predicate
 func ForEach(apply Apply, predicate Predicate) []error {
 	// TODO: This function may hold the lock for too long
-	whereMu.RLock()
-	defer whereMu.RUnlock()
+	where.RLock()
+	defer where.RUnlock()
 
 	var errs []error
-	for _, tm := range where {
+	for _, tm := range where.m {
 		for _, o := range tm {
 			if !predicate(o) {
 				continue
@@ -104,12 +104,12 @@ func ForAll(apply Apply) []error {
 	})
 }
 
-// Do applies the operation to the specified output
-func Do(apply Apply, typ Type, id ID) error {
-	whereMu.RLock()
-	defer whereMu.RUnlock()
+// ForOne applies the operation to the specified output
+func ForOne(apply Apply, typ Type, id ID) error {
+	where.RLock()
+	defer where.RUnlock()
 
-	if tm, ok := where[typ]; ok {
+	if tm, ok := where.m[typ]; ok {
 		if o, ok := tm[id]; ok {
 			return apply(o)
 		}
