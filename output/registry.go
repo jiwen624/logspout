@@ -87,3 +87,10 @@ func ForEach(apply Apply, predicate Predicate) []error {
 	}
 	return errs
 }
+
+// ForAll applies the operation to all the outputs
+func ForAll(apply Apply) []error {
+	return ForEach(apply, func(Output) bool {
+		return true
+	})
+}
