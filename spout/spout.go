@@ -41,7 +41,9 @@ type Spout struct {
 	MaxIntraTransactionLatency int
 
 	// Output defines the output destinations of the logs, which may be the console,
-	// files or some message queues
+	// files or some message queues.
+	// The output stored here may be active or inactive, and may be changed
+	// on-the-fly.
 	Output map[string]output.Output
 
 	// Pattern is a list of regular patterns that define the fields to be repalced

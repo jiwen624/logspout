@@ -78,10 +78,11 @@ func ForEach(apply Apply, predicate Predicate) []error {
 	var errs []error
 	for _, tm := range where {
 		for _, o := range tm {
-			if predicate(o) {
-				if err := apply(o); err != nil {
-					errs = append(errs, err)
-				}
+			if !predicate(o) {
+				continue
+			}
+			if err := apply(o); err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}
@@ -93,4 +94,17 @@ func ForAll(apply Apply) []error {
 	return ForEach(apply, func(Output) bool {
 		return true
 	})
+}
+
+// Do applies the operation to the specified output
+func Do(apply Apply, typ Type, id ID) error {
+	whereMu.RLock()
+	defer whereMu.RUnlock()
+
+	if tm, ok := where[typ]; ok {
+		if o, ok := tm[id]; ok {
+			return apply(o)
+		}
+	}
+	return errNotFound
 }
