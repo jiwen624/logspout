@@ -13,3 +13,11 @@ func (f Syslog) Write(p []byte) (n int, err error) {
 	// TODO: flush the buffer when program exits
 	return 0, nil
 }
+
+func (f Syslog) ID() ID {
+	return ID("") // TODO
+}
+
+func (f Syslog) Type() Type {
+	return syslog
+}

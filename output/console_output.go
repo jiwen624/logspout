@@ -9,3 +9,11 @@ func (c Console) Write(p []byte) (n int, err error) {
 	// TODO: flush the buffer when program exits
 	return 0, nil // TODO
 }
+
+func (c Console) ID() ID {
+	return ID("") // TODO
+}
+
+func (c Console) Type() Type {
+	return console
+}

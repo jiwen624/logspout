@@ -7,11 +7,19 @@ import (
 	"github.com/jiwen624/logspout/utils"
 )
 
+// ID is the short identity of an output, which is usually calculated from the
+// filename, IP+port, etc.
+type ID string
+
 // Output is the interface defines the operations an output can perform. All the
 // output destinations must implement the methods defined here in order to be
 // accpeted by the spout.
 type Output interface {
 	io.Writer
+	// ID returns the short ID of the output destination
+	ID() ID // TODO: []byte or string? md5 or sha1?
+	// Type returns the type of this output
+	Type() Type
 }
 
 // Wrapper is a wrapper struct that contains the output type and a byte slice
