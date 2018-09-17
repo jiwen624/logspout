@@ -1,5 +1,15 @@
 package output
 
+// For output-file
+const (
+	FILENAME   = "file-name"
+	DIRECTORY  = "directory"
+	MAXSIZE    = "max-size"
+	MAXBACKUPS = "max-backups"
+	MAXAGE     = "max-age"
+	COMPRESS   = "compress"
+)
+
 type File struct {
 	FileName   string
 	MaxSize    int
@@ -30,6 +40,6 @@ func (f *File) Activate() error {
 }
 
 func (f *File) Deactivate() error {
-	// TODO
+	// TODO: close files and delete itself from the registry(?)
 	return nil
 }

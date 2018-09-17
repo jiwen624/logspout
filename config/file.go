@@ -34,8 +34,8 @@ func readFile(path string, sizeLimit int64) ([]byte, error) {
 	return cf, nil
 }
 
-// FromFile loads a config file and parse it to s SpoutConfig object
-func FromFile(name string) (*SpoutConfig, error) {
+// FromJsonFile loads a config file and parse it to s SpoutConfig object
+func FromJsonFile(name string) (*SpoutConfig, error) {
 	bs, err := readFile(name, maxConfFileSize)
 	if err != nil {
 		return nil, errors.Wrap(err, "Load config from file:")

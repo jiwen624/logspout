@@ -37,15 +37,15 @@ type Wrapper struct {
 var outputMap map[Type]func() Output
 
 func init() {
-	registerOutput()
+	registerOutputBuilder()
 }
 
-// registerOutput initializes the map of output types and their corresponding
+// registerOutputBuilder initializes the map of output types and their corresponding
 // struct instances factory methods.
 //
 // This function is not concurrent-safe and should only be called in a init()
 // function
-func registerOutput() {
+func registerOutputBuilder() {
 	outputMap = map[Type]func() Output{
 		console: func() Output { return &Console{} },
 		file:    func() Output { return &File{} },

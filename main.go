@@ -11,7 +11,6 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -26,63 +25,6 @@ import (
 	"github.com/jiwen624/logspout/spout"
 	. "github.com/jiwen624/logspout/utils"
 	"github.com/leesper/go_rng"
-)
-
-// Options in the configure file.
-const (
-	LOGTYPE              = "logype"
-	OUTPUTSTDOUT         = "output-stdout"
-	OUTPUTFILE           = "output-file"
-	OUTPUTSYSLOG         = "output-syslog"
-	CONSOLEPORT          = "console-port"
-	SAMPLEFILE           = "sample-file"
-	PATTERN              = "pattern"
-	REPLACEMENT          = "replacement"
-	TYPE                 = "type"
-	PARMS                = "parms"
-	METHOD               = "method"
-	LIST                 = "list"
-	MIN                  = "min"
-	MAX                  = "max"
-	MININTERVAL          = "min-interval"
-	MAXINTERVAL          = "max-interval"
-	DURATION             = "duration"
-	MAXEVENTS            = "max-events"
-	LISTFILE             = "list-file"
-	FIXEDLIST            = "fixed-list"
-	TIMESTAMP            = "timestamp"
-	INTEGER              = "integer"
-	FLOAT                = "float"
-	PRECISION            = "precision"
-	STRING               = "string"
-	CHARS                = "chars"
-	LOOKSREAL            = "looks-real"
-	FORMAT               = "format"
-	CONCURRENY           = "concurrency"
-	DUPLICATE            = "duplicate"
-	UNIFORM              = "uniform"
-	HIGHTIDE             = "hightide"
-	RECONVERT            = "re-convert"
-	TRANSACTION          = "transaction"
-	TRANSACTIONIDS       = "transaction-ids"
-	MAXINTRATRANSLATENCY = "max-intra-transaction-latency"
-)
-
-// For output-file
-const (
-	FILENAME   = "file-name"
-	DIRECTORY  = "directory"
-	MAXSIZE    = "max-size"
-	MAXBACKUPS = "max-backups"
-	MAXAGE     = "max-age"
-	COMPRESS   = "compress"
-)
-
-// For output-syslog
-const (
-	PROTOCOL  = "protocol"
-	NETADDR   = "netaddr"
-	SYSLOGTAG = "tag"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -114,37 +56,29 @@ var termChans = make([]chan struct{}, 0, concurrency)
 // The default log event output stream: stdout
 var logger = l.New(os.Stdout, "", 0)
 
-func SetLogLevel(l string) {
-	if err := log.SetLevel(l); err != nil {
-		log.Warn(err)
-	}
-}
-
 func main() {
-	SetLogLevel(flag.LogLevel)
+	log.SetLevel(flag.LogLevel)
 
-	conf, err := config.FromFile(flag.ConfigPath)
+	conf, err := config.FromJsonFile(flag.ConfigPath)
 	if err != nil {
 		log.Errorf("Error loading config: %s", err)
 		return
 	}
 
-	spout := spout.Build(conf)
+	spt := spout.Build(conf)
+	if err := spt.Start(); err != nil {
+		log.Error("Failed to start spout: %v", err)
+		return
+	}
+	defer spt.Stop()
 
+	// TODO: below ---------------
 	var dests []io.Writer
 	// We support regular files, syslog and stdout.
 	if stdo, err := jsonparser.GetBoolean(conf, OUTPUTSTDOUT); err == nil {
 		if stdo {
 			dests = append(dests, os.Stdout)
 		}
-	}
-
-	if c, err := jsonparser.GetInt(conf, DUPLICATE); err == nil {
-		duplicate = int(c)
-	}
-
-	if p, err := jsonparser.GetInt(conf, CONSOLEPORT); err == nil {
-		consolePort = strconv.Itoa(int(p))
 	}
 
 	if ofile, _, _, err := jsonparser.Get(conf, OUTPUTFILE); err == nil {
@@ -169,14 +103,6 @@ func main() {
 
 	// Set multiple destinations, if any
 	logger.SetOutput(io.MultiWriter(dests...))
-
-	if c, err := jsonparser.GetInt(conf, CONCURRENY); err == nil {
-		concurrency = int(c)
-	}
-
-	if b, err := jsonparser.GetBoolean(conf, UNIFORM); err == nil {
-		uniform = b
-	}
 
 	var logType, sampleFile string
 	if logType, err = jsonparser.GetString(conf, LOGTYPE); err != nil {

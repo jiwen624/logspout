@@ -1,7 +1,6 @@
 package log
 
 import (
-	"fmt"
 	"strings"
 
 	"go.uber.org/zap"
@@ -38,16 +37,16 @@ var (
 	sugar  *zap.SugaredLogger
 )
 
-func SetLevel(level string) error {
+func SetLevel(level string) {
 	level = strings.ToLower(level)
 
 	lvl, ok := levelMap[level]
 	if !ok {
-		return fmt.Errorf("invalid log level: %s", level)
+		Errorf("Failed to set log level: %s", level)
 	}
 
 	lgrCfg.Level.SetLevel(zapcore.Level(lvl))
-	return nil
+	return
 }
 
 var Debug = sugar.Debug

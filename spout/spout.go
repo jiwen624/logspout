@@ -49,6 +49,7 @@ type Spout struct {
 	// files or some message queues.
 	// The output stored here may be active or inactive, and may be changed
 	// on-the-fly.
+	// TODO: currently the outputs are stored in a global registry
 	Output map[string]output.Output
 
 	// Pattern is a list of regular patterns that define the fields to be repalced

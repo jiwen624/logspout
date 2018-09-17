@@ -1,5 +1,12 @@
 package output
 
+// For output-syslog
+const (
+	PROTOCOL  = "protocol"
+	NETADDR   = "netaddr"
+	SYSLOGTAG = "tag"
+)
+
 type Syslog struct {
 	Protocol   string `json:"protocol"`
 	NetAddr    string `json:"netAddr"`
