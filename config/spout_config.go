@@ -11,7 +11,7 @@ import (
 	"github.com/jiwen624/logspout/output"
 )
 
-// SpoutConfig is the basic struct of Logspout configuration. It handles the
+// SpoutConfig is the struct of Logspout configuration. It handles the
 // marshalling/unmarshalling of the configuration file.
 type SpoutConfig struct {
 	// BurstMode defines if the logspout runs under burst mode, aka. it generates
@@ -60,11 +60,10 @@ type SpoutConfig struct {
 }
 
 var (
-	errInputIsNil = errors.New("input data is new")
+	errInputIsNil = errors.New("input data is nil")
 )
 
-// LoadJson read from a byte slice and return a new SpoutConfig object
-func LoadJson(data []byte) (*SpoutConfig, error) {
+func loadJson(data []byte) (*SpoutConfig, error) {
 	if data == nil {
 		return nil, errInputIsNil
 	}

@@ -4,7 +4,7 @@ type Kafka struct {
 	// TODO
 }
 
-func (k Kafka) Write(s string) error {
+func (k Kafka) Write(p []byte) (n int, err error) {
 	// TODO
-	return nil
+	return 0, nil
 }

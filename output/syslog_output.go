@@ -8,8 +8,8 @@ type Syslog struct {
 }
 
 // TODO: Write
-func (f Syslog) Write(s string) error {
+func (f Syslog) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
-	return nil
+	return 0, nil
 }

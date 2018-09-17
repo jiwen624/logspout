@@ -53,7 +53,8 @@ type Spout struct {
 	Replacers map[string]replacer.Replacer
 }
 
-func Build(cfg *config.SpoutConfig) error {
+// Build reads the config from a SoutConfig object and build a Spout object.
+func Build(cfg *config.SpoutConfig) *Spout {
 	s := &Spout{}
 
 	s.BurstMode = cfg.BurstMode
@@ -69,5 +70,5 @@ func Build(cfg *config.SpoutConfig) error {
 
 	s.Output = output.BuildOutputMap(cfg.Output)
 	// TODO: pattern, replacers
-	return nil
+	return s
 }

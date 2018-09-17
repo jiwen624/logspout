@@ -2,6 +2,7 @@ package output
 
 import (
 	"encoding/json"
+	"io"
 
 	"github.com/jiwen624/logspout/utils"
 )
@@ -10,7 +11,7 @@ import (
 // output destinations must implement the methods defined here in order to be
 // accpeted by the spout.
 type Output interface {
-	Write(string) error
+	io.Writer
 }
 
 // Wrapper is a wrapper struct that contains the output type and a byte slice

@@ -7,7 +7,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"io/ioutil"
 	l "log"
 	"math"
 	"os"
@@ -121,32 +120,10 @@ func SetLogLevel(l string) {
 	}
 }
 
-func ReadFile(path string, sizeLimit int64) []byte {
-	fi, e := os.Stat(path)
-	if e != nil {
-		log.Error("Config file doesn't exist: %s", path)
-		return nil
-	}
-
-	size := fi.Size()
-	if size >= sizeLimit {
-		log.Errorf("Config file is too big: %s bytes", size)
-		return nil
-	}
-
-	cf, err := ioutil.ReadFile(flag.ConfigPath)
-	if err != nil {
-		log.Error(err)
-		return nil
-	}
-
-	return cf
-}
-
 func main() {
 	SetLogLevel(flag.LogLevel)
 
-	conf, err := config.LoadJson(ReadFile(flag.ConfigPath, 1048576))
+	conf, err := config.FromFile(flag.ConfigPath)
 	if err != nil {
 		log.Errorf("Error loading config: %s", err)
 		return
