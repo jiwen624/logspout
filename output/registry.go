@@ -17,8 +17,8 @@ var (
 )
 
 var (
-	errDuplicate = errors.New("duplicate ID found")
-	errNotFound  = errors.New("output not found")
+	ErrDuplicate = errors.New("duplicate ID found")
+	ErrNotFound  = errors.New("output not found")
 )
 
 // The operation applies to the output
@@ -31,6 +31,10 @@ type Predicate func(Output) bool
 func Register(output Output) error {
 	whereMu.Lock()
 	defer whereMu.Unlock()
+
+	if err := output.Activate(); err != nil {
+		return errors.Wrap(err, "register failed:")
+	}
 
 	once.Do(func() {
 		where = make(map[Type]map[ID]Output)
@@ -45,7 +49,7 @@ func Register(output Output) error {
 
 	id := output.ID()
 	if _, ok := tm[id]; ok {
-		return errDuplicate
+		return ErrDuplicate
 	}
 	tm[id] = output
 	return nil
@@ -56,14 +60,18 @@ func Unregister(output Output) error {
 	whereMu.Lock()
 	defer whereMu.Unlock()
 
+	if err := output.Deactivate(); err != nil {
+		return errors.Wrap(err, "unregister failed:")
+	}
+
 	tm, ok := where[output.Type()]
 	if !ok {
-		return errNotFound
+		return ErrNotFound
 	}
 
 	id := output.ID()
 	if _, ok := tm[id]; ok {
-		return errNotFound
+		return ErrNotFound
 	}
 	delete(tm, id)
 	return nil
@@ -106,5 +114,5 @@ func Do(apply Apply, typ Type, id ID) error {
 			return apply(o)
 		}
 	}
-	return errNotFound
+	return ErrNotFound
 }

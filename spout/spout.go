@@ -1,10 +1,13 @@
 package spout
 
 import (
+	"fmt"
+
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/output"
 	"github.com/jiwen624/logspout/pattern"
 	"github.com/jiwen624/logspout/replacer"
+	"github.com/pkg/errors"
 )
 
 type Spout struct {
@@ -73,4 +76,45 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	s.Output = output.BuildOutputMap(cfg.Output)
 	// TODO: pattern, replacers
 	return s
+}
+
+func (s *Spout) touchOuput(name string, apply output.Apply) error {
+	o, ok := s.Output[name]
+	if !ok {
+		return errors.Wrap(output.ErrNotFound,
+			fmt.Sprintf("touchOutput:%s", name))
+	}
+	apply(o)
+	return nil
+}
+
+func (s *Spout) touchAllOutput(apply output.Apply) []error {
+	var errs []error
+
+	for name := range s.Output {
+		if err := s.touchOuput(name, apply); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+
+// StartOutput starts an output by its name
+func (s *Spout) StartOutput(name string) error {
+	return s.touchOuput(name, output.Register)
+}
+
+// StopOutput stops an output by its name
+func (s *Spout) StopOutput(name string) error {
+	return s.touchOuput(name, output.Unregister)
+}
+
+// StartAllOutput starts all the outputs
+func (s *Spout) StartAllOutput() []error {
+	return s.touchAllOutput(output.Register)
+}
+
+// StopAllOutput stops all the outputs
+func (s *Spout) StopAllOutputs() []error {
+	return s.touchAllOutput(output.Unregister)
 }

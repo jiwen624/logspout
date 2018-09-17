@@ -20,6 +20,10 @@ type Output interface {
 	ID() ID // TODO: []byte or string? md5 or sha1?
 	// Type returns the type of this output
 	Type() Type
+	// Activate enables the output
+	Activate() error
+	// Deactivate disables the output and releases the resources
+	Deactivate() error
 }
 
 // Wrapper is a wrapper struct that contains the output type and a byte slice

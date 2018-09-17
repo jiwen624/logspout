@@ -10,16 +10,26 @@ type File struct {
 }
 
 // TODO: Write
-func (f File) Write(p []byte) (n int, err error) {
+func (f *File) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
 	return 0, nil
 }
 
-func (f File) ID() ID {
+func (f *File) ID() ID {
 	return ID("") // TODO
 }
 
-func (f File) Type() Type {
+func (f *File) Type() Type {
 	return file
+}
+
+func (f *File) Activate() error {
+	// TODO
+	return nil
+}
+
+func (f *File) Deactivate() error {
+	// TODO
+	return nil
 }
