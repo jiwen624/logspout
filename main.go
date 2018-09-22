@@ -6,7 +6,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"io"
+	"fmt"
 	l "log"
 	"math"
 	"os"
@@ -56,6 +56,17 @@ var termChans = make([]chan struct{}, 0, concurrency)
 // The default log event output stream: stdout
 var logger = l.New(os.Stdout, "", 0)
 
+func summary(conf *config.SpoutConfig) string {
+	var b bytes.Buffer
+	b.WriteString(fmt.Sprintf("loaded configurations from %s\n", flag.ConfigPath))
+	b.WriteString(fmt.Sprintf("  - logtype = %s\n", conf.LogType))
+	b.WriteString(fmt.Sprintf("  - file = %s\n", conf.SampleFilePath))
+	for idx, ptn := range conf.Pattern {
+		b.WriteString(fmt.Sprintf("  - pattern #%d = %s\n", idx, ptn))
+	}
+	return b.String()
+}
+
 func main() {
 	log.SetLevel(flag.LogLevel)
 
@@ -65,6 +76,8 @@ func main() {
 		return
 	}
 
+	log.Debug(summary(conf))
+
 	spt := spout.Build(conf)
 	if err := spt.Start(); err != nil {
 		log.Error("Failed to start spout: %v", err)
@@ -72,90 +85,14 @@ func main() {
 	}
 	defer spt.Stop()
 
-	// TODO: below ---------------
-	var dests []io.Writer
-	// We support regular files, syslog and stdout.
-	if stdo, err := jsonparser.GetBoolean(conf, OUTPUTSTDOUT); err == nil {
-		if stdo {
-			dests = append(dests, os.Stdout)
-		}
-	}
+	// TODO: define a pattern struct and move it to that struct
+	// if reconvert == true {
+	// 	for idx, ptn := range ptns {
+	// 		ptns[idx] = ReConvert(ptn)
+	// 	}
+	// }
 
-	if ofile, _, _, err := jsonparser.Get(conf, OUTPUTFILE); err == nil {
-		for _, f := range BuildOutputFileParms(ofile) {
-			dests = append(dests, f)
-		}
-	}
-
-	if osyslog, _, _, err := jsonparser.Get(conf, OUTPUTSYSLOG); err == nil {
-		dests = append(dests, BuildOutputSyslogParms(osyslog))
-	}
-
-	defer func(dst []io.Writer) {
-		for _, d := range dst {
-			if d != nil {
-				if dc, ok := d.(io.Closer); ok {
-					dc.Close()
-				}
-			}
-		}
-	}(dests)
-
-	// Set multiple destinations, if any
-	logger.SetOutput(io.MultiWriter(dests...))
-
-	var logType, sampleFile string
-	if logType, err = jsonparser.GetString(conf, LOGTYPE); err != nil {
-		log.Error(err)
-		return
-	}
-
-	if sampleFile, err = jsonparser.GetString(conf, SAMPLEFILE); err != nil {
-		log.Error(err)
-		return
-	}
-
-	if t, err := jsonparser.GetBoolean(conf, TRANSACTION); err == nil {
-		trans = t
-	}
-
-	if i, err := jsonparser.GetInt(conf, MAXINTRATRANSLATENCY); err == nil && i != 0 {
-		intraTransLat = int(i)
-	}
-
-	_, err = jsonparser.ArrayEach(conf, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		transIds = append(transIds, string(value))
-	}, TRANSACTIONIDS)
-
-	var ptns = make([]string, 0)
-	_, err = jsonparser.ArrayEach(conf, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
-		ptns = append(ptns, string(value))
-	}, PATTERN)
-
-	if err != nil && trans == false {
-		var ptn string
-		if ptn, err = jsonparser.GetUnsafeString(conf, PATTERN); err != nil {
-			log.Error(err)
-			return
-		}
-		ptns = append(ptns, ptn)
-	}
-
-	if reconvert == true {
-		for idx, ptn := range ptns {
-			ptns[idx] = ReConvert(ptn)
-		}
-	}
-
-	log.Debugf("loaded configurations from %s", *confPath)
-
-	log.Debugf("  - logtype = %s", logType)
-	log.Debugf("  - file = %s", sampleFile)
-	for idx, ptn := range ptns {
-		log.Debugf("  - pattern #%d = %s", idx, ptn)
-	}
-
-	file, err := os.Open(sampleFile)
+	file, err := os.Open(spt.SampleFilePath)
 	if err != nil {
 		log.Error(err)
 		return
@@ -181,8 +118,8 @@ func main() {
 		rawMsgs = append(rawMsgs, strings.TrimRight(buffer.String(), "\n"))
 	}
 
-	if len(rawMsgs) != len(ptns) {
-		log.Errorf("%d sample event(s) but %d pattern(s) found", len(rawMsgs), len(ptns))
+	if len(rawMsgs) != len(spt.Pattern) {
+		log.Errorf("%d sample event(s) but %d pattern(s) found", len(rawMsgs), len(spt.Pattern))
 		return
 	}
 
@@ -193,7 +130,7 @@ func main() {
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
 
-	for idx, ptn := range ptns {
+	for idx, ptn := range conf.Pattern {
 		re := regexp.MustCompile(ptn)
 		matches = append(matches, re.FindStringSubmatch(rawMsgs[idx]))
 		names = append(names, re.SubexpNames())
