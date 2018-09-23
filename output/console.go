@@ -9,6 +9,8 @@ type Console struct {
 func (c *Console) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
+	fmt.Println("a placeholder for console output")
+
 	return 0, nil // TODO
 }
 

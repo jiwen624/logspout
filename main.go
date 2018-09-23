@@ -12,7 +12,6 @@ import (
 	"github.com/jiwen624/logspout/log"
 
 	"github.com/jiwen624/logspout/spout"
-	. "github.com/jiwen624/logspout/utils"
 )
 
 func summary(conf *config.SpoutConfig) string {
@@ -35,7 +34,7 @@ func main() {
 		return
 	}
 
-	log.Debug(summary(conf))
+	// log.Debug(summary(conf))
 
 	spt, err := spout.Build(conf)
 	if err != nil {
@@ -45,21 +44,6 @@ func main() {
 
 	// TODO: remove
 	log.Debugf("===>sput: %+v", spt.Output)
-	// for _, value := range spt.Output {
-	// 	dests = append(dests, value)
-	// }
-
-	// TODO: define a pattern struct and move it to that struct
-	// TODO: support both Perl and PCRE
-	log.Debugf("Original patterns:\n%v\n", spt.Pattern)
-	var ptns []string
-	for _, ptn := range spt.Pattern {
-		ptns = append(ptns, ReConvert(ptn))
-	}
-	spt.Pattern = ptns
-	log.Debugf("Converted patterns:\n%v\n", spt.Pattern)
-
-	log.Debug("check above matches and change patterns if something is wrong")
 
 	if err := spt.Start(); err != nil {
 		log.Errorf("Failed to start spout: %v", err)

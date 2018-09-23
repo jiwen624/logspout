@@ -4,11 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/gen"
 
@@ -93,11 +96,14 @@ type Spout struct {
 
 // Build reads the config from a SoutConfig object and build a Spout object.
 func Build(cfg *config.SpoutConfig) (*Spout, error) {
-	s := &Spout{}
+	s := &Spout{close: make(chan struct{})}
 
 	s.BurstMode = cfg.BurstMode
 	s.Duration = cfg.Duration
 	s.MaxEvents = cfg.MaxEvents
+	if s.MaxEvents == 0 {
+		s.MaxEvents = int(math.MaxInt32)
+	}
 	s.ConsolePort = cfg.ConsolePort
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
@@ -114,7 +120,16 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	s.Output = output.RegistryFromConf(cfg.Output)
 
 	// TODO: pattern, replacers
-	s.Pattern = cfg.Pattern
+	// TODO: define a pattern struct and move it to that struct
+	// TODO: support both Perl and PCRE
+	log.Debugf("Original patterns:\n%v\n", cfg.Pattern)
+	var ptns []string
+	for _, ptn := range cfg.Pattern {
+		ptns = append(ptns, utils.ReConvert(ptn))
+	}
+	s.Pattern = ptns
+	log.Debugf("Converted patterns:\n%v\n", s.Pattern)
+
 	if len(s.rawMsgs) != len(s.Pattern) {
 		return nil, fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
 	}
@@ -150,8 +165,8 @@ func (s *Spout) Start() error {
 
 	go s.console()
 
-	s.ProduceLogs()
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+	s.ProduceLogs()
 
 	return nil
 }
@@ -201,7 +216,6 @@ func (s *Spout) loadRawMessage() error {
 func (s *Spout) ProduceLogs() {
 	// goroutine for future use, not necessary for now.
 	var wg sync.WaitGroup
-	var termChans = make([]chan struct{}, 0, s.Concurrency)
 
 	wg.Add(s.Concurrency) // Add it before you start the goroutine.
 
@@ -231,21 +245,15 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		log.Debugf("spawned worker #%d", i)
-
-		termChans = append(termChans, make(chan struct{}))
-
-		go s.popNewLogs(matches, names, &wg, cCounter, resChan)
+		go s.popNewLogs(matches, names, &wg, cCounter, resChan, i)
 	}
 
 	if s.Duration != 0 {
 		select {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
 			log.Debugf("Stopping logspout after: %v sec", s.Duration)
-			for _, c := range termChans {
-				close(c)
-			}
-			termChans = make([]chan struct{}, 0)
+			// TODO: make sure it's closed only once
+			close(s.close)
 		}
 	}
 

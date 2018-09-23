@@ -7,15 +7,20 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jiwen624/logspout/log"
+
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/gen"
-	rng "github.com/leesper/go_rng"
+	"github.com/leesper/go_rng"
 )
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
 func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, cCounter *sync.Cond,
-	resChan chan uint64) {
+	resChan chan uint64, idx int) {
+	log.Debugf("spawned worker #%d", idx)
+	defer log.Infof("worker #%d is exiting.", idx)
+
 	var newLog string
 	defer wg.Done()
 
