@@ -92,7 +92,7 @@ func buildOutputMap(ow map[string]Wrapper) map[string]Output {
 // build builds a single output instance based on the wrapper.
 func build(m Wrapper) Output {
 	op := outputMap[m.T]()
-	utils.PanicOnErr(json.Unmarshal(m.Raw, op))
+	utils.CheckErr(json.Unmarshal(m.Raw, op))
 
 	return op
 }

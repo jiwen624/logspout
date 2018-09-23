@@ -59,10 +59,10 @@ type Spout struct {
 	// from.
 	SampleFilePath string
 
-	// TransactionIDs defines the transaction IDs for transaction mode. Under
+	// TransactionID defines the transaction IDs for transaction mode. Under
 	// transaction mode, if a certain number of logs have the same value in these
 	// keys, they form a transaction.
-	TransactionIDs []string
+	TransactionID []string
 
 	// MaxIntraTransactionLatency defines the maximum latency of a transaction (
 	// I need a better name for it).
@@ -114,7 +114,7 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	if err := s.loadRawMessage(); err != nil {
 		return nil, errors.Wrap(err, "build spout")
 	}
-	s.TransactionIDs = cfg.TransactionIDs
+	s.TransactionID = cfg.TransactionID
 	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
 	s.Output = output.RegistryFromConf(cfg.Output)
@@ -122,13 +122,11 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	// TODO: pattern, replacers
 	// TODO: define a pattern struct and move it to that struct
 	// TODO: support both Perl and PCRE
-	log.Debugf("Original patterns:\n%v\n", cfg.Pattern)
 	var ptns []string
 	for _, ptn := range cfg.Pattern {
 		ptns = append(ptns, utils.ReConvert(ptn))
 	}
 	s.Pattern = ptns
-	log.Debugf("Converted patterns:\n%v\n", s.Pattern)
 
 	if len(s.rawMsgs) != len(s.Pattern) {
 		return nil, fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
@@ -207,9 +205,6 @@ func (s *Spout) loadRawMessage() error {
 		s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
 	}
 
-	for idx, rawMsg := range s.rawMsgs {
-		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
-	}
 	return nil
 }
 
