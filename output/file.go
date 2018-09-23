@@ -48,7 +48,7 @@ func (f *File) Type() Type {
 
 func (f *File) Activate() error {
 	log.Infof("Activating output %s", f.FileName)
-	f.build()
+	f.buildFile()
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (f *File) Deactivate() error {
 	return nil
 }
 
-func (f *File) build() {
+func (f *File) buildFile() {
 	// default parameters
 	var (
 		fileName   = "logspout_default.log"

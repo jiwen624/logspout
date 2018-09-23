@@ -8,14 +8,14 @@ import (
 
 type Console struct {
 	FileName string `json:"fileName"`
-	file     io.Writer
+	logger   io.Writer
 }
 
 func (c *Console) Write(p []byte) (n int, err error) {
-	if c.file == nil {
+	if c.logger == nil {
 		return 0, fmt.Errorf("output is null: %s", c)
 	}
-	return c.file.Write(p)
+	return c.logger.Write(p)
 }
 
 func (c *Console) String() string {
@@ -33,9 +33,9 @@ func (c *Console) Type() Type {
 func (c *Console) Activate() error {
 	switch c.FileName {
 	case "stdout":
-		c.file = os.Stdout
+		c.logger = os.Stdout
 	case "stderr":
-		c.file = os.Stderr
+		c.logger = os.Stderr
 	default:
 		return fmt.Errorf("invalid console type: %s", c)
 	}
@@ -43,6 +43,6 @@ func (c *Console) Activate() error {
 }
 
 func (c *Console) Deactivate() error {
-	c.file = nil
+	c.logger = nil
 	return nil
 }

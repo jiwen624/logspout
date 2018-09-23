@@ -3,13 +3,9 @@ package spout
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"log/syslog"
 	"os"
 
 	"github.com/pkg/errors"
-
-	"github.com/jiwen624/logspout/output"
 
 	"github.com/buger/jsonparser"
 	"github.com/jiwen624/logspout/config"
@@ -162,32 +158,4 @@ func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 
 	err := jsonparser.ObjectEach(replace, handler)
 	return replacerMap, err
-}
-
-// BuildOutputSyslogParms extracts output parameters from the config file for the syslog output
-func BuildOutputSyslogParms(out []byte) io.Writer {
-	var protocol = "udp"
-	var netaddr = "localhost:514"
-	var level = syslog.LOG_INFO
-	var tag = "logspout"
-
-	if p, err := jsonparser.GetString(out, output.PROTOCOL); err == nil {
-		protocol = p
-	}
-
-	if n, err := jsonparser.GetString(out, output.NETADDR); err == nil {
-		netaddr = n
-	}
-	// TODO: The syslog default level is hardcoded for now.
-	// if l, err := jsonparser.GetString(out, SYSLOGLEVEL); err == nil {
-	// 	level = l
-	// }
-	if t, err := jsonparser.GetString(out, output.SYSLOGTAG); err == nil {
-		tag = t
-	}
-	w, err := syslog.Dial(protocol, netaddr, level, tag)
-	if err != nil {
-		log.Errorf("failed to connect to syslog destination: %s", netaddr)
-	}
-	return w
 }
