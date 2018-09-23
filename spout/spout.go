@@ -7,6 +7,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
+	"time"
+
+	"github.com/jiwen624/logspout/gen"
 
 	"github.com/pkg/errors"
 
@@ -134,6 +138,12 @@ func (s *Spout) Start() error {
 	if err := s.StartAllOutput(); err != nil {
 		return errors.Wrap(err, "logspout start")
 	}
+
+	go s.console()
+
+	s.ProduceLogs()
+	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+
 	return nil
 }
 
@@ -142,6 +152,8 @@ func (s *Spout) Stop() error {
 	if err := s.StopAllOutputs(); err != nil {
 		return errors.Wrap(err, "logspout stop")
 	}
+	log.Info("LogSpout ended")
+
 	return nil
 }
 
@@ -179,5 +191,42 @@ func (s *Spout) loadRawMessage() error {
 	for idx, rawMsg := range s.rawMsgs {
 		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
 	}
+	return nil
+}
+
+func (s *Spout) ProduceLogs() {
+	// goroutine for future use, not necessary for now.
+	var wg sync.WaitGroup
+	var termChans = make([]chan struct{}, 0, s.Concurrency)
+
+	wg.Add(s.Concurrency) // Add it before you start the goroutine.
+
+	for i := 0; i < s.Concurrency; i++ {
+		log.Debugf("spawned worker #%d", i)
+
+		termChans = append(termChans, make(chan struct{}))
+
+		var replacerMap map[string]gen.Replacer
+		log.Debugf("Replacement: %s", string(s.Replacers))
+		if replacerMap, err := BuildReplacerMap(spt.Replacers); err != nil {
+			log.Error(err)
+			return
+
+			go s.popNewLogs(matches, names, &wg, termChans[i])
+		}
+	}
+
+	if s.Duration != 0 {
+		select {
+		case <-time.After(time.Second * time.Duration(s.Duration)):
+			log.Debugf("Stopping logspout after: %v sec", s.Duration)
+			for _, c := range termChans {
+				close(c)
+			}
+			termChans = make([]chan struct{}, 0)
+		}
+	}
+
+	wg.Wait()
 
 }

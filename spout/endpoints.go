@@ -1,4 +1,4 @@
-package main
+package spout
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/jiwen624/logspout/flag"
 	"github.com/jiwen624/logspout/log"
@@ -18,7 +19,18 @@ type Counter struct {
 	Conf    string   `json:"ConfigFile"`
 }
 
-func fetchCounter(w http.ResponseWriter, r *http.Request) {
+var (
+	reqCounter = false
+
+	// For fetching the counter values
+	wgCounter sync.WaitGroup
+
+	cCounter = sync.NewCond(&sync.Mutex{})
+
+	resChan = make(chan uint64)
+)
+
+func (s *Spout) fetchCounter(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 
 	counter := Counter{
@@ -27,7 +39,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 		Conf:    "",
 	}
 
-	wgCounter.Add(concurrency)
+	wgCounter.Add(s.Concurrency)
 
 	cCounter.L.Lock()
 	reqCounter = true
@@ -39,7 +51,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	reqCounter = false
 
 	var total uint64
-	var num = concurrency
+	var num = s.Concurrency
 	for c := range resChan {
 		if details == "true" {
 			counter.Workers = append(counter.Workers, c)
@@ -50,7 +62,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	counter.Total = total * uint64(duplicate)
+	counter.Total = total
 	counter.Conf = flag.ConfigPath
 
 	var retStr string
@@ -63,6 +75,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, retStr)
 }
 
+// TODO: print the spout obj in the memory
 func currConfig(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 	if details == "true" {
@@ -78,16 +91,16 @@ func currConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func console(port int) {
-	if port == 0 {
-		log.Infof("Management console is disabled with port=%d", port)
+func (s *Spout) console() {
+	if s.ConsolePort == 0 {
+		log.Infof("Management console is disabled with port=%d", s.ConsolePort)
 		return
 	}
 
-	http.HandleFunc("/counter", fetchCounter)
+	http.HandleFunc("/counter", s.fetchCounter)
 	http.HandleFunc("/config", currConfig)
 
-	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
+	err := http.ListenAndServe(":"+strconv.Itoa(s.ConsolePort), nil)
 	if err != nil {
 		log.Fatal("listen and serve: ", err)
 	}

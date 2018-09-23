@@ -11,12 +11,9 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"sync"
-	"time"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/flag"
-	"github.com/jiwen624/logspout/gen"
 	"github.com/jiwen624/logspout/log"
 
 	"github.com/jiwen624/logspout/spout"
@@ -36,13 +33,6 @@ var trans = false
 var transIds = make([]string, 0)
 var rawMsgs = make([]string, 0)
 var intraTransLat = 10
-
-// For fetching the counter values
-var wgCounter sync.WaitGroup
-var mCounter = sync.Mutex{}
-var cCounter = sync.NewCond(&mCounter)
-var reqCounter = false
-var resChan = make(chan uint64)
 
 // termChans stores the channels for close requests
 var termChans = make([]chan struct{}, 0, concurrency)
@@ -77,12 +67,6 @@ func main() {
 		log.Errorf("Failed to create logspout: %s", err.Error())
 		return
 	}
-
-	if err := spt.Start(); err != nil {
-		log.Errorf("Failed to start spout: %v", err)
-		return
-	}
-	defer spt.Stop()
 
 	var dests []io.Writer
 	// TODO: remove
@@ -129,8 +113,6 @@ func main() {
 
 	log.Debug("check above matches and change patterns if something is wrong")
 
-	replace := spt.Replacers
-
 	// TODO: change minInterval to int
 	minInterval = float64(spt.MinInterval)
 	maxInterval = float64(spt.MaxInterval)
@@ -144,39 +126,12 @@ func main() {
 		return
 	}
 
-	// goroutine for future use, not necessary for now.
-	var wg sync.WaitGroup
-	wg.Add(concurrency) // Add it before you start the goroutine.
-
-	for i := 0; i < concurrency; i++ {
-		log.Debugf("spawned worker #%d", i)
-
-		termChans = append(termChans, make(chan struct{}))
-
-		var replacerMap map[string]gen.Replacer
-		log.Debugf("Replacement: %s", string(replace))
-		if replacerMap, err = BuildReplacerMap(replace); err != nil {
-			log.Error(err)
-			return
-		}
-		go spt.PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
+	if err := spt.Start(); err != nil {
+		log.Errorf("Failed to start spout: %v", err)
+		return
 	}
 
-	go console(spt.ConsolePort)
+	// TODO: Register stop to sig handler and timeout handler
+	defer spt.Stop()
 
-	log.Infof("LogSpout started with %d workers.", concurrency)
-
-	if duration != 0 {
-		select {
-		case <-time.After(time.Second * time.Duration(duration)):
-			log.Debugf("Stopping logspout after: %v sec", duration)
-			for _, c := range termChans {
-				close(c)
-			}
-			termChans = make([]chan struct{}, 0)
-		}
-	}
-
-	wg.Wait()
-	log.Info("LogSpout ended")
 }

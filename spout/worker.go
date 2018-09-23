@@ -14,7 +14,7 @@ import (
 )
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func (s *Spout) PopNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, cCounter *sync.Cond,
+func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, cCounter *sync.Cond,
 	resChan chan uint64) {
 	var newLog string
 	defer wg.Done()
@@ -71,7 +71,7 @@ func (s *Spout) PopNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 		}
 
 		// It never sleeps in hightide mode.
-		if trans == true && s.BurstMode == false {
+		if len(s.TransactionIDs) != 0 && s.BurstMode == false {
 			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, s.MaxIntraTransactionLatency)))
 		}
 
