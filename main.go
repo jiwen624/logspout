@@ -16,7 +16,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/buger/jsonparser"
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/flag"
 	"github.com/jiwen624/logspout/gen"
@@ -154,25 +153,13 @@ func main() {
 
 	log.Debug("check above matches and change patterns if something is wrong")
 
-	replace, _, _, err := jsonparser.Get(conf, REPLACEMENT)
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	replace := spt.Replacers
 
-	if minI, err := jsonparser.GetInt(conf, MININTERVAL); err == nil {
-		minInterval = float64(minI)
-	}
-	if maxI, err := jsonparser.GetInt(conf, MAXINTERVAL); err == nil {
-		maxInterval = float64(maxI)
-	}
-	if d, err := jsonparser.GetInt(conf, DURATION); err == nil {
-		duration = int(d) // I suppose you won't set a large number that makes an int overflow.
-	}
-
-	if me, err := jsonparser.GetInt(conf, MAXEVENTS); err == nil {
-		maxEvents = uint64(me)
-	}
+	// TODO: change minInterval to int
+	minInterval = float64(spt.MinInterval)
+	maxInterval = float64(spt.MaxInterval)
+	duration = spt.Duration // I suppose you won't set a large number that makes an int overflow.
+	maxEvents = uint64(spt.MaxEvents)
 
 	if minInterval > maxInterval {
 		log.Error("minInterval should be less than maxInterval")

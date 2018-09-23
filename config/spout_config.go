@@ -21,6 +21,14 @@ type SpoutConfig struct {
 	// instead to achieve the same outcome.
 	BurstMode bool `json:"burstMode"`
 
+	// Duration means how long the logspout will run for (in seconds)
+	// A zero value (or non-exist) means it will run infinitely
+	Duration int `json:"duration"`
+
+	// MaxEvents means the maximum number of events logspout will generate
+	// A zero value (or non-exist) means it will run infinitely
+	MaxEvents int `json:"maxEvents"`
+
 	// Concurrency defines the number of workers to generate logs concurrently.
 	Concurrency int `json:"concurrency"`
 
@@ -56,7 +64,9 @@ type SpoutConfig struct {
 
 	// Replacement defines the replacement policies for the fields extracted by
 	// patterns defined in Pattern
-	Replacement map[string]map[string]interface{} `json:"replacement"`
+	//
+	// Replacement map[string]map[string]interface{} `json:"replacement"`
+	Replacement json.RawMessage
 }
 
 var (

@@ -2,6 +2,8 @@
   "burstMode": true,
   "concurrency": 1,
   "minInterval": 1,
+  "duration": 0,
+  "maxEvents": 0,
   "maxInterval": 2,
   "logType": "weblogic",
   "sampleFile": "samples/sample.log",

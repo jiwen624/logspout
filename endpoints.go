@@ -3,8 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/jiwen624/logspout/flag"
 )
 
 // Counter stores the counter values returned to the client
@@ -47,7 +50,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	counter.Total = total * uint64(duplicate)
-	counter.Conf = *confPath
+	counter.Conf = flag.ConfigPath
 
 	var retStr string
 	if b, err := json.Marshal(&counter); err != nil {
@@ -62,9 +65,15 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 func currConfig(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 	if details == "true" {
-		fmt.Fprintln(w, string(conf))
+		var cfg string
+		if b, err := ioutil.ReadFile(flag.ConfigPath); err != nil {
+			cfg = err.Error()
+		} else {
+			cfg = string(b)
+		}
+		fmt.Fprintln(w, cfg)
 	} else {
-		fmt.Fprintln(w, *confPath)
+		fmt.Fprintln(w, flag.ConfigPath)
 	}
 }
 

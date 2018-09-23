@@ -1,14 +1,13 @@
 package spout
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/output"
-	"github.com/jiwen624/logspout/pattern"
-	"github.com/jiwen624/logspout/replacer"
 	"github.com/pkg/errors"
 )
 
@@ -19,6 +18,12 @@ type Spout struct {
 	// BurstMode will be deprecated in future, use MinInterval=MaxInterval=0
 	// instead to achieve the same outcome.
 	BurstMode bool
+
+	// Duration means how long the logspout program will run for (in seconds)
+	Duration int
+
+	// MaxEvents means the maximum number of events logspout will generate
+	MaxEvents int
 
 	// Concurrency defines the number of workers to generate logs concurrently.
 	Concurrency int
@@ -54,11 +59,15 @@ type Spout struct {
 
 	// Pattern is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.
-	Pattern []pattern.Pattern
+	// TODO:
+	// Pattern []pattern.Pattern
+	Pattern []string
 
 	// Replacement defines the replacement policies for the fields extracted by
 	// patterns defined in Pattern
-	Replacers map[string]replacer.Replacer
+	// TODO:
+	// Replacers map[string]replacer.Replacer
+	Replacers json.RawMessage
 }
 
 // Build reads the config from a SoutConfig object and build a Spout object.
@@ -66,6 +75,7 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	s := &Spout{}
 
 	s.BurstMode = cfg.BurstMode
+	s.Duration = cfg.Duration
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval
@@ -77,7 +87,10 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
 	s.Output = output.BuildOutputMap(cfg.Output)
+
 	// TODO: pattern, replacers
+	s.Pattern = cfg.Pattern
+	s.Replacers = cfg.Replacement
 	return s
 }
 
