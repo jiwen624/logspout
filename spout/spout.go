@@ -115,6 +115,9 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 
 	// TODO: pattern, replacers
 	s.Pattern = cfg.Pattern
+	if len(s.rawMsgs) != len(s.Pattern) {
+		return nil, fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
+	}
 
 	r, err := buildReplacerMap(cfg.Replacement)
 	if err != nil {
@@ -187,11 +190,6 @@ func (s *Spout) loadRawMessage() error {
 
 	if buffer.Len() != 0 {
 		s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
-	}
-
-	if len(s.rawMsgs) != len(s.Pattern) {
-		return fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
-
 	}
 
 	for idx, rawMsg := range s.rawMsgs {
