@@ -1,9 +1,17 @@
 package spout
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"github.com/jiwen624/logspout/config"
+	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/output"
 )
 
@@ -14,6 +22,9 @@ type Spout struct {
 	// BurstMode will be deprecated in future, use MinInterval=MaxInterval=0
 	// instead to achieve the same outcome.
 	BurstMode bool
+
+	// UniformLoad means the workload is uniform
+	UniformLoad bool
 
 	// Duration means how long the logspout program will run for (in seconds)
 	Duration int
@@ -50,6 +61,9 @@ type Spout struct {
 	// I need a better name for it).
 	MaxIntraTransactionLatency int
 
+	// rawMsgs are the sample logs to be manipulated
+	rawMsgs []string
+
 	// Output defines the output destinations of the logs, which may be the console,
 	// files or some message queues.
 	// The output stored here may be active or inactive, and may be changed
@@ -68,10 +82,13 @@ type Spout struct {
 	// TODO:
 	// Replacers map[string]replacer.Replacer
 	Replacers json.RawMessage
+
+	// close is the indicator to close the spout
+	close chan struct{}
 }
 
 // Build reads the config from a SoutConfig object and build a Spout object.
-func Build(cfg *config.SpoutConfig) *Spout {
+func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	s := &Spout{}
 
 	s.BurstMode = cfg.BurstMode
@@ -84,7 +101,9 @@ func Build(cfg *config.SpoutConfig) *Spout {
 
 	s.LogType = cfg.LogType
 	s.SampleFilePath = cfg.SampleFilePath
-
+	if err := s.loadRawMessage(); err != nil {
+		return nil, errors.Wrap(err, "build spout")
+	}
 	s.TransactionIDs = cfg.TransactionIDs
 	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
@@ -93,7 +112,7 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	// TODO: pattern, replacers
 	s.Pattern = cfg.Pattern
 	s.Replacers = cfg.Replacement
-	return s
+	return s, nil
 }
 
 // StartAllOutput starts all the outputs
@@ -112,10 +131,53 @@ func (s *Spout) StopAllOutputs() error {
 
 // Start kicks off the spout
 func (s *Spout) Start() error {
-	return s.StartAllOutput()
+	if err := s.StartAllOutput(); err != nil {
+		return errors.Wrap(err, "logspout start")
+	}
+	return nil
 }
 
 // Stop stops the spout
 func (s *Spout) Stop() error {
-	return s.StopAllOutputs()
+	if err := s.StopAllOutputs(); err != nil {
+		return errors.Wrap(err, "logspout stop")
+	}
+	return nil
+}
+
+func (s *Spout) loadRawMessage() error {
+	file, err := os.Open(s.SampleFilePath)
+	if err != nil {
+		return errors.Wrap(err, "loadRawMessage")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var buffer bytes.Buffer
+	var vs string
+	for scanner.Scan() {
+		// Use blank line as the delimiter of a log event.
+		if vs = scanner.Text(); vs == "" {
+			s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+			buffer.Reset()
+			continue
+		}
+		buffer.WriteString(scanner.Text())
+		buffer.WriteString("\n") // Multi-line log support
+	}
+
+	if buffer.Len() != 0 {
+		s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+	}
+
+	if len(s.rawMsgs) != len(s.Pattern) {
+		return fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
+
+	}
+
+	for idx, rawMsg := range s.rawMsgs {
+		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
+	}
+
 }

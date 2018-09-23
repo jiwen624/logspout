@@ -21,6 +21,9 @@ type SpoutConfig struct {
 	// instead to achieve the same outcome.
 	BurstMode bool `json:"burstMode"`
 
+	// UniformLoad means the workload is uniform
+	UniformLoad bool `json:"uniformLoad"`
+
 	// Duration means how long the logspout will run for (in seconds)
 	// A zero value (or non-exist) means it will run infinitely
 	Duration int `json:"duration"`

@@ -4,7 +4,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -12,9 +11,7 @@ import (
 	"math"
 	"os"
 	"regexp"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/jiwen624/logspout/config"
@@ -24,7 +21,6 @@ import (
 
 	"github.com/jiwen624/logspout/spout"
 	. "github.com/jiwen624/logspout/utils"
-	"github.com/leesper/go_rng"
 )
 
 // Control the speed of log bursts, in milliseconds.
@@ -76,7 +72,12 @@ func main() {
 
 	log.Debug(summary(conf))
 
-	spt := spout.Build(conf)
+	spt, err := spout.Build(conf)
+	if err != nil {
+		log.Errorf("Failed to create logspout: %s", err.Error())
+		return
+	}
+
 	if err := spt.Start(); err != nil {
 		log.Errorf("Failed to start spout: %v", err)
 		return
@@ -84,6 +85,7 @@ func main() {
 	defer spt.Stop()
 
 	var dests []io.Writer
+	// TODO: remove
 	log.Debugf("===>sput: %+v", spt.Output)
 	// for _, value := range spt.Output {
 	// 	dests = append(dests, value)
@@ -99,41 +101,6 @@ func main() {
 	}
 	spt.Pattern = ptns
 	log.Debugf("Converted patterns:\n%v\n", spt.Pattern)
-
-	file, err := os.Open(spt.SampleFilePath)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-
-	var buffer bytes.Buffer
-	var vs string
-	for scanner.Scan() {
-		// Use blank line as the delimiter of a log event.
-		if vs = scanner.Text(); vs == "" {
-			rawMsgs = append(rawMsgs, strings.TrimRight(buffer.String(), "\n"))
-			buffer.Reset()
-			continue
-		}
-		buffer.WriteString(scanner.Text())
-		buffer.WriteString("\n") // Multi-line log support
-	}
-
-	if buffer.Len() != 0 {
-		rawMsgs = append(rawMsgs, strings.TrimRight(buffer.String(), "\n"))
-	}
-
-	if len(rawMsgs) != len(spt.Pattern) {
-		log.Errorf("%d sample event(s) but %d pattern(s) found", len(rawMsgs), len(spt.Pattern))
-		return
-	}
-
-	for idx, rawMsg := range rawMsgs {
-		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
-	}
 
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
@@ -192,7 +159,7 @@ func main() {
 			log.Error(err)
 			return
 		}
-		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
+		go spt.PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
 	}
 
 	go console(spt.ConsolePort)
@@ -212,103 +179,4 @@ func main() {
 
 	wg.Wait()
 	log.Info("LogSpout ended")
-}
-
-// PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func PopNewLogs(logger *l.Logger, replacers map[string]gen.Replacer, m [][]string,
-	names [][]string, wg *sync.WaitGroup, terminate chan struct{}) {
-	var newLog string
-	defer wg.Done()
-
-	// Gaussian distribution
-	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
-
-	matches := StrSlice2DCopy(m)
-
-	var currMsg int
-	var counter uint64
-	var totalCnt uint64
-
-	var c uint64
-
-	// This goroutine waits for the request from client to fetch the current counter value.
-	go func(res chan uint64) {
-		for {
-			cCounter.L.Lock()
-			for reqCounter == false {
-				cCounter.Wait()
-			}
-			cCounter.L.Unlock()
-			wgCounter.Done()
-
-			res <- atomic.LoadUint64(&c)
-		}
-	}(resChan)
-
-	cTicker := time.NewTicker(time.Second * 1).C
-	for {
-		// The first message of a transaction
-		for k, v := range replacers {
-			idx := StrIndex(names[currMsg], k)
-			if idx == -1 {
-				continue
-			} else if currMsg == 0 || StrIndex(transIds, k) == -1 {
-				if s, err := v.ReplacedValue(grng); err == nil {
-					matches[currMsg][idx] = s
-				}
-			} else {
-				matches[currMsg][idx] = matches[0][idx]
-			}
-		}
-
-		newLog = strings.Join(matches[currMsg], "")
-		// Print to logger streams, you may redirect it to anywhere else you want
-		logger.Println(newLog)
-		counter++
-		// Exits after it exceeds the predefined maximum events.
-		totalCnt++
-		if totalCnt >= maxEvents/uint64(concurrency) {
-			return
-		}
-
-		// It never sleeps in hightide mode.
-		if trans == true && highTide == false {
-			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, intraTransLat)))
-		}
-
-		currMsg++
-		if currMsg >= len(rawMsgs) {
-			currMsg = 0
-
-			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
-			if highTide == false {
-				// Sleep for a short while.
-				var sleepMsec = minInterval
-				if maxInterval == minInterval {
-					sleepMsec = minInterval
-				} else {
-					if uniform == true {
-						sleepMsec = minInterval + float64(gen.SimpleGaussian(grng, int(maxInterval-minInterval)))
-					} else { // There should be a better algorithm here.
-						x := float64((time.Now().Unix() % 86400) / 13751)
-						y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
-						sleepMsec = minInterval / y
-						if sleepMsec > maxInterval {
-							sleepMsec = maxInterval
-						}
-					}
-				}
-				time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
-			}
-		}
-
-		select {
-		case <-terminate:
-			return
-		case <-cTicker:
-			atomic.StoreUint64(&c, counter)
-			counter = 0
-		default:
-		}
-	}
 }
