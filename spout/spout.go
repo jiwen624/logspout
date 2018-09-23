@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -97,42 +96,42 @@ type Spout struct {
 	closeOnce sync.Once
 }
 
+func NewDefault() *Spout {
+	return &Spout{close: make(chan struct{})}
+}
+
 // Build reads the config from a SoutConfig object and build a Spout object.
 func Build(cfg *config.SpoutConfig) (*Spout, error) {
-	s := &Spout{close: make(chan struct{})}
+	s := NewDefault()
 
 	s.BurstMode = cfg.BurstMode
+	s.UniformLoad = cfg.UniformLoad
 	s.Duration = cfg.Duration
+
 	s.MaxEvents = cfg.MaxEvents
 	if s.MaxEvents == 0 {
 		s.MaxEvents = int(math.MaxInt32)
 	}
+
 	s.ConsolePort = cfg.ConsolePort
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval
-
 	s.LogType = cfg.LogType
 	s.SampleFilePath = cfg.SampleFilePath
-	if err := s.loadRawMessage(); err != nil {
-		return nil, errors.Wrap(err, "build spout")
-	}
 	s.TransactionID = cfg.TransactionID
 	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
+	if err := s.loadRawMessage(); err != nil {
+		return nil, errors.Wrap(err, "build spout")
+	}
+
 	s.Output = output.RegistryFromConf(cfg.Output)
 
-	// TODO: pattern, replacers
 	// TODO: define a pattern struct and move it to that struct
 	// TODO: support both Perl and PCRE
-	var ptns []string
 	for _, ptn := range cfg.Pattern {
-		ptns = append(ptns, utils.ReConvert(ptn))
-	}
-	s.Pattern = ptns
-
-	if len(s.rawMsgs) != len(s.Pattern) {
-		return nil, fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
+		s.Pattern = append(s.Pattern, utils.ReConvert(ptn))
 	}
 
 	r, err := buildReplacerMap(cfg.Replacement)
@@ -141,6 +140,19 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	}
 	s.Replacers = r
 
+	return s.SanityCheck()
+}
+
+// TODO: add more checks
+func (s *Spout) SanityCheck() (*Spout, error) {
+	var errs []error
+	rl := len(s.rawMsgs)
+	pl := len(s.Pattern)
+	if rl != pl {
+		e := fmt.Errorf("%d sample event(s) but %d pattern(s) found", rl, pl)
+		errs = append(errs, e)
+		return nil, utils.CombineErrs(errs)
+	}
 	return s, nil
 }
 
@@ -161,7 +173,7 @@ func (s *Spout) StopAllOutputs() error {
 // Start kicks off the spout
 func (s *Spout) Start() error {
 	if err := s.StartAllOutput(); err != nil {
-		return errors.Wrap(err, "logspout start")
+		return errors.Wrap(err, "start outputs")
 	}
 
 	go s.console()
@@ -181,17 +193,14 @@ func (s *Spout) Start() error {
 }
 
 // Stop stops the spout
-func (s *Spout) Stop() error {
-	if err := s.StopAllOutputs(); err != nil {
-		return errors.Wrap(err, "logspout stop")
-	}
-
-	log.Info("LogSpout ended")
-
+func (s *Spout) Stop() {
 	s.closeOnce.Do(func() {
+		if err := s.StopAllOutputs(); err != nil {
+			log.Error(errors.Wrap(err, "logspout stop"))
+		}
 		close(s.close)
 	})
-	return nil
+	log.Info("LogSpout ended")
 }
 
 func (s *Spout) sigHandler(c chan os.Signal) {
@@ -200,6 +209,7 @@ func (s *Spout) sigHandler(c chan os.Signal) {
 		case os.Interrupt:
 			fallthrough
 		case syscall.SIGTERM:
+			// Don't call os.Exit(), wait until all workers are closed.
 			s.Stop()
 		default:
 			err := fmt.Errorf("unhandled signal: %v", sig)
@@ -220,18 +230,22 @@ func (s *Spout) loadRawMessage() error {
 	var buffer bytes.Buffer
 	var vs string
 	for scanner.Scan() {
+		vs = scanner.Text()
 		// Use blank line as the delimiter of a log event.
-		if vs = scanner.Text(); vs == "" {
-			s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+		if vs == "" {
+			if buffer.Len() == 0 {
+				continue
+			}
+			s.rawMsgs = append(s.rawMsgs, buffer.String())
 			buffer.Reset()
 			continue
 		}
-		buffer.WriteString(scanner.Text())
+		buffer.WriteString(vs)
 		buffer.WriteString("\n") // Multi-line log support
 	}
 
 	if buffer.Len() != 0 {
-		s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+		s.rawMsgs = append(s.rawMsgs, buffer.String())
 	}
 
 	return nil

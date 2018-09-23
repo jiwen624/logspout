@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/syslog"
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/gen"
 	"github.com/jiwen624/logspout/log"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -192,44 +190,4 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 		log.Errorf("failed to connect to syslog destination: %s", netaddr)
 	}
 	return w
-}
-
-// BuildOutputFileParms extracts output parameters from the config file, if any.
-func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
-	var fileName = "logspout_default.log"
-	var directory = "."
-	var maxSize = 100  // 100 Megabytes
-	var maxBackups = 5 // 5 backups
-	var maxAge = 7     // 7 days
-	var compress = false
-	var loggers = make([]*lumberjack.Logger, 0)
-
-	if f, err := jsonparser.GetString(out, output.FILENAME); err == nil {
-		fileName = f
-	}
-	if d, err := jsonparser.GetString(out, output.DIRECTORY); err == nil {
-		directory = d
-	}
-	if ms, err := jsonparser.GetInt(out, output.MAXSIZE); err == nil {
-		maxSize = int(ms)
-	}
-	if mb, err := jsonparser.GetInt(out, output.MAXBACKUPS); err == nil {
-		maxBackups = int(mb)
-	}
-	if ma, err := jsonparser.GetInt(out, output.MAXAGE); err == nil {
-		maxAge = int(ma)
-	}
-	if c, err := jsonparser.GetBoolean(out, output.COMPRESS); err == nil {
-		compress = c
-	}
-	loggers = append(loggers, &lumberjack.Logger{
-		Filename:   filepath.Join(directory, fileName),
-		MaxSize:    maxSize, // megabytes
-		MaxBackups: maxBackups,
-		MaxAge:     maxAge,   // days
-		Compress:   compress, // disabled by default.
-		LocalTime:  true,
-	})
-
-	return loggers
 }

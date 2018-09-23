@@ -18,7 +18,7 @@ func init() {
 		"specify the config file in json format.")
 	flag.StringVar(&LogLevel, "v", "warn",
 		"debug, info, warn, error.")
-	flag.StringVar(&LogMode, "log", "prod",
+	flag.StringVar(&LogMode, "log", "dev",
 		"specify the log mode. it can be either dev or prod.")
 	flag.Parse()
 }

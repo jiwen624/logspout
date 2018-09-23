@@ -31,7 +31,5 @@ func main() {
 		log.Errorf("Failed to start spout: %v", err)
 		return
 	}
-
-	// TODO: Register stop to sig handler and timeout handler
-	// spt.Stop()
+	defer spt.Stop()
 }

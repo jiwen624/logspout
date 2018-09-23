@@ -37,13 +37,13 @@
         "maxBackups": 3,
         "compress": false,
         "maxAge": 7,
-        "duplicate": false
+        "duplicate": 2
       }
     }
   },
   "pattern": [
-    "(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)",
-    "(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)"
+    "^(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>\\n)$",
+    "^(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>\\n)$"
   ],
   "replacement": {
     "timestamp": {
