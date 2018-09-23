@@ -182,5 +182,9 @@ func CombineErrs(errs []error) error {
 		}
 		cmb = append(cmb, err.Error())
 	}
-	return fmt.Errorf(strings.Join(cmb, "\n"))
+	if len(cmb) == 0 {
+		return nil
+	} else {
+		return fmt.Errorf(strings.Join(cmb, "\n"))
+	}
 }

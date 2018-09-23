@@ -79,7 +79,7 @@ func main() {
 
 	spt := spout.Build(conf)
 	if err := spt.Start(); err != nil {
-		log.Error("Failed to start spout: %v", err)
+		log.Errorf("Failed to start spout: %v", err)
 		return
 	}
 	defer spt.Stop()
