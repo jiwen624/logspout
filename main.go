@@ -85,11 +85,14 @@ func main() {
 	defer spt.Stop()
 
 	// TODO: define a pattern struct and move it to that struct
-	// if reconvert == true {
-	// 	for idx, ptn := range ptns {
-	// 		ptns[idx] = ReConvert(ptn)
-	// 	}
-	// }
+	// TODO: support both Perl and PCRE
+	log.Debugf("Original patterns:\n%v\n", spt.Pattern)
+	var ptns []string
+	for _, ptn := range spt.Pattern {
+		ptns = append(ptns, ReConvert(ptn))
+	}
+	spt.Pattern = ptns
+	log.Debugf("Converted patterns:\n%v\n", spt.Pattern)
 
 	file, err := os.Open(spt.SampleFilePath)
 	if err != nil {
@@ -129,7 +132,7 @@ func main() {
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
 
-	for idx, ptn := range conf.Pattern {
+	for idx, ptn := range spt.Pattern {
 		re := regexp.MustCompile(ptn)
 		matches = append(matches, re.FindStringSubmatch(rawMsgs[idx]))
 		names = append(names, re.SubexpNames())
@@ -176,6 +179,7 @@ func main() {
 		termChans = append(termChans, make(chan struct{}))
 
 		var replacerMap map[string]gen.Replacer
+		log.Debugf("Replacement: %s", string(replace))
 		if replacerMap, err = BuildReplacerMap(replace); err != nil {
 			log.Error(err)
 			return
