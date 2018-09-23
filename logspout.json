@@ -70,13 +70,13 @@
     "ipaddress": {
       "type": "looksReal",
       "attrs": {
-        "method": "ipv4china"
+        "method": "ipv4China"
       }
     },
     "phone": {
       "type": "looksReal",
       "attrs": {
-        "method": "cellphone-china"
+        "method": "cellphoneChina"
       }
     },
     "user": {

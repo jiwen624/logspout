@@ -3,6 +3,7 @@
   "concurrency": 1,
   "minInterval": 1,
   "maxInterval": 2,
+  "consolePort": 12345,
   "logType": "weblogic",
   "sampleFile": "samples/sample.log",
   "transactionId": [
@@ -49,7 +50,7 @@
       }
     },
     "severity": {
-      "type": "fixed-list",
+      "type": "fixedList",
       "attrs": {
         "method": "random",
         "listFile": "samples/severity.sample"
@@ -64,19 +65,19 @@
       }
     },
     "ipaddress": {
-      "type": "looks-real",
+      "type": "looksReal",
       "attrs": {
-        "method": "ipv4china"
+        "method": "ipv4China"
       }
     },
     "phone": {
-      "type": "looks-real",
+      "type": "looksReal",
       "attrs": {
-        "method": "cellphone-china"
+        "method": "cellphoneChina"
       }
     },
     "user": {
-      "type": "fixed-list",
+      "type": "fixedList",
       "attrs": {
         "method": "random",
         "list": [

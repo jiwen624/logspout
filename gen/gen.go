@@ -20,15 +20,15 @@ import (
 // LooksReal data methods
 const (
 	IPV4           = "ipv4"
-	IPV4CHINA      = "ipv4china"
-	CELLPHONECHINA = "cellphone-china"
+	IPV4CHINA      = "ipv4China"
+	CELLPHONECHINA = "cellphoneChina"
 	IPV6           = "ipv6"
 	MAC            = "mac"
-	UA             = "user-agent"
+	UA             = "userAgent"
 	COUNTRY        = "country"
 	EMAIL          = "email"
 	NAME           = "name"
-	CHINESENAME    = "chinese-name"
+	CHINESENAME    = "chineseName"
 	UUID           = "uuid"
 	XML            = "xml"
 	JSON           = "json"
@@ -43,9 +43,9 @@ const (
 
 // Looks-real opts
 const (
-	MAXDEPTH    = "max-depth"
-	MAXELEMENTS = "max-elements"
-	TAGSEED     = "tag-seed"
+	MAXDEPTH    = "maxDepth"
+	MAXELEMENTS = "maxElements"
+	TAGSEED     = "tagSeed"
 )
 
 // seed is the seed data to generate China IP addresses.
