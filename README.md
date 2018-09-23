@@ -5,8 +5,8 @@
 [![GoDoc](https://godoc.org/github.com/jiwen624/logspout?status.svg)](https://godoc.org/github.com/jiwen624/logspout)
 
 
-**Please checkout the ![latest release](https://github.com/jiwen624/logspout/releases) rather than the master branch. The master branch is under active development, which
-may not be working properly all the time.'
+**Please checkout the [latest release](https://github.com/jiwen624/logspout/releases) rather than the master branch. The master branch is under active development, which
+may not be working properly all the time.**
 
 LogSpout is a easy-to-use tool to generate machine logs in specified format. It needs only a sample log and the
 configuration file in json format. With the value replacement rules defined in the configuration file, logspout
