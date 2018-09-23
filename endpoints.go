@@ -3,8 +3,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"strconv"
+
+	"github.com/jiwen624/logspout/flag"
+	"github.com/jiwen624/logspout/log"
 )
+
+// Counter stores the counter values returned to the client
+type Counter struct {
+	Workers []uint64 `json:"Workers"`
+	Total   uint64   `json:"TotalEPS"`
+	Conf    string   `json:"ConfigFile"`
+}
 
 func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
@@ -39,7 +51,7 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	counter.Total = total * uint64(duplicate)
-	counter.Conf = *confPath
+	counter.Conf = flag.ConfigPath
 
 	var retStr string
 	if b, err := json.Marshal(&counter); err != nil {
@@ -51,21 +63,32 @@ func fetchCounter(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, retStr)
 }
 
-func config(w http.ResponseWriter, r *http.Request) {
+func currConfig(w http.ResponseWriter, r *http.Request) {
 	details := r.URL.Query().Get("details")
 	if details == "true" {
-			fmt.Fprintln(w, string(conf))
+		var cfg string
+		if b, err := ioutil.ReadFile(flag.ConfigPath); err != nil {
+			cfg = err.Error()
+		} else {
+			cfg = string(b)
+		}
+		fmt.Fprintln(w, cfg)
 	} else {
-		fmt.Fprintln(w, *confPath)
+		fmt.Fprintln(w, flag.ConfigPath)
 	}
 }
 
-func console() {
-	http.HandleFunc("/counter", fetchCounter)
-	http.HandleFunc("/config", config)
+func console(port int) {
+	if port == 0 {
+		log.Infof("Management console is disabled with port=%d", port)
+		return
+	}
 
-	err := http.ListenAndServe(":"+consolePort, nil)
+	http.HandleFunc("/counter", fetchCounter)
+	http.HandleFunc("/config", currConfig)
+
+	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
 	if err != nil {
-		sugar.Fatal("listen and serve: ", err)
+		log.Fatal("listen and serve: ", err)
 	}
 }

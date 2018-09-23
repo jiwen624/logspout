@@ -3,14 +3,21 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/buger/jsonparser"
-	"github.com/jiwen624/logspout/gen"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"log/syslog"
 	"os"
-	"strconv"
 	"path/filepath"
+	"strconv"
+
+	"github.com/pkg/errors"
+
+	"github.com/jiwen624/logspout/output"
+
+	"github.com/buger/jsonparser"
+	"github.com/jiwen624/logspout/config"
+	"github.com/jiwen624/logspout/gen"
+	"github.com/jiwen624/logspout/log"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
@@ -18,15 +25,17 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 	var replacerMap = make(map[string]gen.Replacer)
 
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		log.Debugf("BuildReplacerMap parsing:\nkey: %s\nvalue:%s\n", string(key), string(value))
+
 		var err error
 		k := string(key)
-		notFound := func(string) error {
-			return fmt.Errorf("no %s found in %s", MIN, k)
+		notFound := func(v string, err error) error {
+			return errors.Wrap(err, fmt.Sprintf("no %s found in %s", v, k))
 		}
 
-		t, err := jsonparser.GetString(value, TYPE)
+		t, err := jsonparser.GetString(value, config.TYPE)
 		if err != nil {
-			return notFound(TYPE)
+			return notFound(config.TYPE, err)
 		}
 
 		var parms = make(map[string]interface{})
@@ -50,7 +59,7 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			return nil
 		}
 
-		p, _, _, errParms := jsonparser.Get(value, PARMS)
+		p, _, _, errParms := jsonparser.Get(value, config.ATTRS)
 
 		// It is a normal case if PARMS is not found
 		if errParms == nil {
@@ -58,25 +67,27 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 		}
 
 		switch t {
-		case FIXEDLIST:
-			c, err := jsonparser.GetString(value, METHOD)
+		case config.FIXEDLIST:
+			c, err := jsonparser.GetString(p, config.METHOD)
 			if err != nil {
-				return notFound(METHOD)
+				return notFound(config.METHOD, err)
 			}
 			var vr = make([]string, 0)
-			_, err = jsonparser.ArrayEach(value, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
+
+			// Found list
+			_, err = jsonparser.ArrayEach(p, func(value []byte, dataType jsonparser.ValueType, offset int, err error) {
 				vr = append(vr, string(value))
-			}, LIST)
+			}, config.LIST)
 			// No list found
 			if err != nil {
-				f, err := jsonparser.GetString(value, LISTFILE)
+				f, err := jsonparser.GetString(p, config.LISTFILE)
 				if err != nil {
-					return err
+					return notFound(config.LISTFILE, err)
 				}
-				//Open sample file and fill into vr
+				// Open sample file and fill into vr
 				fp, err := os.Open(f)
 				if err != nil {
-					return err
+					return errors.Wrap(err, fmt.Sprintf("in %s", config.LISTFILE))
 				}
 				defer fp.Close()
 				s := bufio.NewScanner(fp)
@@ -87,64 +98,64 @@ func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			}
 			replacerMap[k] = gen.NewFixedListReplacer(c, vr, 0)
 
-		case TIMESTAMP:
-			if tsFmt, err := jsonparser.GetString(value, FORMAT); err == nil {
+		case config.TIMESTAMP:
+			if tsFmt, err := jsonparser.GetString(p, config.FORMAT); err == nil {
 				replacerMap[k] = gen.NewTimeStampReplacer(tsFmt)
 			} else {
-				return err
+				return notFound(config.FORMAT, err)
 			}
 
-		case INTEGER:
-			c, err := jsonparser.GetString(value, METHOD)
+		case config.INTEGER:
+			c, err := jsonparser.GetString(p, config.METHOD)
 			if err != nil {
-				return notFound(METHOD)
+				return notFound(config.METHOD, err)
 			}
-			min, err := jsonparser.GetInt(value, MIN)
+			min, err := jsonparser.GetInt(p, config.MIN)
 			if err != nil {
-				return notFound(MIN)
+				return notFound(config.MIN, err)
 			}
-			max, err := jsonparser.GetInt(value, MAX)
+			max, err := jsonparser.GetInt(p, config.MAX)
 			if err != nil {
-				return notFound(MAX)
+				return notFound(config.MAX, err)
 			}
 			replacerMap[k] = gen.NewIntegerReplacer(c, min, max, min)
 
-		case FLOAT:
-			min, err := jsonparser.GetFloat(value, MIN)
+		case config.FLOAT:
+			min, err := jsonparser.GetFloat(p, config.MIN)
 			if err != nil {
-				return notFound(MIN)
+				return notFound(config.MIN, err)
 			}
-			max, err := jsonparser.GetFloat(value, MAX)
+			max, err := jsonparser.GetFloat(p, config.MAX)
 			if err != nil {
-				return notFound(MAX)
+				return notFound(config.MAX, err)
 			}
 
-			precision, err := jsonparser.GetInt(value, PRECISION)
+			precision, err := jsonparser.GetInt(p, config.PRECISION)
 			if err != nil {
-				return notFound(MIN)
+				return notFound(config.MIN, err)
 			}
 			replacerMap[k] = gen.NewFloatReplacer(min, max, precision)
 
-		case STRING:
+		case config.STRING:
 			var chars = ""
-			min, err := jsonparser.GetInt(value, MIN)
+			min, err := jsonparser.GetInt(p, config.MIN)
 			if err != nil {
-				return notFound(MIN)
+				return notFound(config.MIN, err)
 			}
-			max, err := jsonparser.GetInt(value, MAX)
+			max, err := jsonparser.GetInt(p, config.MAX)
 			if err != nil {
-				return notFound(MAX)
+				return notFound(config.MAX, err)
 			}
 
-			if c, err := jsonparser.GetString(value, CHARS); err == nil {
+			if c, err := jsonparser.GetString(p, config.CHARS); err == nil {
 				chars = c
 			}
 			replacerMap[k] = gen.NewStringReplacer(chars, min, max)
 
-		case LOOKSREAL:
-			c, err := jsonparser.GetString(value, METHOD)
+		case config.LOOKSREAL:
+			c, err := jsonparser.GetString(p, config.METHOD)
 			if err != nil {
-				return notFound(METHOD)
+				return notFound(config.METHOD, err)
 			}
 			gen.InitLooksRealParms(parms, c)
 			replacerMap[k] = gen.NewLooksReal(c, parms)
@@ -163,23 +174,23 @@ func BuildOutputSyslogParms(out []byte) io.Writer {
 	var level = syslog.LOG_INFO
 	var tag = "logspout"
 
-	if p, err := jsonparser.GetString(out, PROTOCOL); err == nil {
+	if p, err := jsonparser.GetString(out, output.PROTOCOL); err == nil {
 		protocol = p
 	}
 
-	if n, err := jsonparser.GetString(out, NETADDR); err == nil {
+	if n, err := jsonparser.GetString(out, output.NETADDR); err == nil {
 		netaddr = n
 	}
 	// TODO: The syslog default level is hardcoded for now.
-	//if l, err := jsonparser.GetString(out, SYSLOGLEVEL); err == nil {
-	//	level = l
-	//}
-	if t, err := jsonparser.GetString(out, SYSLOGTAG); err == nil {
+	// if l, err := jsonparser.GetString(out, SYSLOGLEVEL); err == nil {
+	// 	level = l
+	// }
+	if t, err := jsonparser.GetString(out, output.SYSLOGTAG); err == nil {
 		tag = t
 	}
 	w, err := syslog.Dial(protocol, netaddr, level, tag)
 	if err != nil {
-		sugar.Errorf("failed to connect to syslog destination: %s", netaddr)
+		log.Errorf("failed to connect to syslog destination: %s", netaddr)
 	}
 	return w
 }
@@ -194,27 +205,27 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	var compress = false
 	var loggers = make([]*lumberjack.Logger, 0)
 
-	if f, err := jsonparser.GetString(out, FILENAME); err == nil {
+	if f, err := jsonparser.GetString(out, output.FILENAME); err == nil {
 		fileName = f
 	}
-	if d, err := jsonparser.GetString(out, DIRECTORY); err == nil {
+	if d, err := jsonparser.GetString(out, output.DIRECTORY); err == nil {
 		directory = d
 	}
-	if ms, err := jsonparser.GetInt(out, MAXSIZE); err == nil {
+	if ms, err := jsonparser.GetInt(out, output.MAXSIZE); err == nil {
 		maxSize = int(ms)
 	}
-	if mb, err := jsonparser.GetInt(out, MAXBACKUPS); err == nil {
+	if mb, err := jsonparser.GetInt(out, output.MAXBACKUPS); err == nil {
 		maxBackups = int(mb)
 	}
-	if ma, err := jsonparser.GetInt(out, MAXAGE); err == nil {
+	if ma, err := jsonparser.GetInt(out, output.MAXAGE); err == nil {
 		maxAge = int(ma)
 	}
-	if c, err := jsonparser.GetBoolean(out, COMPRESS); err == nil {
+	if c, err := jsonparser.GetBoolean(out, output.COMPRESS); err == nil {
 		compress = c
 	}
 	for i := 0; i < duplicate; i++ {
 		loggers = append(loggers, &lumberjack.Logger{
-			Filename:   filepath.Join(directory, strconv.Itoa(i) + "_" + fileName),
+			Filename:   filepath.Join(directory, strconv.Itoa(i)+"_"+fileName),
 			MaxSize:    maxSize, // megabytes
 			MaxBackups: maxBackups,
 			MaxAge:     maxAge,   // days
