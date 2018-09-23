@@ -7,7 +7,6 @@ import (
 	"log/syslog"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -223,15 +222,14 @@ func BuildOutputFileParms(out []byte) []*lumberjack.Logger {
 	if c, err := jsonparser.GetBoolean(out, output.COMPRESS); err == nil {
 		compress = c
 	}
-	for i := 0; i < duplicate; i++ {
-		loggers = append(loggers, &lumberjack.Logger{
-			Filename:   filepath.Join(directory, strconv.Itoa(i)+"_"+fileName),
-			MaxSize:    maxSize, // megabytes
-			MaxBackups: maxBackups,
-			MaxAge:     maxAge,   // days
-			Compress:   compress, // disabled by default.
-			LocalTime:  true,
-		})
-	}
+	loggers = append(loggers, &lumberjack.Logger{
+		Filename:   filepath.Join(directory, fileName),
+		MaxSize:    maxSize, // megabytes
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,   // days
+		Compress:   compress, // disabled by default.
+		LocalTime:  true,
+	})
+
 	return loggers
 }
