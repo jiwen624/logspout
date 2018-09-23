@@ -1,5 +1,7 @@
 package output
 
+import "fmt"
+
 type Console struct {
 	FileName string
 }
@@ -8,6 +10,10 @@ func (c *Console) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
 	return 0, nil // TODO
+}
+
+func (c *Console) String() string {
+	return fmt.Sprintf("Console{FileName:%s}", c.FileName)
 }
 
 func (c *Console) ID() ID {

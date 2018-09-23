@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"io"
+	"sync"
 
 	"github.com/jiwen624/logspout/utils"
 )
@@ -20,6 +21,8 @@ type Output interface {
 	ID() ID // TODO: []byte or string? md5 or sha1?
 	// Type returns the type of this output
 	Type() Type
+	// String defines the string representation of the output
+	String() string
 	// Activate enables the output
 	Activate() error
 	// Deactivate disables the output and releases the resources
@@ -34,19 +37,24 @@ type Wrapper struct {
 }
 
 // outputMap is the map for the output types and their factory methods
-var outputMap map[Type]func() Output
+var (
+	outputMap map[Type]Initializer
+	mu        sync.Mutex
+)
 
 func init() {
-	registerOutputBuilder()
+	initDefaultTypes()
 }
 
-// registerOutputBuilder initializes the map of output types and their corresponding
+// initDefaultTypes initializes the map of output types and their corresponding
 // struct instances factory methods.
 //
 // This function is not concurrent-safe and should only be called in a init()
 // function
-func registerOutputBuilder() {
-	outputMap = map[Type]func() Output{
+func initDefaultTypes() {
+	mu.Lock()
+	defer mu.Unlock()
+	outputMap = map[Type]Initializer{
 		console: func() Output { return &Console{} },
 		file:    func() Output { return &File{} },
 		syslog:  func() Output { return &Syslog{} },
@@ -54,10 +62,25 @@ func registerOutputBuilder() {
 	}
 }
 
-// BuildOutputMap builds the outputs based on the configurations wrapped by
+// RegisterType registers a new output type initializer. A new initializer will
+// override the old one with the same type.
+func RegisterType(t Type, init Initializer) {
+	mu.Lock()
+	defer mu.Unlock()
+	outputMap[t] = init
+}
+
+// UnregisterType unregisters a specific type's initializer.
+func UnregisterType(t Type) {
+	mu.Lock()
+	defer mu.Unlock()
+	delete(outputMap, t)
+}
+
+// buildOutputMap builds the outputs based on the configurations wrapped by
 // Wrapper. It iterates all the configurations and creates output instances
 // of various types.
-func BuildOutputMap(ow map[string]Wrapper) map[string]Output {
+func buildOutputMap(ow map[string]Wrapper) map[string]Output {
 	om := map[string]Output{}
 	for k, v := range ow {
 		ov := build(v)
@@ -73,3 +96,12 @@ func build(m Wrapper) Output {
 
 	return op
 }
+
+// Initializer defines the initializer type which creates an empty output object
+type Initializer func() Output
+
+// The operation applies to the output
+type Apply func(Output) error
+
+// The predicate that filters the ouput
+type Predicate func(Output) bool

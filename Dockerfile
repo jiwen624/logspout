@@ -4,7 +4,6 @@ COPY . $GOPATH/src/app/
 WORKDIR $GOPATH/src/app/
 
 RUN go get -d ./...
-RUN git describe --abbrev=0 --tags | xargs git checkout
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix nocgo -o /go/bin/app
 
 FROM scratch

@@ -7,6 +7,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	l "log"
 	"math"
 	"os"
@@ -81,6 +82,13 @@ func main() {
 		return
 	}
 	defer spt.Stop()
+
+	var dests []io.Writer
+	log.Debugf("===>sput: %+v", spt.Output)
+	// for _, value := range spt.Output {
+	// 	dests = append(dests, value)
+	// }
+	logger.SetOutput(io.MultiWriter(dests...))
 
 	// TODO: define a pattern struct and move it to that struct
 	// TODO: support both Perl and PCRE

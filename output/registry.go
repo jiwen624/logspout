@@ -1,12 +1,18 @@
 package output
 
 import (
+	"fmt"
 	"sync"
+
+	"github.com/jiwen624/logspout/utils"
 
 	"github.com/pkg/errors"
 )
 
-var where struct {
+// Registry is a collection of outputs. Output can be registered to or unregistered
+// from the registry. It can also accepts byte slice and write it to the selected
+// output based on a filter.
+type Registry struct {
 	// Where the data is written to. There may be multiple destinations for a
 	// specific output type.
 	m map[Type]map[ID]Output
@@ -17,34 +23,36 @@ var where struct {
 }
 
 var (
-	ErrDuplicate = errors.New("duplicate ID found")
-	ErrNotFound  = errors.New("output not found")
+	ErrDuplicate     = errors.New("duplicate ID found")
+	ErrNotFound      = errors.New("output not found")
+	ErrEmptyRegistry = errors.New("registry is empty")
 )
 
-// The operation applies to the output
-type Apply func(Output) error
+func (r *Registry) String() string {
+	r.Lock()
+	defer r.Unlock()
+	return fmt.Sprintf("%+v", r.m)
 
-// The predicate that filters the ouput
-type Predicate func(Output) bool
+}
 
 // Register registers an output destination
-func Register(output Output) error {
-	where.Lock()
-	defer where.Unlock()
+func (r *Registry) Register(output Output) error {
+	r.Lock()
+	defer r.Unlock()
 
 	if err := output.Activate(); err != nil {
 		return errors.Wrap(err, "register failed:")
 	}
 
-	where.Do(func() {
-		where.m = make(map[Type]map[ID]Output)
+	r.Do(func() {
+		r.m = make(map[Type]map[ID]Output)
 	})
 
 	typ := output.Type()
-	tm, ok := where.m[typ]
+	tm, ok := r.m[typ]
 	if !ok {
 		tm = make(map[ID]Output, 1)
-		where.m[typ] = tm
+		r.m[typ] = tm
 	}
 
 	id := output.ID()
@@ -56,15 +64,15 @@ func Register(output Output) error {
 }
 
 // Unregister unregisters an output from the global registry
-func Unregister(output Output) error {
-	where.Lock()
-	defer where.Unlock()
+func (r *Registry) Unregister(output Output) error {
+	r.Lock()
+	defer r.Unlock()
 
 	if err := output.Deactivate(); err != nil {
 		return errors.Wrap(err, "unregister failed:")
 	}
 
-	tm, ok := where.m[output.Type()]
+	tm, ok := r.m[output.Type()]
 	if !ok {
 		return ErrNotFound
 	}
@@ -78,13 +86,16 @@ func Unregister(output Output) error {
 }
 
 // ForEach applies the operation to each output which matches the predicate
-func ForEach(apply Apply, predicate Predicate) []error {
-	// TODO: This function may hold the lock for too long
-	where.RLock()
-	defer where.RUnlock()
+func (r *Registry) ForEach(apply Apply, predicate Predicate) error {
+	r.RLock()
+	defer r.RUnlock()
+
+	if r.m == nil {
+		return ErrEmptyRegistry
+	}
 
 	var errs []error
-	for _, tm := range where.m {
+	for _, tm := range r.m {
 		for _, o := range tm {
 			if !predicate(o) {
 				continue
@@ -94,22 +105,26 @@ func ForEach(apply Apply, predicate Predicate) []error {
 			}
 		}
 	}
-	return errs
+	return utils.CombineErrs(errs)
 }
 
 // ForAll applies the operation to all the outputs
-func ForAll(apply Apply) []error {
-	return ForEach(apply, func(Output) bool {
+func (r *Registry) ForAll(apply Apply) error {
+	return r.ForEach(apply, func(Output) bool {
 		return true
 	})
 }
 
 // ForOne applies the operation to the specified output
-func ForOne(apply Apply, typ Type, id ID) error {
-	where.RLock()
-	defer where.RUnlock()
+func (r *Registry) ForOne(apply Apply, typ Type, id ID) error {
+	r.RLock()
+	defer r.RUnlock()
 
-	if tm, ok := where.m[typ]; ok {
+	if r.m == nil {
+		return ErrEmptyRegistry
+	}
+
+	if tm, ok := r.m[typ]; ok {
 		if o, ok := tm[id]; ok {
 			return apply(o)
 		}
@@ -118,9 +133,26 @@ func ForOne(apply Apply, typ Type, id ID) error {
 }
 
 // Write is a helper function to write the string to all the outputs
-func Write(str string) []error {
-	return ForAll(func(o Output) error {
+func (r *Registry) Write(str string) error {
+	return r.ForAll(func(o Output) error {
 		_, err := o.Write([]byte(str))
 		return err
 	})
+}
+
+func NewRegistry() *Registry {
+	return &Registry{}
+}
+
+// RegistryFromConf creates and registers outputs from a JSON-based configuration
+// byte slice.
+func RegistryFromConf(ow map[string]Wrapper) *Registry {
+	om := buildOutputMap(ow)
+	r := &Registry{}
+
+	for _, o := range om {
+		r.Register(o)
+	}
+
+	return r
 }

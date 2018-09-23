@@ -2,13 +2,9 @@ package spout
 
 import (
 	"encoding/json"
-	"fmt"
-
-	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/output"
-	"github.com/pkg/errors"
 )
 
 type Spout struct {
@@ -59,7 +55,7 @@ type Spout struct {
 	// The output stored here may be active or inactive, and may be changed
 	// on-the-fly.
 	// TODO: currently the outputs are stored in a global registry
-	Output map[string]output.Output
+	Output *output.Registry
 
 	// Pattern is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.
@@ -92,7 +88,7 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	s.TransactionIDs = cfg.TransactionIDs
 	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
-	s.Output = output.BuildOutputMap(cfg.Output)
+	s.Output = output.RegistryFromConf(cfg.Output)
 
 	// TODO: pattern, replacers
 	s.Pattern = cfg.Pattern
@@ -100,53 +96,26 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	return s
 }
 
-func (s *Spout) touchOuput(name string, apply output.Apply) error {
-	o, ok := s.Output[name]
-	if !ok {
-		return errors.Wrap(output.ErrNotFound,
-			fmt.Sprintf("touchOutput:%s", name))
-	}
-	apply(o)
-	return nil
-}
-
-func (s *Spout) touchAllOutput(apply output.Apply) []error {
-	var errs []error
-
-	for name := range s.Output {
-		if err := s.touchOuput(name, apply); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
-// StartOutput starts an output by its name
-func (s *Spout) StartOutput(name string) error {
-	return s.touchOuput(name, output.Register)
-}
-
-// StopOutput stops an output by its name
-func (s *Spout) StopOutput(name string) error {
-	return s.touchOuput(name, output.Unregister)
-}
-
 // StartAllOutput starts all the outputs
-func (s *Spout) StartAllOutput() []error {
-	return s.touchAllOutput(output.Register)
+func (s *Spout) StartAllOutput() error {
+	return s.Output.ForAll(func(o output.Output) error {
+		return o.Activate()
+	})
 }
 
 // StopAllOutput stops all the outputs
-func (s *Spout) StopAllOutputs() []error {
-	return s.touchAllOutput(output.Unregister)
+func (s *Spout) StopAllOutputs() error {
+	return s.Output.ForAll(func(o output.Output) error {
+		return o.Deactivate()
+	})
 }
 
 // Start kicks off the spout
 func (s *Spout) Start() error {
-	return utils.CombineErrs(s.StartAllOutput())
+	return s.StartAllOutput()
 }
 
 // Stop stops the spout
 func (s *Spout) Stop() error {
-	return utils.CombineErrs(s.StopAllOutputs())
+	return s.StopAllOutputs()
 }

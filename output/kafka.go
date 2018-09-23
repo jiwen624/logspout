@@ -13,6 +13,10 @@ func (k *Kafka) ID() ID {
 	return ID("") // TODO
 }
 
+func (k *Kafka) String() string {
+	return "Kafka"
+}
+
 func (k *Kafka) Type() Type {
 	return kafka
 }
