@@ -162,7 +162,9 @@ func main() {
 	minInterval = float64(spt.MinInterval)
 	maxInterval = float64(spt.MaxInterval)
 	duration = spt.Duration // I suppose you won't set a large number that makes an int overflow.
-	maxEvents = uint64(spt.MaxEvents)
+	if spt.MaxEvents != 0 {
+		maxEvents = uint64(spt.MaxEvents)
+	}
 
 	if minInterval > maxInterval {
 		log.Error("minInterval should be less than maxInterval")
@@ -189,11 +191,12 @@ func main() {
 
 	go console()
 
-	log.Debug("LogSpout started")
+	log.Infof("LogSpout started with %d workers.", concurrency)
 
 	if duration != 0 {
 		select {
 		case <-time.After(time.Second * time.Duration(duration)):
+			log.Debugf("Stopping logspout after: %v sec", duration)
 			for _, c := range termChans {
 				close(c)
 			}
@@ -202,7 +205,7 @@ func main() {
 	}
 
 	wg.Wait()
-	log.Debugf("LogSpout ended")
+	log.Info("LogSpout ended")
 }
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.

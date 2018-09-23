@@ -76,6 +76,7 @@ func Build(cfg *config.SpoutConfig) *Spout {
 
 	s.BurstMode = cfg.BurstMode
 	s.Duration = cfg.Duration
+	s.MaxEvents = cfg.MaxEvents
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval

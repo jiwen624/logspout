@@ -16,8 +16,8 @@ var (
 func init() {
 	flag.StringVar(&ConfigPath, "f", "logspout.json",
 		"specify the config file in json format.")
-	flag.StringVar(&LogLevel, "v", "info",
-		"debug, info, warning, error.")
+	flag.StringVar(&LogLevel, "v", "warn",
+		"debug, info, warn, error.")
 	flag.StringVar(&LogMode, "log", "dev",
 		"specify the log mode. it can be either dev or prod.")
 	flag.Parse()

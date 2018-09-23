@@ -5,7 +5,7 @@ var Debugf = sugar.Debugf
 var Debugw = sugar.Debugw
 
 var Info = sugar.Info
-var Infof = sugar.Info
+var Infof = sugar.Infof
 var Infow = sugar.Infow
 
 var Warn = sugar.Warn
