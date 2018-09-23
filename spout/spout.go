@@ -126,7 +126,14 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 		return nil, errors.Wrap(err, "build spout")
 	}
 
-	s.Output = output.RegistryFromConf(cfg.Output)
+	op, err := output.RegistryFromConf(cfg.Output)
+	if err != nil {
+		log.Warn(errors.Wrap(err, "build logspout"))
+		if op.Size() == 0 {
+			return nil, errors.Wrap(err, "no valid output")
+		}
+	}
+	s.Output = op
 
 	// TODO: define a pattern struct and move it to that struct
 	// TODO: support both Perl and PCRE
@@ -172,10 +179,7 @@ func (s *Spout) StopAllOutputs() error {
 
 // Start kicks off the spout
 func (s *Spout) Start() error {
-	if err := s.StartAllOutput(); err != nil {
-		return errors.Wrap(err, "start outputs")
-	}
-
+	// TODO: see what extra things we can do here
 	go s.console()
 
 	c := make(chan os.Signal, 10)
@@ -195,12 +199,13 @@ func (s *Spout) Start() error {
 // Stop stops the spout
 func (s *Spout) Stop() {
 	s.closeOnce.Do(func() {
+		log.Info("LogSpout is closing.")
+
 		if err := s.StopAllOutputs(); err != nil {
 			log.Error(errors.Wrap(err, "logspout stop"))
 		}
 		close(s.close)
 	})
-	log.Info("LogSpout ended")
 }
 
 func (s *Spout) sigHandler(c chan os.Signal) {

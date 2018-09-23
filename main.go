@@ -15,6 +15,7 @@ import (
 func main() {
 	utils.CheckErr(log.SetLevel(flag.LogLevel))
 
+	log.Infof("Starting up Logspout %s", version)
 	conf, err := config.FromJsonFile(flag.ConfigPath)
 	if err != nil {
 		log.Errorf("Error loading config: %s", err)
@@ -32,4 +33,5 @@ func main() {
 		return
 	}
 	defer spt.Stop()
+	log.Info("Logspout is stopped. Bye.")
 }
