@@ -25,7 +25,7 @@ type File struct {
 func (f *File) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
-	fmt.Println("a placeholder for file output")
+	// fmt.Println("a placeholder for file output")
 	return 0, nil
 }
 

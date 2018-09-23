@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/jiwen624/logspout/utils"
@@ -91,7 +93,8 @@ type Spout struct {
 	Replacers map[string]gen.Replacer
 
 	// close is the indicator to close the spout
-	close chan struct{}
+	close     chan struct{}
+	closeOnce sync.Once
 }
 
 // Build reads the config from a SoutConfig object and build a Spout object.
@@ -163,6 +166,14 @@ func (s *Spout) Start() error {
 
 	go s.console()
 
+	c := make(chan os.Signal, 10)
+	signal.Notify(c,
+		os.Interrupt,    // Ctrl-C
+		syscall.SIGTERM, // kill
+	)
+
+	go s.sigHandler(c)
+
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
 	s.ProduceLogs()
 
@@ -174,9 +185,27 @@ func (s *Spout) Stop() error {
 	if err := s.StopAllOutputs(); err != nil {
 		return errors.Wrap(err, "logspout stop")
 	}
+
 	log.Info("LogSpout ended")
 
+	s.closeOnce.Do(func() {
+		close(s.close)
+	})
 	return nil
+}
+
+func (s *Spout) sigHandler(c chan os.Signal) {
+	for sig := range c {
+		switch sig {
+		case os.Interrupt:
+			fallthrough
+		case syscall.SIGTERM:
+			s.Stop()
+		default:
+			err := fmt.Errorf("unhandled signal: %v", sig)
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 }
 
 func (s *Spout) loadRawMessage() error {

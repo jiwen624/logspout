@@ -1,7 +1,5 @@
 package output
 
-import "fmt"
-
 // For output-syslog
 const (
 	PROTOCOL  = "protocol"
@@ -24,7 +22,7 @@ func (s *Syslog) String() string {
 func (s *Syslog) Write(p []byte) (n int, err error) {
 	// TODO: use bufio to avoid excessive I/O
 	// TODO: flush the buffer when program exits
-	fmt.Println("a dumb placeholder for syslog output")
+	// fmt.Println("a dumb placeholder for syslog output")
 	return 0, nil
 }
 
