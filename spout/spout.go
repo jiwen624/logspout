@@ -3,9 +3,9 @@ package spout
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -85,7 +85,7 @@ type Spout struct {
 	// patterns defined in Pattern
 	// TODO:
 	// Replacers map[string]replacer.Replacer
-	Replacers json.RawMessage
+	Replacers map[string]gen.Replacer
 
 	// close is the indicator to close the spout
 	close chan struct{}
@@ -115,7 +115,13 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 
 	// TODO: pattern, replacers
 	s.Pattern = cfg.Pattern
-	s.Replacers = cfg.Replacement
+
+	r, err := buildReplacerMap(cfg.Replacement)
+	if err != nil {
+		return nil, errors.Wrap(err, "build replacer")
+	}
+	s.Replacers = r
+
 	return s, nil
 }
 
@@ -201,19 +207,37 @@ func (s *Spout) ProduceLogs() {
 
 	wg.Add(s.Concurrency) // Add it before you start the goroutine.
 
+	var matches = make([][]string, 0)
+	var names = make([][]string, 0)
+
+	for idx, ptn := range s.Pattern {
+		re := regexp.MustCompile(ptn)
+		matches = append(matches, re.FindStringSubmatch(s.rawMsgs[idx]))
+		names = append(names, re.SubexpNames())
+
+		if len(matches[idx]) == 0 {
+			log.Errorf("the re pattern doesn't match the sample log in #%d", idx)
+			return
+		}
+
+		// Remove the first one as it is the whole string.
+		matches[idx] = matches[idx][1:]
+		names[idx] = names[idx][1:]
+	}
+
+	for idx, match := range matches {
+		log.Debugf("   pattern #%d", idx)
+		for i, group := range match {
+			log.Debugf("       - %s: %s", names[idx][i], group)
+		}
+	}
+
 	for i := 0; i < s.Concurrency; i++ {
 		log.Debugf("spawned worker #%d", i)
 
 		termChans = append(termChans, make(chan struct{}))
 
-		var replacerMap map[string]gen.Replacer
-		log.Debugf("Replacement: %s", string(s.Replacers))
-		if replacerMap, err := BuildReplacerMap(spt.Replacers); err != nil {
-			log.Error(err)
-			return
-
-			go s.popNewLogs(matches, names, &wg, termChans[i])
-		}
+		go s.popNewLogs(matches, names, &wg, cCounter, resChan)
 	}
 
 	if s.Duration != 0 {

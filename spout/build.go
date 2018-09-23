@@ -1,4 +1,4 @@
-package main
+package spout
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ import (
 )
 
 // BuildReplacerMap builds and returns an string-Replacer map for future use.
-func BuildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
+func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 	var replacerMap = make(map[string]gen.Replacer)
 
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
