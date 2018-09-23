@@ -1,6 +1,7 @@
 package output
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"io"
 	"sync"
@@ -95,6 +96,13 @@ func build(m Wrapper) Output {
 	utils.CheckErr(json.Unmarshal(m.Raw, op))
 
 	return op
+}
+
+func id(s string) ID {
+	h := sha1.New()
+	h.Write([]byte(s))
+	id := h.Sum(nil)
+	return ID(id)
 }
 
 // Initializer defines the initializer type which creates an empty output object

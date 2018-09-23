@@ -1,17 +1,21 @@
 package output
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"os"
+)
 
 type Console struct {
-	FileName string
+	FileName string `json:"fileName"`
+	file     io.Writer
 }
 
 func (c *Console) Write(p []byte) (n int, err error) {
-	// TODO: use bufio to avoid excessive I/O
-	// TODO: flush the buffer when program exits
-	// fmt.Println("a placeholder for console output")
-
-	return 0, nil // TODO
+	if c.file == nil {
+		return 0, fmt.Errorf("output is null: %s", c)
+	}
+	return c.file.Write(p)
 }
 
 func (c *Console) String() string {
@@ -19,7 +23,7 @@ func (c *Console) String() string {
 }
 
 func (c *Console) ID() ID {
-	return ID("") // TODO
+	return id(c.String())
 }
 
 func (c *Console) Type() Type {
@@ -27,11 +31,18 @@ func (c *Console) Type() Type {
 }
 
 func (c *Console) Activate() error {
-	// TODO
+	switch c.FileName {
+	case "stdout":
+		c.file = os.Stdout
+	case "stderr":
+		c.file = os.Stderr
+	default:
+		return fmt.Errorf("invalid console type: %s", c)
+	}
 	return nil
 }
 
 func (c *Console) Deactivate() error {
-	// TODO
+	c.file = nil
 	return nil
 }

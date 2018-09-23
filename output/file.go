@@ -22,7 +22,7 @@ type File struct {
 }
 
 func (f *File) Write(p []byte) (n int, err error) {
-	// TODO: write in parallel?
+	// TODO: write in parallel, pub/sub?
 	var errs []error
 	for _, l := range f.loggers {
 		_, err := l.Write(p)
@@ -34,11 +34,12 @@ func (f *File) Write(p []byte) (n int, err error) {
 }
 
 func (f *File) String() string {
-	return fmt.Sprintf("File{FileName:%s}", f.FileName)
+	return fmt.Sprintf("File{FileName:%s, Directory:%s}",
+		f.FileName, f.Directory)
 }
 
 func (f *File) ID() ID {
-	return ID("") // TODO
+	return id(f.String())
 }
 
 func (f *File) Type() Type {
