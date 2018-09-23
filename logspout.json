@@ -52,7 +52,7 @@
       }
     },
     "severity": {
-      "type": "fixed-list",
+      "type": "fixedList",
       "attrs": {
         "method": "random",
         "listFile": "samples/severity.sample"
@@ -67,19 +67,19 @@
       }
     },
     "ipaddress": {
-      "type": "looks-real",
+      "type": "looksReal",
       "attrs": {
         "method": "ipv4china"
       }
     },
     "phone": {
-      "type": "looks-real",
+      "type": "looksReal",
       "attrs": {
         "method": "cellphone-china"
       }
     },
     "user": {
-      "type": "fixed-list",
+      "type": "fixedList",
       "attrs": {
         "method": "random",
         "list": [

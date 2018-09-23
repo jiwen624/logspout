@@ -66,7 +66,7 @@ type SpoutConfig struct {
 	// patterns defined in Pattern
 	//
 	// Replacement map[string]map[string]interface{} `json:"replacement"`
-	Replacement json.RawMessage
+	Replacement json.RawMessage `json:"replacement"`
 }
 
 var (
