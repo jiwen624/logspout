@@ -1,55 +1,21 @@
 package log
 
-func Debug(args ...interface{}) {
-	sugar.Debug(args)
-}
-func Debugf(template string, args ...interface{}) {
-	sugar.Debugf(template, args...)
-}
-func Debugw(msg string, keysAndValues ...interface{}) {
-	sugar.Debugw(msg, keysAndValues...)
-}
+var Debug = sugar.Debug
+var Debugf = sugar.Debugf
+var Debugw = sugar.Debugw
 
-func Info(args ...interface{}) {
-	sugar.Info(args)
-}
+var Info = sugar.Info
+var Infof = sugar.Info
+var Infow = sugar.Infow
 
-func Infof(template string, args ...interface{}) {
-	sugar.Infof(template, args...)
-}
-func Infow(msg string, keysAndValues ...interface{}) {
-	sugar.Infow(msg, keysAndValues...)
-}
+var Warn = sugar.Warn
+var Warnf = sugar.Warnf
+var Warnw = sugar.Warnw
 
-func Warn(args ...interface{}) {
-	sugar.Warn(args)
-}
+var Error = sugar.Error
+var Errorf = sugar.Errorf
+var Errorw = sugar.Errorw
 
-func Warnf(template string, args ...interface{}) {
-	sugar.Warnf(template, args...)
-}
-func Warnw(msg string, keysAndValues ...interface{}) {
-	sugar.Warnw(msg, keysAndValues...)
-}
-
-func Error(args ...interface{}) {
-	sugar.Error(args)
-}
-
-func Errorf(template string, args ...interface{}) {
-	sugar.Errorf(template, args...)
-}
-func Errorw(msg string, keysAndValues ...interface{}) {
-	sugar.Errorw(msg, keysAndValues...)
-}
-
-func Fatal(args ...interface{}) {
-	sugar.Fatal(args)
-}
-
-func Fatalf(template string, args ...interface{}) {
-	sugar.Fatalf(template, args...)
-}
-func Fatalw(msg string, keysAndValues ...interface{}) {
-	sugar.Fatalw(msg, keysAndValues...)
-}
+var Fatal = sugar.Fatal
+var Fatalf = sugar.Fatalf
+var Fatalw = sugar.Fatalw

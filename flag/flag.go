@@ -8,13 +8,17 @@ var (
 
 	// LogLevel defines the log level in string format
 	LogLevel string
+
+	// LogMode can be either dev (development mode) or prod (production)
+	LogMode string
 )
 
 func init() {
 	flag.StringVar(&ConfigPath, "f", "logspout.json",
-		"specify the config file in json format")
+		"specify the config file in json format.")
 	flag.StringVar(&LogLevel, "v", "info",
-		"Log level: debug, info, warning, error")
-
+		"debug, info, warning, error.")
+	flag.StringVar(&LogMode, "log", "dev",
+		"specify the log mode. it can be either dev or prod.")
 	flag.Parse()
 }

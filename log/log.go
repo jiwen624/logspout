@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jiwen624/logspout/flag"
+
 	"github.com/pkg/errors"
 
 	"go.uber.org/zap"
@@ -12,14 +14,17 @@ import (
 )
 
 func init() {
-	// lgrCfg = zap.NewProductionConfig()
-	lgrCfg = zap.NewDevelopmentConfig()
+	if flag.LogMode == "prod" {
+		lgrCfg = zap.NewProductionConfig()
+	} else {
+		lgrCfg = zap.NewDevelopmentConfig()
+	}
 	lgrCfg.Level.SetLevel(zap.InfoLevel)
-	lgr, err := lgrCfg.Build()
+	lgr, err := lgrCfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrap(err, "logspout err"))
 	}
-	sugar = lgr.Sugar()
+	sugar = *lgr.Sugar()
 }
 
 type Level zapcore.Level
@@ -42,7 +47,9 @@ var levelMap = map[string]Level{
 
 var (
 	lgrCfg zap.Config
-	sugar  *zap.SugaredLogger
+	// sugar must be an object rather than a pointer, otherwise the wrappers will
+	// point to an uninitialized logger.
+	sugar zap.SugaredLogger
 )
 
 func SetLevel(level string) {
