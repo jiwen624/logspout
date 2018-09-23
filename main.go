@@ -33,9 +33,7 @@ var duration = 0
 var maxEvents uint64 = math.MaxUint64
 var concurrency = 1
 var duplicate = 1
-var consolePort = "10306"
 var highTide = false
-var reconvert = true
 var uniform = true
 var trans = false
 var transIds = make([]string, 0)
@@ -189,7 +187,7 @@ func main() {
 		go PopNewLogs(logger, replacerMap, matches, names, &wg, termChans[i])
 	}
 
-	go console()
+	go console(spt.ConsolePort)
 
 	log.Infof("LogSpout started with %d workers.", concurrency)
 

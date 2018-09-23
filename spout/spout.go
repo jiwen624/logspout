@@ -25,6 +25,10 @@ type Spout struct {
 	// MaxEvents means the maximum number of events logspout will generate
 	MaxEvents int
 
+	// ConsolePort specifies the port for management console. The console is
+	// disabled if the port is 0 (the default value)
+	ConsolePort int
+
 	// Concurrency defines the number of workers to generate logs concurrently.
 	Concurrency int
 
@@ -77,6 +81,7 @@ func Build(cfg *config.SpoutConfig) *Spout {
 	s.BurstMode = cfg.BurstMode
 	s.Duration = cfg.Duration
 	s.MaxEvents = cfg.MaxEvents
+	s.ConsolePort = cfg.ConsolePort
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval

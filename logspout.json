@@ -4,6 +4,7 @@
   "minInterval": 1,
   "duration": 0,
   "maxEvents": 10,
+  "consolePort": 0,
   "maxInterval": 2,
   "logType": "weblogic",
   "sampleFile": "samples/sample.log",

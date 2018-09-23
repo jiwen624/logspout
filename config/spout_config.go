@@ -29,6 +29,10 @@ type SpoutConfig struct {
 	// A zero value (or non-exist) means it will run infinitely
 	MaxEvents int `json:"maxEvents"`
 
+	// ConsolePort specifies the port for management console. The console is
+	// disabled if the port is 0 (the default value)
+	ConsolePort int `json:"consolePort"`
+
 	// Concurrency defines the number of workers to generate logs concurrently.
 	Concurrency int `json:"concurrency"`
 

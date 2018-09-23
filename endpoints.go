@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/jiwen624/logspout/flag"
+	"github.com/jiwen624/logspout/log"
 )
 
 // Counter stores the counter values returned to the client
@@ -77,11 +78,16 @@ func currConfig(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func console() {
+func console(port int) {
+	if port == 0 {
+		log.Infof("Management console is disabled with port=%d", port)
+		return
+	}
+
 	http.HandleFunc("/counter", fetchCounter)
 	http.HandleFunc("/config", currConfig)
 
-	err := http.ListenAndServe(":"+consolePort, nil)
+	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
 	if err != nil {
 		log.Fatal("listen and serve: ", err)
 	}
