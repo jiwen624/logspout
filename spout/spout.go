@@ -4,11 +4,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"math"
 	"os"
+	"os/signal"
 	"regexp"
-	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/gen"
 
@@ -56,10 +60,10 @@ type Spout struct {
 	// from.
 	SampleFilePath string
 
-	// TransactionIDs defines the transaction IDs for transaction mode. Under
+	// TransactionID defines the transaction IDs for transaction mode. Under
 	// transaction mode, if a certain number of logs have the same value in these
 	// keys, they form a transaction.
-	TransactionIDs []string
+	TransactionID []string
 
 	// MaxIntraTransactionLatency defines the maximum latency of a transaction (
 	// I need a better name for it).
@@ -88,35 +92,53 @@ type Spout struct {
 	Replacers map[string]gen.Replacer
 
 	// close is the indicator to close the spout
-	close chan struct{}
+	close     chan struct{}
+	closeOnce sync.Once
+}
+
+func NewDefault() *Spout {
+	return &Spout{close: make(chan struct{})}
 }
 
 // Build reads the config from a SoutConfig object and build a Spout object.
 func Build(cfg *config.SpoutConfig) (*Spout, error) {
-	s := &Spout{}
+	s := NewDefault()
 
 	s.BurstMode = cfg.BurstMode
+	s.UniformLoad = cfg.UniformLoad
 	s.Duration = cfg.Duration
+
 	s.MaxEvents = cfg.MaxEvents
+	if s.MaxEvents == 0 {
+		s.MaxEvents = int(math.MaxInt32)
+	}
+
 	s.ConsolePort = cfg.ConsolePort
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval
-
 	s.LogType = cfg.LogType
 	s.SampleFilePath = cfg.SampleFilePath
+	s.TransactionID = cfg.TransactionID
+	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
+
 	if err := s.loadRawMessage(); err != nil {
 		return nil, errors.Wrap(err, "build spout")
 	}
-	s.TransactionIDs = cfg.TransactionIDs
-	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
 
-	s.Output = output.RegistryFromConf(cfg.Output)
+	op, err := output.RegistryFromConf(cfg.Output)
+	if err != nil {
+		log.Warn(errors.Wrap(err, "build logspout"))
+		if op.Size() == 0 {
+			return nil, errors.Wrap(err, "no valid output")
+		}
+	}
+	s.Output = op
 
-	// TODO: pattern, replacers
-	s.Pattern = cfg.Pattern
-	if len(s.rawMsgs) != len(s.Pattern) {
-		return nil, fmt.Errorf("%d sample event(s) but %d pattern(s) found", len(s.rawMsgs), len(s.Pattern))
+	// TODO: define a pattern struct and move it to that struct
+	// TODO: support both Perl and PCRE
+	for _, ptn := range cfg.Pattern {
+		s.Pattern = append(s.Pattern, utils.ReConvert(ptn))
 	}
 
 	r, err := buildReplacerMap(cfg.Replacement)
@@ -125,6 +147,19 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	}
 	s.Replacers = r
 
+	return s.SanityCheck()
+}
+
+// TODO: add more checks
+func (s *Spout) SanityCheck() (*Spout, error) {
+	var errs []error
+	rl := len(s.rawMsgs)
+	pl := len(s.Pattern)
+	if rl != pl {
+		e := fmt.Errorf("%d sample event(s) but %d pattern(s) found", rl, pl)
+		errs = append(errs, e)
+		return nil, utils.CombineErrs(errs)
+	}
 	return s, nil
 }
 
@@ -144,26 +179,48 @@ func (s *Spout) StopAllOutputs() error {
 
 // Start kicks off the spout
 func (s *Spout) Start() error {
-	if err := s.StartAllOutput(); err != nil {
-		return errors.Wrap(err, "logspout start")
-	}
-
+	// TODO: see what extra things we can do here
 	go s.console()
 
-	s.ProduceLogs()
+	c := make(chan os.Signal, 10)
+	signal.Notify(c,
+		os.Interrupt,    // Ctrl-C
+		syscall.SIGTERM, // kill
+	)
+
+	go s.sigHandler(c)
+
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+	s.ProduceLogs()
 
 	return nil
 }
 
 // Stop stops the spout
-func (s *Spout) Stop() error {
-	if err := s.StopAllOutputs(); err != nil {
-		return errors.Wrap(err, "logspout stop")
-	}
-	log.Info("LogSpout ended")
+func (s *Spout) Stop() {
+	s.closeOnce.Do(func() {
+		log.Info("LogSpout is closing.")
 
-	return nil
+		if err := s.StopAllOutputs(); err != nil {
+			log.Error(errors.Wrap(err, "logspout stop"))
+		}
+		close(s.close)
+	})
+}
+
+func (s *Spout) sigHandler(c chan os.Signal) {
+	for sig := range c {
+		switch sig {
+		case os.Interrupt:
+			fallthrough
+		case syscall.SIGTERM:
+			// Don't call os.Exit(), wait until all workers are closed.
+			s.Stop()
+		default:
+			err := fmt.Errorf("unhandled signal: %v", sig)
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
 }
 
 func (s *Spout) loadRawMessage() error {
@@ -178,30 +235,30 @@ func (s *Spout) loadRawMessage() error {
 	var buffer bytes.Buffer
 	var vs string
 	for scanner.Scan() {
+		vs = scanner.Text()
 		// Use blank line as the delimiter of a log event.
-		if vs = scanner.Text(); vs == "" {
-			s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+		if vs == "" {
+			if buffer.Len() == 0 {
+				continue
+			}
+			s.rawMsgs = append(s.rawMsgs, buffer.String())
 			buffer.Reset()
 			continue
 		}
-		buffer.WriteString(scanner.Text())
+		buffer.WriteString(vs)
 		buffer.WriteString("\n") // Multi-line log support
 	}
 
 	if buffer.Len() != 0 {
-		s.rawMsgs = append(s.rawMsgs, strings.TrimRight(buffer.String(), "\n"))
+		s.rawMsgs = append(s.rawMsgs, buffer.String())
 	}
 
-	for idx, rawMsg := range s.rawMsgs {
-		log.Debugf("**raw message#%d**: %s", idx, rawMsg)
-	}
 	return nil
 }
 
 func (s *Spout) ProduceLogs() {
 	// goroutine for future use, not necessary for now.
 	var wg sync.WaitGroup
-	var termChans = make([]chan struct{}, 0, s.Concurrency)
 
 	wg.Add(s.Concurrency) // Add it before you start the goroutine.
 
@@ -231,21 +288,15 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		log.Debugf("spawned worker #%d", i)
-
-		termChans = append(termChans, make(chan struct{}))
-
-		go s.popNewLogs(matches, names, &wg, cCounter, resChan)
+		go s.popNewLogs(matches, names, &wg, cCounter, resChan, i)
 	}
 
 	if s.Duration != 0 {
 		select {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
 			log.Debugf("Stopping logspout after: %v sec", s.Duration)
-			for _, c := range termChans {
-				close(c)
-			}
-			termChans = make([]chan struct{}, 0)
+			// TODO: make sure it's closed only once
+			close(s.close)
 		}
 	}
 

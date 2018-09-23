@@ -2,8 +2,11 @@
 
 package utils
 
-func PanicOnErr(e error) {
+import "github.com/jiwen624/logspout/log"
+
+// CheckErr will print the error and panic
+func CheckErr(e error) {
 	if e != nil {
-		panic(e)
+		log.Fatal(e)
 	}
 }

@@ -52,10 +52,10 @@ type SpoutConfig struct {
 	// from.
 	SampleFilePath string `json:"sampleFile"`
 
-	// TransactionIDs defines the transaction IDs for transaction mode. Under
+	// TransactionID defines the transaction IDs for transaction mode. Under
 	// transaction mode, if a certain number of logs have the same value in these
 	// keys, they form a transaction.
-	TransactionIDs []string `json:"transactionId"`
+	TransactionID []string `json:"transactionId"`
 
 	// MaxIntraTransactionLatency defines the maximum latency of a transaction (
 	// I need a better name for it).

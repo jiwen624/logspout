@@ -1,6 +1,7 @@
 package output
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"io"
 	"sync"
@@ -89,12 +90,19 @@ func buildOutputMap(ow map[string]Wrapper) map[string]Output {
 	return om
 }
 
-// build builds a single output instance based on the wrapper.
+// buildFile builds a single output instance based on the wrapper.
 func build(m Wrapper) Output {
 	op := outputMap[m.T]()
-	utils.PanicOnErr(json.Unmarshal(m.Raw, op))
+	utils.CheckErr(json.Unmarshal(m.Raw, op))
 
 	return op
+}
+
+func id(s string) ID {
+	h := sha1.New()
+	h.Write([]byte(s))
+	id := h.Sum(nil)
+	return ID(id)
 }
 
 // Initializer defines the initializer type which creates an empty output object

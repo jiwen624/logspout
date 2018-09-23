@@ -28,6 +28,12 @@ var (
 	ErrEmptyRegistry = errors.New("registry is empty")
 )
 
+func (r *Registry) Size() int {
+	r.Lock()
+	defer r.Unlock()
+	return len(r.m)
+}
+
 func (r *Registry) String() string {
 	r.Lock()
 	defer r.Unlock()
@@ -41,7 +47,7 @@ func (r *Registry) Register(output Output) error {
 	defer r.Unlock()
 
 	if err := output.Activate(); err != nil {
-		return errors.Wrap(err, "register failed:")
+		return errors.Wrap(err, "register failed")
 	}
 
 	r.Do(func() {
@@ -146,13 +152,16 @@ func NewRegistry() *Registry {
 
 // RegistryFromConf creates and registers outputs from a JSON-based configuration
 // byte slice.
-func RegistryFromConf(ow map[string]Wrapper) *Registry {
+func RegistryFromConf(ow map[string]Wrapper) (*Registry, error) {
 	om := buildOutputMap(ow)
 	r := &Registry{}
 
+	var errs []error
 	for _, o := range om {
-		r.Register(o)
+		if err := r.Register(o); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
-	return r
+	return r, utils.CombineErrs(errs)
 }

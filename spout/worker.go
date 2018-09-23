@@ -7,15 +7,20 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/jiwen624/logspout/log"
+
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/gen"
-	rng "github.com/leesper/go_rng"
+	"github.com/leesper/go_rng"
 )
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
 func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, cCounter *sync.Cond,
-	resChan chan uint64) {
+	resChan chan uint64, idx int) {
+	log.Debugf("spawned worker #%d", idx)
+	defer log.Infof("worker #%d is exiting.", idx)
+
 	var newLog string
 	defer wg.Done()
 
@@ -51,7 +56,7 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 			idx := utils.StrIndex(names[currMsg], k)
 			if idx == -1 {
 				continue
-			} else if currMsg == 0 || utils.StrIndex(s.TransactionIDs, k) == -1 {
+			} else if currMsg == 0 || utils.StrIndex(s.TransactionID, k) == -1 {
 				if s, err := v.ReplacedValue(grng); err == nil {
 					matches[currMsg][idx] = s
 				}
@@ -71,7 +76,7 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 		}
 
 		// It never sleeps in hightide mode.
-		if len(s.TransactionIDs) != 0 && s.BurstMode == false {
+		if len(s.TransactionID) != 0 && s.BurstMode == false {
 			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, s.MaxIntraTransactionLatency)))
 		}
 

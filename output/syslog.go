@@ -1,5 +1,12 @@
 package output
 
+import (
+	"fmt"
+	slog "log/syslog"
+
+	"github.com/pkg/errors"
+)
+
 // For output-syslog
 const (
 	PROTOCOL  = "protocol"
@@ -12,21 +19,23 @@ type Syslog struct {
 	NetAddr    string `json:"netAddr"`
 	MaxBackups int    `json:"maxBackups"`
 	Tag        string `json:"tag"`
+	logger     *slog.Writer
 }
 
 func (s *Syslog) String() string {
-	return "Syslog"
+	return fmt.Sprintf("Syslog{Protocl:%s,NetAddr:%s,Tag:%s}",
+		s.Protocol, s.NetAddr, s.Tag)
 }
 
-// TODO: Write
 func (s *Syslog) Write(p []byte) (n int, err error) {
-	// TODO: use bufio to avoid excessive I/O
-	// TODO: flush the buffer when program exits
-	return 0, nil
+	if s.logger == nil {
+		return 0, fmt.Errorf("output is null: %s", s)
+	}
+	return s.logger.Write(p)
 }
 
 func (s *Syslog) ID() ID {
-	return ID("") // TODO
+	return id(s.String())
 }
 
 func (s *Syslog) Type() Type {
@@ -34,11 +43,41 @@ func (s *Syslog) Type() Type {
 }
 
 func (s *Syslog) Activate() error {
-	// TODO
+	if err := s.buildSyslog(); err != nil {
+		return errors.Wrap(err, "activate syslog")
+	}
 	return nil
 }
 
 func (s *Syslog) Deactivate() error {
-	// TODO
+	return s.logger.Close()
+}
+
+// buildSyslog extracts output parameters from the config file and build the
+// syslog output
+func (s *Syslog) buildSyslog() error {
+	var (
+		protocol = "udp"
+		netaddr  = "localhost:514"
+		level    = slog.LOG_INFO
+		tag      = "logspout"
+	)
+
+	if s.Protocol != "" {
+		protocol = s.Protocol
+	}
+
+	if s.NetAddr != "" {
+		netaddr = s.NetAddr
+	}
+	if s.Tag != "" {
+		tag = s.Tag
+	}
+	// TODO: The syslog default level is hardcoded for now.
+	w, err := slog.Dial(protocol, netaddr, level, tag)
+	if err != nil {
+		return errors.Wrap(err, "build syslog")
+	}
+	s.logger = w
 	return nil
 }
