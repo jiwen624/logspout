@@ -8,10 +8,9 @@ import (
 	"time"
 
 	"github.com/jiwen624/logspout/log"
-
+	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
 
-	"github.com/jiwen624/logspout/gen"
 	"github.com/leesper/go_rng"
 )
 
@@ -77,11 +76,11 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 
 		// It never sleeps in hightide mode.
 		if len(s.TransactionID) != 0 && s.BurstMode == false {
-			time.Sleep(time.Millisecond * time.Duration(gen.SimpleGaussian(grng, s.MaxIntraTransactionLatency)))
+			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, s.MaxIntraTransLat)))
 		}
 
 		currMsg++
-		if currMsg >= len(s.rawMsgs) {
+		if currMsg >= len(s.seedLogs) {
 			currMsg = 0
 
 			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
@@ -92,7 +91,7 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 					sleepMsec = s.MinInterval
 				} else {
 					if s.UniformLoad == true {
-						sleepMsec = s.MinInterval + gen.SimpleGaussian(grng, int(s.MaxInterval-s.MinInterval))
+						sleepMsec = s.MinInterval + replacer.SimpleGaussian(grng, int(s.MaxInterval-s.MinInterval))
 					} else { // There should be a better algorithm here.
 						x := float64((time.Now().Unix() % 86400) / 13751)
 						y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619

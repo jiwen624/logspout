@@ -9,19 +9,21 @@ import (
 
 var (
 	_TypeNameToValue = map[string]Type{
-		"console": console,
-		"file":    file,
-		"syslog":  syslog,
-		"kafka":   kafka,
-		"es":      es,
+		"unspecified": unspecified,
+		"console":     console,
+		"file":        file,
+		"syslog":      syslog,
+		"kafka":       kafka,
+		"es":          es,
 	}
 
 	_TypeValueToName = map[Type]string{
-		console: "console",
-		file:    "file",
-		syslog:  "syslog",
-		kafka:   "kafka",
-		es:      "es",
+		unspecified: "unspecified",
+		console:     "console",
+		file:        "file",
+		syslog:      "syslog",
+		kafka:       "kafka",
+		es:          "es",
 	}
 )
 
@@ -29,11 +31,12 @@ func init() {
 	var v Type
 	if _, ok := interface{}(v).(fmt.Stringer); ok {
 		_TypeNameToValue = map[string]Type{
-			interface{}(console).(fmt.Stringer).String(): console,
-			interface{}(file).(fmt.Stringer).String():    file,
-			interface{}(syslog).(fmt.Stringer).String():  syslog,
-			interface{}(kafka).(fmt.Stringer).String():   kafka,
-			interface{}(es).(fmt.Stringer).String():      es,
+			interface{}(unspecified).(fmt.Stringer).String(): unspecified,
+			interface{}(console).(fmt.Stringer).String():     console,
+			interface{}(file).(fmt.Stringer).String():        file,
+			interface{}(syslog).(fmt.Stringer).String():      syslog,
+			interface{}(kafka).(fmt.Stringer).String():       kafka,
+			interface{}(es).(fmt.Stringer).String():          es,
 		}
 	}
 }

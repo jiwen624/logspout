@@ -91,6 +91,15 @@ func (r *Registry) Unregister(output Output) error {
 	return nil
 }
 
+// Get accepts and output ID and returns the output object
+func (r *Registry) Get(id ID) (output Output, err error) {
+	err = r.ForOne(func(o Output) error {
+		output = o
+		return nil
+	}, unspecified, id)
+	return
+}
+
 // ForEach applies the operation to each output which matches the predicate
 func (r *Registry) ForEach(apply Apply, predicate Predicate) error {
 	r.RLock()
@@ -130,9 +139,18 @@ func (r *Registry) ForOne(apply Apply, typ Type, id ID) error {
 		return ErrEmptyRegistry
 	}
 
-	if tm, ok := r.m[typ]; ok {
-		if o, ok := tm[id]; ok {
-			return apply(o)
+	var typs []Type
+	if typ == unspecified {
+		typs = Types()
+	} else {
+		typs = append(typs, typ)
+	}
+
+	for _, tp := range typs {
+		if tm, ok := r.m[tp]; ok {
+			if o, ok := tm[id]; ok {
+				return apply(o)
+			}
 		}
 	}
 	return ErrNotFound

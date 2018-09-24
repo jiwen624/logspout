@@ -1,5 +1,6 @@
 package pattern
 
 type Pattern interface {
-	// TODO
+	Matches(string) []string
+	Names() []string
 }

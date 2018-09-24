@@ -57,7 +57,7 @@ type SpoutConfig struct {
 	// keys, they form a transaction.
 	TransactionID []string `json:"transactionId"`
 
-	// MaxIntraTransactionLatency defines the maximum latency of a transaction (
+	// MaxIntraTransLat defines the maximum latency of a transaction (
 	// I need a better name for it).
 	MaxIntraTransactionLatency int `json:"maxIntraTransactionLatency"`
 
@@ -65,12 +65,12 @@ type SpoutConfig struct {
 	// files or some message queues
 	Output map[string]output.Wrapper `json:"output"`
 
-	// Pattern is a list of regular patterns that define the fields to be repalced
+	// Patterns is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.
 	Pattern []string `json:"pattern"`
 
 	// Replacement defines the replacement policies for the fields extracted by
-	// patterns defined in Pattern
+	// patterns defined in Patterns
 	//
 	// Replacement map[string]map[string]interface{} `json:"replacement"`
 	Replacement json.RawMessage `json:"replacement"`
