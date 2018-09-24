@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-
-	"github.com/jiwen624/logspout/flag"
 )
 
 const (
@@ -26,7 +24,7 @@ func readFile(path string, sizeLimit int64) ([]byte, error) {
 		return nil, fmt.Errorf("larger than %d bytes", sizeLimit)
 	}
 
-	cf, err := ioutil.ReadFile(flag.ConfigPath)
+	cf, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "read file")
 	}
