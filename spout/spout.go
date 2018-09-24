@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jiwen624/logspout/utils"
+	"github.com/jiwen624/logspout/replacer"
 
-	"github.com/jiwen624/logspout/gen"
+	"github.com/jiwen624/logspout/utils"
 
 	"github.com/pkg/errors"
 
@@ -89,7 +89,7 @@ type Spout struct {
 	// patterns defined in Pattern
 	// TODO:
 	// Replacers map[string]replacer.Replacer
-	Replacers map[string]gen.Replacer
+	Replacers map[string]replacer.Replacer
 
 	// close is the indicator to close the spout
 	close     chan struct{}
@@ -141,7 +141,7 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 		s.Pattern = append(s.Pattern, utils.ReConvert(ptn))
 	}
 
-	r, err := buildReplacerMap(cfg.Replacement)
+	r, err := replacer.Build(cfg.Replacement)
 	if err != nil {
 		return nil, errors.Wrap(err, "build replacer")
 	}

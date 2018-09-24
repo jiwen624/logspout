@@ -1,4 +1,4 @@
-package spout
+package replacer
 
 import (
 	"bufio"
@@ -9,13 +9,12 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/jiwen624/logspout/config"
-	"github.com/jiwen624/logspout/gen"
 	"github.com/jiwen624/logspout/log"
 )
 
-// BuildReplacerMap builds and returns an string-Replacer map for future use.
-func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
-	var replacerMap = make(map[string]gen.Replacer)
+// Build builds and returns an string-Replacer map for future use.
+func Build(replace []byte) (map[string]Replacer, error) {
+	var replacerMap = make(map[string]Replacer)
 
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		log.Debugf("BuildReplacerMap parsing:\nkey: %s\nvalue:%s\n", string(key), string(value))
@@ -89,11 +88,11 @@ func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 				}
 
 			}
-			replacerMap[k] = gen.NewFixedListReplacer(c, vr, 0)
+			replacerMap[k] = NewFixedListReplacer(c, vr, 0)
 
 		case config.TIMESTAMP:
 			if tsFmt, err := jsonparser.GetString(p, config.FORMAT); err == nil {
-				replacerMap[k] = gen.NewTimeStampReplacer(tsFmt)
+				replacerMap[k] = NewTimeStampReplacer(tsFmt)
 			} else {
 				return notFound(config.FORMAT, err)
 			}
@@ -111,7 +110,7 @@ func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			if err != nil {
 				return notFound(config.MAX, err)
 			}
-			replacerMap[k] = gen.NewIntegerReplacer(c, min, max, min)
+			replacerMap[k] = NewIntegerReplacer(c, min, max, min)
 
 		case config.FLOAT:
 			min, err := jsonparser.GetFloat(p, config.MIN)
@@ -127,7 +126,7 @@ func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			if err != nil {
 				return notFound(config.MIN, err)
 			}
-			replacerMap[k] = gen.NewFloatReplacer(min, max, precision)
+			replacerMap[k] = NewFloatReplacer(min, max, precision)
 
 		case config.STRING:
 			var chars = ""
@@ -143,15 +142,15 @@ func buildReplacerMap(replace []byte) (map[string]gen.Replacer, error) {
 			if c, err := jsonparser.GetString(p, config.CHARS); err == nil {
 				chars = c
 			}
-			replacerMap[k] = gen.NewStringReplacer(chars, min, max)
+			replacerMap[k] = NewStringReplacer(chars, min, max)
 
 		case config.LOOKSREAL:
 			c, err := jsonparser.GetString(p, config.METHOD)
 			if err != nil {
 				return notFound(config.METHOD, err)
 			}
-			gen.InitLooksRealParms(parms, c)
-			replacerMap[k] = gen.NewLooksReal(c, parms)
+			InitLooksRealParms(parms, c)
+			replacerMap[k] = NewLooksReal(c, parms)
 		}
 		return err
 	}
