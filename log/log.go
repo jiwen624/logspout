@@ -44,6 +44,24 @@ var levelMap = map[string]Level{
 	"fatal": FATAL,
 }
 
+func ToString(l Level) (s string) {
+	switch l {
+	case DEBUG:
+		s = "debug"
+	case INFO:
+		s = "info"
+	case WARN:
+		s = "warn"
+	case ERROR:
+		s = "error"
+	case FATAL:
+		s = "fatal"
+	default:
+		s = "invalid"
+	}
+	return s
+}
+
 var (
 	lgrCfg zap.Config
 
@@ -62,4 +80,8 @@ func SetLevel(level string) error {
 
 	lgrCfg.Level.SetLevel(zapcore.Level(lvl))
 	return nil
+}
+
+func GetLevel() string {
+	return ToString(Level(lgrCfg.Level.Level()))
 }

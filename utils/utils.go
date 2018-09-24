@@ -31,22 +31,6 @@ func StrIndex(vs []string, t string) int {
 	return -1
 }
 
-// ReConvert does the pre-process of the regular expression literal.
-// It does the following things:
-// 1. Remove P before captured group names
-// 2. Add parenthesises to the other parts of the log event string.
-func ReConvert(ptn string) string {
-	s := strings.Split(ptn, "")
-	for i := 1; i < len(s)-1; i++ {
-		if s[i] == "?" && s[i-1] == "(" && s[i+1] == "<" {
-			// Replace "?" with "?P", it has a bug but works for 99% of the cases.
-			// TODO: I'll keep it before I have time to write a better one.
-			s[i] = "?P"
-		}
-	}
-	return strings.Join(s, "")
-}
-
 // StrSlice2DCopy is a simple helper function to make a deep copy of a 2-dimensional string slice.
 func StrSlice2DCopy(src [][]string) (cpy [][]string) {
 	cpy = make([][]string, len(src))
