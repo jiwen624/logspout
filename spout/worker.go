@@ -7,10 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/jiwen624/logspout/replacer"
-
 	"github.com/jiwen624/logspout/log"
-
+	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/leesper/go_rng"
@@ -78,11 +76,11 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, c
 
 		// It never sleeps in hightide mode.
 		if len(s.TransactionID) != 0 && s.BurstMode == false {
-			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, s.MaxIntraTransactionLatency)))
+			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, s.MaxIntraTransLat)))
 		}
 
 		currMsg++
-		if currMsg >= len(s.rawMsgs) {
+		if currMsg >= len(s.seedLogs) {
 			currMsg = 0
 
 			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)

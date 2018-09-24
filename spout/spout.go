@@ -7,28 +7,27 @@ import (
 	"math"
 	"os"
 	"os/signal"
-	"regexp"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/jiwen624/logspout/replacer"
-
-	"github.com/jiwen624/logspout/utils"
+	"github.com/jiwen624/logspout/pattern"
 
 	"github.com/pkg/errors"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/output"
+	"github.com/jiwen624/logspout/replacer"
+	"github.com/jiwen624/logspout/utils"
 )
 
 type Spout struct {
 	// BurstMode defines if the logspout runs under burst mode, aka. it generates
 	// logs without any `thinking` time.
 	//
-	// BurstMode will be deprecated in future, use MinInterval=MaxInterval=0
-	// instead to achieve the same outcome.
+	// Deprecated: BurstMode will be deprecated in a future version, use
+	// MinInterval=MaxInterval=0 instead to achieve the same outcome.
 	BurstMode bool
 
 	// UniformLoad means the workload is uniform
@@ -65,28 +64,25 @@ type Spout struct {
 	// keys, they form a transaction.
 	TransactionID []string
 
-	// MaxIntraTransactionLatency defines the maximum latency of a transaction (
+	// MaxIntraTransLat defines the maximum latency of a transaction (
 	// I need a better name for it).
-	MaxIntraTransactionLatency int
+	MaxIntraTransLat int
 
-	// rawMsgs are the sample logs to be manipulated
-	rawMsgs []string
+	// seedLogs are the sample logs to be manipulated
+	seedLogs []string
 
 	// Output defines the output destinations of the logs, which may be the console,
 	// files or some message queues.
 	// The output stored here may be active or inactive, and may be changed
 	// on-the-fly.
-	// TODO: currently the outputs are stored in a global registry
 	Output *output.Registry
 
-	// Pattern is a list of regular patterns that define the fields to be repalced
+	// Patterns is a list of regular patterns that define the fields to be repalced
 	// by policies defined in Replacement.
-	// TODO:
-	// Pattern []pattern.Pattern
-	Pattern []string
+	Patterns []pattern.Pattern
 
 	// Replacement defines the replacement policies for the fields extracted by
-	// patterns defined in Pattern
+	// patterns defined in Patterns
 	// TODO:
 	// Replacers map[string]replacer.Replacer
 	Replacers map[string]replacer.Replacer
@@ -120,7 +116,7 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	s.LogType = cfg.LogType
 	s.SampleFilePath = cfg.SampleFilePath
 	s.TransactionID = cfg.TransactionID
-	s.MaxIntraTransactionLatency = cfg.MaxIntraTransactionLatency
+	s.MaxIntraTransLat = cfg.MaxIntraTransactionLatency
 
 	if err := s.loadRawMessage(); err != nil {
 		return nil, errors.Wrap(err, "build spout")
@@ -135,10 +131,8 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	}
 	s.Output = op
 
-	// TODO: define a pattern struct and move it to that struct
-	// TODO: support both Perl and PCRE
 	for _, ptn := range cfg.Pattern {
-		s.Pattern = append(s.Pattern, utils.ReConvert(ptn))
+		s.Patterns = append(s.Patterns, pattern.New(ptn))
 	}
 
 	r, err := replacer.Build(cfg.Replacement)
@@ -153,8 +147,8 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 // TODO: add more checks
 func (s *Spout) SanityCheck() (*Spout, error) {
 	var errs []error
-	rl := len(s.rawMsgs)
-	pl := len(s.Pattern)
+	rl := len(s.seedLogs)
+	pl := len(s.Patterns)
 	if rl != pl {
 		e := fmt.Errorf("%d sample event(s) but %d pattern(s) found", rl, pl)
 		errs = append(errs, e)
@@ -241,7 +235,7 @@ func (s *Spout) loadRawMessage() error {
 			if buffer.Len() == 0 {
 				continue
 			}
-			s.rawMsgs = append(s.rawMsgs, buffer.String())
+			s.seedLogs = append(s.seedLogs, buffer.String())
 			buffer.Reset()
 			continue
 		}
@@ -250,7 +244,7 @@ func (s *Spout) loadRawMessage() error {
 	}
 
 	if buffer.Len() != 0 {
-		s.rawMsgs = append(s.rawMsgs, buffer.String())
+		s.seedLogs = append(s.seedLogs, buffer.String())
 	}
 
 	return nil
@@ -265,13 +259,12 @@ func (s *Spout) ProduceLogs() {
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
 
-	for idx, ptn := range s.Pattern {
-		re := regexp.MustCompile(ptn)
-		matches = append(matches, re.FindStringSubmatch(s.rawMsgs[idx]))
-		names = append(names, re.SubexpNames())
+	for idx, ptn := range s.Patterns {
+		matches = append(matches, ptn.Matches(s.seedLogs[idx]))
+		names = append(names, ptn.Names())
 
 		if len(matches[idx]) == 0 {
-			log.Errorf("the re pattern doesn't match the sample log in #%d", idx)
+			log.Errorf("the pattern doesn't match the sample log in #%d", idx)
 			return
 		}
 
