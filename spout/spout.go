@@ -83,8 +83,6 @@ type Spout struct {
 
 	// Replacement defines the replacement policies for the fields extracted by
 	// patterns defined in Patterns
-	// TODO:
-	// Replacers map[string]replacer.Replacer
 	Replacers map[string]replacer.Replacer
 
 	// close is the indicator to close the spout
@@ -150,7 +148,7 @@ func (s *Spout) SanityCheck() (*Spout, error) {
 	rl := len(s.seedLogs)
 	pl := len(s.Patterns)
 	if rl != pl {
-		e := fmt.Errorf("%d sample event(s) but %d pattern(s) found", rl, pl)
+		e := fmt.Errorf("%d seed log(s) but %d pattern(s) found", rl, pl)
 		errs = append(errs, e)
 		return nil, utils.CombineErrs(errs)
 	}
@@ -264,7 +262,7 @@ func (s *Spout) ProduceLogs() {
 		names = append(names, ptn.Names())
 
 		if len(matches[idx]) == 0 {
-			log.Errorf("the pattern doesn't match the sample log in #%d", idx)
+			log.Errorf("pattern doesn't match sample log in #%d", idx)
 			return
 		}
 
@@ -288,8 +286,7 @@ func (s *Spout) ProduceLogs() {
 		select {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
 			log.Debugf("Stopping logspout after: %v sec", s.Duration)
-			// TODO: make sure it's closed only once
-			close(s.close)
+			s.Stop()
 		}
 	}
 
