@@ -6,9 +6,8 @@ package config
 import (
 	"encoding/json"
 
-	"errors"
-
 	"github.com/jiwen624/logspout/output"
+	"github.com/pkg/errors"
 )
 
 // SpoutConfig is the struct of Logspout configuration. It handles the
@@ -87,7 +86,7 @@ func loadJson(data []byte) (*SpoutConfig, error) {
 	sc := &SpoutConfig{}
 
 	if err := json.Unmarshal(data, sc); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "unmarshal")
 	}
 	return sc, nil
 }

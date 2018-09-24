@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-
-	"github.com/jiwen624/logspout/flag"
 )
 
 const (
@@ -16,19 +14,19 @@ const (
 )
 
 func readFile(path string, sizeLimit int64) ([]byte, error) {
-	fi, e := os.Stat(path)
-	if e != nil {
-		return nil, fmt.Errorf("the file doesn't exist: %s", path)
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("file stat: %s", path))
 	}
 
 	size := fi.Size()
 	if size >= sizeLimit {
-		return nil, fmt.Errorf("the file is too big: > %d bytes", maxConfFileSize)
+		return nil, fmt.Errorf("larger than %d bytes", sizeLimit)
 	}
 
-	cf, err := ioutil.ReadFile(flag.ConfigPath)
+	cf, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "read file")
 	}
 
 	return cf, nil
@@ -38,7 +36,7 @@ func readFile(path string, sizeLimit int64) ([]byte, error) {
 func FromJsonFile(name string) (*SpoutConfig, error) {
 	bs, err := readFile(name, maxConfFileSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "Load config from file:")
+		return nil, errors.Wrap(err, "load config from file")
 	}
 	return loadJson(bs)
 }

@@ -7,13 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// For output-syslog
-const (
-	PROTOCOL  = "protocol"
-	NETADDR   = "netaddr"
-	SYSLOGTAG = "tag"
-)
-
 type Syslog struct {
 	Protocol   string `json:"protocol"`
 	NetAddr    string `json:"netAddr"`
@@ -50,7 +43,7 @@ func (s *Syslog) Activate() error {
 }
 
 func (s *Syslog) Deactivate() error {
-	return s.logger.Close()
+	return errors.Wrap(s.logger.Close(), "deactivate syslog")
 }
 
 // buildSyslog extracts output parameters from the config file and build the
