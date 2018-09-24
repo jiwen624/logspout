@@ -6,3 +6,4 @@ services:
     volumes:
       - ./logspout-docker.json:/logspout.json
       - .:/logs
+      - ./samples:/samples

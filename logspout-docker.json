@@ -2,20 +2,18 @@
   "burstMode": true,
   "concurrency": 1,
   "minInterval": 1,
+  "duration": 0,
+  "maxEvents": 0,
+  "consolePort": 0,
   "maxInterval": 2,
-  "consolePort": 12345,
   "logType": "weblogic",
-  "sampleFile": "samples/sample.log",
+  "sampleFile": "/samples/sample.log",
   "transactionId": [
     "thread",
     "msgid"
   ],
   "maxIntraTransactionLatency": 40,
   "output": {
-    "stdout1": {
-      "type": "console",
-      "attrs": {}
-    },
     "syslog1": {
       "type": "syslog",
       "attrs": {
@@ -28,19 +26,19 @@
     "file1": {
       "type": "file",
       "attrs": {
-        "directory": "/logs",
         "fileName": "default.log",
+	"directory":"/logs",
         "maxSize": 500,
         "maxBackups": 3,
         "compress": false,
         "maxAge": 7,
-        "duplicate": false
+        "duplicate": 2
       }
     }
   },
   "pattern": [
-    "(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)",
-    "(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>)"
+    "^(Start####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>\\n)$",
+    "^(End####<)(?<timestamp>.*?)(>\\s*<)(?<severity>.*?)(>\\s*<)(?<subsystem>.*?)(>\\s*<)(?<ipaddress>.*?)(>\\s*<)(?<phone>.*?)(>\\s*<)(?<thread>.*?)(>\\s*<)(?<user>.*?)(>\\s*<)(?<transaction>.*?)(>\\s*<)(?<diagcontext>.*?)(>\\s*<)(?<rawtime>.*?)(>\\s*<BEA-)(?<msgid>.*?)(>\\s*<)(?<msgtext>.*?)(>\\n)$"
   ],
   "replacement": {
     "timestamp": {
