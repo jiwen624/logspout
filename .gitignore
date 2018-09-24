@@ -20,3 +20,6 @@ _vendor*
 
 # IDEA stuff
 .idea/
+
+# Misc
+version_init.go

@@ -15,7 +15,7 @@ import (
 func main() {
 	utils.CheckErr(log.SetLevel(flag.LogLevel))
 
-	log.Infof("Starting up Logspout %s", version)
+	log.Infof("Starting up Logspout %s", spout.Version())
 	conf, err := config.FromJsonFile(flag.ConfigPath)
 	if err != nil {
 		log.Errorf("Error loading config: %s", err)
