@@ -115,7 +115,7 @@ Usage of ./logspout:
 	"max-interval": 1010,
 	"duration": 3600,
 	"logtype": "weblogic",
-	"sample-file": "samples/sample.log",
+	"sample-file": "examples/sample.log",
 	"output-stdout": true,
 	"output-syslog": {
 		"protocol": "udp",
@@ -138,7 +138,7 @@ Usage of ./logspout:
 		"severity": {
 			"type": "fixed-list",
 			"method": "random",
-			"list-file": "samples/severity.sample"
+			"list-file": "examples/severity.sample"
 		},
 		"subsystem": {
 			"type": "float",

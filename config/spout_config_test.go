@@ -34,13 +34,13 @@ func TestLoadJson(t *testing.T) {
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	data, err = ioutil.ReadFile("../logspout-docker.json")
+	data, err = ioutil.ReadFile("../examples/logspout-docker.json")
 	assert.Nil(t, err)
 	sc, err = loadJson(data)
 	assert.NotNil(t, sc)
 	assert.Nil(t, err)
 
-	data, err = ioutil.ReadFile("../logspout.json")
+	data, err = ioutil.ReadFile("../examples/logspout.json")
 	assert.Nil(t, err)
 	sc, err = loadJson(data)
 	assert.NotNil(t, sc)

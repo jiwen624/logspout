@@ -7,19 +7,13 @@
   "consolePort": 0,
   "maxInterval": 2,
   "logType": "weblogic",
-  "sampleFile": "samples/sample.log",
+  "sampleFile": "/examples/sample.log",
   "transactionId": [
     "thread",
     "msgid"
   ],
   "maxIntraTransactionLatency": 40,
   "output": {
-    "stdout1": {
-      "type": "console",
-      "attrs": {
-        "fileName": "stdout"
-      }
-    },
     "syslog1": {
       "type": "syslog",
       "attrs": {
@@ -33,6 +27,7 @@
       "type": "file",
       "attrs": {
         "fileName": "default.log",
+	"directory":"/logs",
         "maxSize": 500,
         "maxBackups": 3,
         "compress": false,
@@ -56,7 +51,7 @@
       "type": "fixedList",
       "attrs": {
         "method": "random",
-        "listFile": "samples/severity.sample"
+        "listFile": "examples/severity.sample"
       }
     },
     "subsystem": {

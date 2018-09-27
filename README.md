@@ -38,7 +38,7 @@ A simple way to use it is through Docker, in just a few steps:
 
 ```git clone git@github.com:jiwen624/logspout.git```
 
-2. Build the docker image and run the servicei (You need to have docker and docker-compose installed):
+2. Build the docker image and run the service (You need to have docker and docker-compose installed):
 
 ```docker-compose up```
 
@@ -46,7 +46,7 @@ Note that you can also use `docker-compose up -d` to make it run in background, 
 
 Stop it with Ctrl-C if you run it foreground, or `docker-compose down` for background services.
 
-You may change the configuration file `logspout-docker.json` or use your own one by modifying the docker-compose.yml file.
+You may change the configuration file `logspout-docker.json` in directory `examples` or use your own one by modifying the docker-compose.yml file.
 
 Enjoy it.
 
