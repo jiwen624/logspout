@@ -7,7 +7,7 @@
   "consolePort": 0,
   "maxInterval": 2,
   "logType": "weblogic",
-  "sampleFile": "samples/sample.log",
+  "sampleFile": "examples/sample.log",
   "transactionId": [
     "thread",
     "msgid"
@@ -56,7 +56,7 @@
       "type": "fixedList",
       "attrs": {
         "method": "random",
-        "listFile": "samples/severity.sample"
+        "listFile": "examples/severity.sample"
       }
     },
     "subsystem": {
