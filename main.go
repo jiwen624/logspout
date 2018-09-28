@@ -18,7 +18,7 @@ func main() {
 	log.Infof("Starting up Logspout %s", spout.Version())
 	conf, err := config.FromJsonFile(flag.ConfigPath)
 	if err != nil {
-		log.Errorf("Error loading config: %s", err)
+		log.Errorf("Error main: %s", err)
 		return
 	}
 

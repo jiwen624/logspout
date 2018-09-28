@@ -16,7 +16,7 @@ const (
 func readFile(path string, sizeLimit int64) ([]byte, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("file stat: %s", path))
+		return nil, errors.Wrap(err, "read file")
 	}
 
 	size := fi.Size()

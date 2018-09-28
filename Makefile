@@ -10,7 +10,8 @@ help:
 
 .PHONY: linux
 linux: std-linux-bin
-	upx logspout
+# Comment out upx as it seems causing problems.
+#	upx logspout
 
 .PHONY: std-linux-bin
 std-linux-bin: clean generate
@@ -22,7 +23,8 @@ std-bin: clean generate
 
 .PHONY: bin
 mac: std-bin
-	upx logspout
+# Comment out upx as it seems causing problems.
+#	upx logspout
 
 .PHONY: clean-bin
 clean-bin:
