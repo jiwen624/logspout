@@ -14,7 +14,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&ConfigPath, "f", "logspout.json",
+	flag.StringVar(&ConfigPath, "f", "examples/logspout.json",
 		"specify the config file in json format.")
 	flag.StringVar(&LogLevel, "v", "warn",
 		"debug, info, warn, error.")
