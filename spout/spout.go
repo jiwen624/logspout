@@ -11,13 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jiwen624/logspout/pattern"
-
 	"github.com/pkg/errors"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/output"
+	"github.com/jiwen624/logspout/pattern"
 	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
 )
@@ -172,11 +171,8 @@ func (s *Spout) StopAllOutputs() error {
 	})
 }
 
-// Start kicks off the spout
-func (s *Spout) Start() error {
-	// TODO: see what extra things we can do here
-	go s.console()
-
+// SigMon registers the signal handler and run the handler in a standalone goroutine.
+func (s *Spout) SigMon() {
 	c := make(chan os.Signal, 10)
 	signal.Notify(c,
 		os.Interrupt,    // Ctrl-C
@@ -184,8 +180,17 @@ func (s *Spout) Start() error {
 	)
 
 	go s.sigHandler(c)
+}
 
-	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+// StartConsole starts the management console in a standalone goroutine.
+func (s *Spout) StartConsole() {
+	go s.console()
+}
+
+// Start kicks off the spout
+func (s *Spout) Start() error {
+	s.StartConsole()
+	s.SigMon()
 	s.ProduceLogs()
 
 	return nil
@@ -281,6 +286,8 @@ func (s *Spout) ProduceLogs() {
 	for i := 0; i < s.Concurrency; i++ {
 		go s.popNewLogs(matches, names, cCounter, resChan, i)
 	}
+
+	log.Infof("LogSpout started with %d workers.", s.Concurrency)
 
 	if s.Duration != 0 {
 		select {
