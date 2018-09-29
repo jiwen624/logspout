@@ -284,7 +284,7 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		go s.popNewLogs(matches, names, cCounter, resChan, i)
+		go s.popNewLogs(matches, names, i)
 	}
 
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
