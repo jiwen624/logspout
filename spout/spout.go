@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
+
+	"github.com/jiwen624/logspout/console"
 
 	"github.com/pkg/errors"
 
@@ -38,8 +38,7 @@ type Spout struct {
 	// MaxEvents means the maximum number of events logspout will generate
 	MaxEvents int
 
-	// ConsolePort specifies the port for management console. The console is
-	// disabled if the port is 0 (the default value)
+	// ConsolePort specifies the port for management console.
 	ConsolePort int
 
 	// Concurrency defines the number of workers to generate logs concurrently.
@@ -92,6 +91,10 @@ type Spout struct {
 	sync.WaitGroup
 }
 
+const (
+	defaultConsolePort = 10306
+)
+
 func NewDefault() *Spout {
 	return &Spout{close: make(chan struct{})}
 }
@@ -110,6 +113,9 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	}
 
 	s.ConsolePort = cfg.ConsolePort
+	if s.ConsolePort == 0 {
+		s.ConsolePort = defaultConsolePort
+	}
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval
@@ -171,20 +177,10 @@ func (s *Spout) StopAllOutputs() error {
 	})
 }
 
-// SigMon registers the signal handler and run the handler in a standalone goroutine.
-func (s *Spout) SigMon() {
-	c := make(chan os.Signal, 10)
-	signal.Notify(c,
-		os.Interrupt,    // Ctrl-C
-		syscall.SIGTERM, // kill
-	)
-
-	go s.sigHandler(c)
-}
-
 // StartConsole starts the management console in a standalone goroutine.
 func (s *Spout) StartConsole() {
-	go s.console()
+	host := fmt.Sprintf("localhost:%d", s.ConsolePort)
+	console.Start(host)
 }
 
 // Start kicks off the spout
@@ -206,21 +202,6 @@ func (s *Spout) Stop() {
 		}
 		close(s.close)
 	})
-}
-
-func (s *Spout) sigHandler(c chan os.Signal) {
-	for sig := range c {
-		switch sig {
-		case os.Interrupt:
-			fallthrough
-		case syscall.SIGTERM:
-			// Don't call os.Exit(), wait until all workers are closed.
-			s.Stop()
-		default:
-			err := fmt.Errorf("unhandled signal: %v", sig)
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}
 }
 
 func (s *Spout) loadRawMessage() error {
@@ -256,6 +237,9 @@ func (s *Spout) loadRawMessage() error {
 	return nil
 }
 
+// ProduceLogs generate logs based on the replacers configuration. It will block
+// until the maximum number of events is reached, or timeout, or the program is
+// stopped by Ctrl-C
 func (s *Spout) ProduceLogs() {
 	s.Add(s.Concurrency) // Add it before you start the goroutine.
 
@@ -284,7 +268,7 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		go s.popNewLogs(matches, names, cCounter, resChan, i)
+		go s.startWorker(matches, names, i)
 	}
 
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
@@ -299,5 +283,9 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	s.Wait()
+}
 
+// Spray sprays the generated logs into the predefined destinations.
+func (s *Spout) Spray(log string) error {
+	return s.Output.Write(log)
 }

@@ -31,7 +31,7 @@ func StrIndex(vs []string, t string) int {
 	return -1
 }
 
-// StrSlice2DCopy is a simple helper function to make a deep copy of a 2-dimensional string slice.
+// StrSlice2DCopy is a helper function to make a deep copy of a 2-dimensional string slice.
 func StrSlice2DCopy(src [][]string) (cpy [][]string) {
 	cpy = make([][]string, len(src))
 	for i := range src {

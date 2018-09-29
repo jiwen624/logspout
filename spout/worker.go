@@ -1,11 +1,12 @@
 package spout
 
 import (
+	"fmt"
 	"math"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"time"
+
+	"github.com/jiwen624/logspout/metrics"
 
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/replacer"
@@ -14,11 +15,12 @@ import (
 	"github.com/leesper/go_rng"
 )
 
-// PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func (s *Spout) popNewLogs(m [][]string, names [][]string, cCounter *sync.Cond,
-	resChan chan uint64, idx int) {
-	log.Debugf("spawned worker #%d", idx)
-	defer log.Infof("worker #%d is exiting.", idx)
+// startWorker generates new logs with the replacement policies, in a infinite loop.
+func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
+	workerName := fmt.Sprintf("worker%d", workerID)
+
+	log.Infof("%s spawned", workerName)
+	defer log.Infof("%s is exiting.", workerName)
 
 	var newLog string
 	defer s.Done()
@@ -28,46 +30,36 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, cCounter *sync.Cond,
 
 	matches := utils.StrSlice2DCopy(m)
 
-	var currMsg int
-	var counter uint64
+	// the index of current log event in the transaction (which contains multiple
+	// log events
+	var evtIdxInTrans int
+	// the transaction per second
+	var tps int64
+	// the total count of log events
 	var totalCnt int
-
-	var c uint64
-
-	// This goroutine waits for the request from client to fetch the current counter value.
-	go func(res chan uint64) {
-		for {
-			cCounter.L.Lock()
-			for reqCounter == false {
-				cCounter.Wait()
-			}
-			cCounter.L.Unlock()
-			wgCounter.Done()
-
-			res <- atomic.LoadUint64(&c)
-		}
-	}(resChan)
 
 	cTicker := time.NewTicker(time.Second * 1).C
 	for {
 		// The first message of a transaction
 		for k, v := range s.Replacers {
-			idx := utils.StrIndex(names[currMsg], k)
+			idx := utils.StrIndex(names[evtIdxInTrans], k)
 			if idx == -1 {
 				continue
-			} else if currMsg == 0 || utils.StrIndex(s.TransactionID, k) == -1 {
+			} else if evtIdxInTrans == 0 || utils.StrIndex(s.TransactionID, k) == -1 {
 				if s, err := v.ReplacedValue(grng); err == nil {
-					matches[currMsg][idx] = s
+					matches[evtIdxInTrans][idx] = s
 				}
 			} else {
-				matches[currMsg][idx] = matches[0][idx]
+				matches[evtIdxInTrans][idx] = matches[0][idx]
 			}
 		}
 
-		newLog = strings.Join(matches[currMsg], "")
+		newLog = strings.Join(matches[evtIdxInTrans], "")
 		// Print to logger streams, you may redirect it to anywhere else you want
-		s.Output.Write(newLog)
-		counter++
+
+		s.Spray(newLog)
+
+		tps++
 		// Exits after it exceeds the predefined maximum events.
 		totalCnt++
 		if totalCnt >= int(s.MaxEvents/s.Concurrency) {
@@ -79,9 +71,9 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, cCounter *sync.Cond,
 			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, s.MaxIntraTransLat)))
 		}
 
-		currMsg++
-		if currMsg >= len(s.seedLogs) {
-			currMsg = 0
+		evtIdxInTrans++
+		if evtIdxInTrans >= len(s.seedLogs) {
+			evtIdxInTrans = 0
 
 			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
 			if s.BurstMode == false {
@@ -109,8 +101,8 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, cCounter *sync.Cond,
 		case <-s.close:
 			return
 		case <-cTicker:
-			atomic.StoreUint64(&c, counter)
-			counter = 0
+			metrics.SetTPS(workerName, tps)
+			tps = 0
 		default:
 		}
 	}
