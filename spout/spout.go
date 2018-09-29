@@ -11,13 +11,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jiwen624/logspout/pattern"
-
 	"github.com/pkg/errors"
 
 	"github.com/jiwen624/logspout/config"
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/output"
+	"github.com/jiwen624/logspout/pattern"
 	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
 )
@@ -88,6 +87,9 @@ type Spout struct {
 	// close is the indicator to close the spout
 	close     chan struct{}
 	closeOnce sync.Once
+
+	// Used to coordinate between the main goroutine and the workers
+	sync.WaitGroup
 }
 
 func NewDefault() *Spout {
@@ -169,11 +171,8 @@ func (s *Spout) StopAllOutputs() error {
 	})
 }
 
-// Start kicks off the spout
-func (s *Spout) Start() error {
-	// TODO: see what extra things we can do here
-	go s.console()
-
+// SigMon registers the signal handler and run the handler in a standalone goroutine.
+func (s *Spout) SigMon() {
 	c := make(chan os.Signal, 10)
 	signal.Notify(c,
 		os.Interrupt,    // Ctrl-C
@@ -181,8 +180,17 @@ func (s *Spout) Start() error {
 	)
 
 	go s.sigHandler(c)
+}
 
-	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+// StartConsole starts the management console in a standalone goroutine.
+func (s *Spout) StartConsole() {
+	go s.console()
+}
+
+// Start kicks off the spout
+func (s *Spout) Start() error {
+	s.StartConsole()
+	s.SigMon()
 	s.ProduceLogs()
 
 	return nil
@@ -249,10 +257,7 @@ func (s *Spout) loadRawMessage() error {
 }
 
 func (s *Spout) ProduceLogs() {
-	// goroutine for future use, not necessary for now.
-	var wg sync.WaitGroup
-
-	wg.Add(s.Concurrency) // Add it before you start the goroutine.
+	s.Add(s.Concurrency) // Add it before you start the goroutine.
 
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
@@ -279,17 +284,20 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		go s.popNewLogs(matches, names, &wg, cCounter, resChan, i)
+		go s.popNewLogs(matches, names, cCounter, resChan, i)
 	}
+
+	log.Infof("LogSpout started with %d workers.", s.Concurrency)
 
 	if s.Duration != 0 {
 		select {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
 			log.Debugf("Stopping logspout after: %v sec", s.Duration)
 			s.Stop()
+		case <-s.close:
 		}
 	}
 
-	wg.Wait()
+	s.Wait()
 
 }

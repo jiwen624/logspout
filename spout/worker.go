@@ -15,13 +15,13 @@ import (
 )
 
 // PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func (s *Spout) popNewLogs(m [][]string, names [][]string, wg *sync.WaitGroup, cCounter *sync.Cond,
+func (s *Spout) popNewLogs(m [][]string, names [][]string, cCounter *sync.Cond,
 	resChan chan uint64, idx int) {
 	log.Debugf("spawned worker #%d", idx)
 	defer log.Infof("worker #%d is exiting.", idx)
 
 	var newLog string
-	defer wg.Done()
+	defer s.Done()
 
 	// Gaussian distribution
 	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
