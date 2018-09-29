@@ -294,6 +294,7 @@ func (s *Spout) ProduceLogs() {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
 			log.Debugf("Stopping logspout after: %v sec", s.Duration)
 			s.Stop()
+		case <-s.close:
 		}
 	}
 
