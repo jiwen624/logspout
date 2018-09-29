@@ -88,6 +88,9 @@ type Spout struct {
 	// close is the indicator to close the spout
 	close     chan struct{}
 	closeOnce sync.Once
+
+	// Used to coordinate between the main goroutine and the workers
+	sync.WaitGroup
 }
 
 func NewDefault() *Spout {
@@ -249,10 +252,7 @@ func (s *Spout) loadRawMessage() error {
 }
 
 func (s *Spout) ProduceLogs() {
-	// goroutine for future use, not necessary for now.
-	var wg sync.WaitGroup
-
-	wg.Add(s.Concurrency) // Add it before you start the goroutine.
+	s.Add(s.Concurrency) // Add it before you start the goroutine.
 
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
@@ -279,7 +279,7 @@ func (s *Spout) ProduceLogs() {
 	}
 
 	for i := 0; i < s.Concurrency; i++ {
-		go s.popNewLogs(matches, names, &wg, cCounter, resChan, i)
+		go s.popNewLogs(matches, names, cCounter, resChan, i)
 	}
 
 	if s.Duration != 0 {
@@ -290,6 +290,6 @@ func (s *Spout) ProduceLogs() {
 		}
 	}
 
-	wg.Wait()
+	s.Wait()
 
 }
