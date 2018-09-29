@@ -4,42 +4,31 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/jiwen624/logspout/config"
-	"github.com/jiwen624/logspout/console"
 	"github.com/jiwen624/logspout/flag"
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/spout"
 	"github.com/jiwen624/logspout/utils"
 )
 
+const (
+	errFailedInMain = "Failed in main"
+)
+
 func main() {
-	utils.CheckErr(log.SetLevel(flag.LogLevel))
+	utils.ExitOnErr(errFailedInMain, log.SetLevel(flag.LogLevel))
 
 	log.Infof("Starting up Logspout %s", spout.Version())
+
 	conf, err := config.FromJsonFile(flag.ConfigPath)
-	if err != nil {
-		log.Errorf("Error main: %s", err)
-		return
-	}
+	utils.ExitOnErr(errFailedInMain, err)
 
 	spt, err := spout.Build(conf)
-	if err != nil {
-		log.Errorf("Failed to create logspout: %s", err.Error())
-		return
-	}
+	utils.ExitOnErr(errFailedInMain, err)
 
-	// TODO: replace the console in Spout, change port
-	cHost := fmt.Sprintf("localhost:%d", 9999)
-	console.Start(cHost)
-	defer console.Stop()
+	// It will block here if no error happens
+	utils.ExitOnErr(errFailedInMain, spt.Start())
 
-	if err := spt.Start(); err != nil {
-		log.Errorf("Failed to start spout: %v", err)
-		return
-	}
-	defer spt.Stop()
-
+	spt.Stop()
 	log.Info("Logspout is stopped. Bye.")
 }

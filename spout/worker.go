@@ -1,6 +1,7 @@
 package spout
 
 import (
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -14,10 +15,12 @@ import (
 	"github.com/leesper/go_rng"
 )
 
-// PopNewLogs generates new logs with the replacement policies, in a infinite loop.
-func (s *Spout) popNewLogs(m [][]string, names [][]string, workerID int) {
-	log.Debugf("spawned worker #%d", workerID)
-	defer log.Infof("worker #%d is exiting.", workerID)
+// startWorker generates new logs with the replacement policies, in a infinite loop.
+func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
+	workerName := fmt.Sprintf("worker%d", workerID)
+
+	log.Infof("%s spawned", workerName)
+	defer log.Infof("%s is exiting.", workerName)
 
 	var newLog string
 	defer s.Done()
@@ -98,14 +101,9 @@ func (s *Spout) popNewLogs(m [][]string, names [][]string, workerID int) {
 		case <-s.close:
 			return
 		case <-cTicker:
-			metrics.SetTPS(workerID, tps)
+			metrics.SetTPS(workerName, tps)
 			tps = 0
 		default:
 		}
 	}
-}
-
-// Spray sprays the generated logs into the predefined destinations.
-func (s *Spout) Spray(log string) error {
-	return s.Output.Write(log)
 }

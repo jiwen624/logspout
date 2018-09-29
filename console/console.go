@@ -18,8 +18,3 @@ func startListener(host string) {
 		log.Fatal("listen and serve: ", err)
 	}
 }
-
-// Stop stops the console and release resources
-func Stop() {
-	// TODO
-}

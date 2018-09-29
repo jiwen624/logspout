@@ -93,7 +93,7 @@ func buildOutputMap(ow map[string]Wrapper) map[string]Output {
 // buildFile builds a single output instance based on the wrapper.
 func build(m Wrapper) Output {
 	op := initializers[m.T]()
-	utils.CheckErr(json.Unmarshal(m.Raw, op))
+	utils.ExitOnErr("build", json.Unmarshal(m.Raw, op))
 
 	return op
 }

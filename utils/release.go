@@ -2,11 +2,17 @@
 
 package utils
 
-import "github.com/jiwen624/logspout/log"
+import (
+	"os"
 
-// CheckErr prints the error and do nothing else
-func CheckErr(e error) {
+	"github.com/jiwen624/logspout/log"
+	"github.com/pkg/errors"
+)
+
+// ExitOnErr prints the error and do nothing else
+func ExitOnErr(wrapper string, e error) {
 	if e != nil {
-		log.Error(e)
+		log.Error(errors.Wrap(e, wrapper))
+		os.Exit(1)
 	}
 }
