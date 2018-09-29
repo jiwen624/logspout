@@ -4,7 +4,10 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/jiwen624/logspout/config"
+	"github.com/jiwen624/logspout/console"
 	"github.com/jiwen624/logspout/flag"
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/spout"
@@ -27,10 +30,16 @@ func main() {
 		return
 	}
 
+	// TODO: replace the console in Spout, change port
+	cHost := fmt.Sprintf("localhost:%d", 9999)
+	console.Start(cHost)
+	defer console.Stop()
+
 	if err := spt.Start(); err != nil {
 		log.Errorf("Failed to start spout: %v", err)
 		return
 	}
 	defer spt.Stop()
+
 	log.Info("Logspout is stopped. Bye.")
 }
