@@ -4,15 +4,15 @@ import (
 	"fmt"
 	slog "log/syslog"
 
+	"github.com/jiwen624/logspout/log"
 	"github.com/pkg/errors"
 )
 
 type Syslog struct {
-	Protocol   string `json:"protocol"`
-	NetAddr    string `json:"netAddr"`
-	MaxBackups int    `json:"maxBackups"`
-	Tag        string `json:"tag"`
-	logger     *slog.Writer
+	Protocol string `json:"protocol"`
+	NetAddr  string `json:"netAddr"`
+	Tag      string `json:"tag"`
+	logger   *slog.Writer
 }
 
 func (s *Syslog) String() string {
@@ -36,6 +36,9 @@ func (s *Syslog) Type() Type {
 }
 
 func (s *Syslog) Activate() error {
+	o := fmt.Sprintf("%s://%s", s.Protocol, s.NetAddr)
+	log.Infof("Activating output %s", o)
+
 	if err := s.buildSyslog(); err != nil {
 		return errors.Wrap(err, "activate syslog")
 	}
@@ -43,6 +46,9 @@ func (s *Syslog) Activate() error {
 }
 
 func (s *Syslog) Deactivate() error {
+	o := fmt.Sprintf("%s//%s", s.Protocol, s.NetAddr)
+	log.Infof("Deactivating output %s", o)
+
 	return errors.Wrap(s.logger.Close(), "deactivate syslog")
 }
 

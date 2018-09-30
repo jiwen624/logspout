@@ -157,6 +157,8 @@ func (r *Registry) ForOne(apply Apply, typ Type, id ID) error {
 }
 
 // Write is a helper function to write the string to all the outputs
+// It writes to all the outputs one by one, which may be a performance
+// bottleneck.
 func (r *Registry) Write(str string) error {
 	return r.ForAll(func(o Output) error {
 		_, err := o.Write([]byte(str))

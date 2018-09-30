@@ -22,6 +22,9 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 	log.Infof("%s spawned", workerName)
 	defer log.Infof("%s is exiting.", workerName)
 
+	// the expected number of events assigned to this worker
+	expectedEvents := int(s.MaxEvents / s.Concurrency)
+
 	var newLog string
 	defer s.Done()
 
@@ -36,7 +39,7 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 	// the transaction per second
 	var tps int64
 	// the total count of log events
-	var totalCnt int
+	var generatedEvents int
 
 	cTicker := time.NewTicker(time.Second * 1).C
 	for {
@@ -46,6 +49,8 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 			if idx == -1 {
 				continue
 			} else if evtIdxInTrans == 0 || utils.StrIndex(s.TransactionID, k) == -1 {
+				// TODO: data race due to multiple workers using/manipulating the same
+				// TODO: replacer object
 				if s, err := v.ReplacedValue(grng); err == nil {
 					matches[evtIdxInTrans][idx] = s
 				}
@@ -61,8 +66,8 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 
 		tps++
 		// Exits after it exceeds the predefined maximum events.
-		totalCnt++
-		if totalCnt >= int(s.MaxEvents/s.Concurrency) {
+		generatedEvents++
+		if generatedEvents >= expectedEvents {
 			return
 		}
 
@@ -74,27 +79,8 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 		evtIdxInTrans++
 		if evtIdxInTrans >= len(s.seedLogs) {
 			evtIdxInTrans = 0
-
-			// We will populate events as fast as possible in high tide mode. (Watch out your CPU!)
-			if s.BurstMode == false {
-				// Sleep for a short while.
-				var sleepMsec = s.MinInterval
-				if s.MaxInterval == s.MinInterval {
-					sleepMsec = s.MinInterval
-				} else {
-					if s.UniformLoad == true {
-						sleepMsec = s.MinInterval + replacer.SimpleGaussian(grng, int(s.MaxInterval-s.MinInterval))
-					} else { // There should be a better algorithm here.
-						x := float64((time.Now().Unix() % 86400) / 13751)
-						y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
-						sleepMsec = int(float64(s.MinInterval) / y)
-						if sleepMsec > s.MaxInterval {
-							sleepMsec = s.MaxInterval
-						}
-					}
-				}
-				time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
-			}
+			// think for a while between transactions
+			s.think(grng)
 		}
 
 		select {
@@ -106,4 +92,30 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 		default:
 		}
 	}
+}
+
+// TODO: use Jitter object as the only parameter
+// think calculates the think time and sleep for certain period if time
+func (s *Spout) think(grng *rng.GaussianGenerator) {
+	if s.BurstMode {
+		return
+	}
+
+	// Sleep for a short while.
+	var sleepMsec = s.MinInterval
+	if s.MaxInterval == s.MinInterval {
+		sleepMsec = s.MinInterval
+	} else {
+		if s.UniformLoad == true {
+			sleepMsec = s.MinInterval + replacer.SimpleGaussian(grng, int(s.MaxInterval-s.MinInterval))
+		} else { // There should be a better algorithm here.
+			x := float64((time.Now().Unix() % 86400) / 13751)
+			y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
+			sleepMsec = int(float64(s.MinInterval) / y)
+			if sleepMsec > s.MaxInterval {
+				sleepMsec = s.MaxInterval
+			}
+		}
+	}
+	time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
 }

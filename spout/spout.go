@@ -99,6 +99,15 @@ func NewDefault() *Spout {
 	return &Spout{close: make(chan struct{})}
 }
 
+// setOrFallback returns val if val doesn't equal to init (the initial value),
+// otherwise it returns the fallback value
+func setOrFallback(val int, init int, fallback int) int {
+	if val == init {
+		return fallback
+	}
+	return val
+}
+
 // Build reads the config from a SoutConfig object and build a Spout object.
 func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	s := NewDefault()
@@ -107,15 +116,9 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	s.UniformLoad = cfg.UniformLoad
 	s.Duration = cfg.Duration
 
-	s.MaxEvents = cfg.MaxEvents
-	if s.MaxEvents == 0 {
-		s.MaxEvents = int(math.MaxInt32)
-	}
+	s.MaxEvents = setOrFallback(cfg.MaxEvents, 0, int(math.MaxInt32))
+	s.ConsolePort = setOrFallback(cfg.ConsolePort, 0, defaultConsolePort)
 
-	s.ConsolePort = cfg.ConsolePort
-	if s.ConsolePort == 0 {
-		s.ConsolePort = defaultConsolePort
-	}
 	s.Concurrency = cfg.Concurrency
 	s.MinInterval = cfg.MinInterval
 	s.MaxInterval = cfg.MaxInterval
