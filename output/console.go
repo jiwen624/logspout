@@ -7,7 +7,7 @@ import (
 )
 
 type Console struct {
-	FileName string `json:"fileName"`
+	FileName string `json:"defaultFileName"`
 	logger   io.Writer
 }
 

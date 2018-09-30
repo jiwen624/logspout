@@ -114,7 +114,7 @@ Usage of ./logspout:
 	"output-stdout": true,
 	"output-syslog": {
 		"protocol": "udp",
-		"netaddr": "localhost:514",
+		"host": "localhost:514",
 		"tag": "logspout"
 	},
 	"output-file": {
@@ -275,7 +275,7 @@ Usage of ./logspout:
 ```
 "output-syslog": {
     "protocol": "udp",   (可配置为udp或tcp)
-    "netaddr": "localhost:514",   (syslog接收地址)
+    "host": "localhost:514",   (syslog接收地址)
     "tag": "logspout"      (标签)
 }
 ```

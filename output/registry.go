@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jiwen624/logspout/log"
+
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/pkg/errors"
@@ -46,9 +48,9 @@ func (r *Registry) Register(output Output) error {
 	r.Lock()
 	defer r.Unlock()
 
-	if err := output.Activate(); err != nil {
-		return errors.Wrap(err, "register failed")
-	}
+	// if err := output.Activate(); err != nil {
+	// 	return errors.Wrap(err, "register failed")
+	// }
 
 	r.Do(func() {
 		r.m = make(map[Type]map[ID]Output)
@@ -161,7 +163,10 @@ func (r *Registry) ForOne(apply Apply, typ Type, id ID) error {
 // bottleneck.
 func (r *Registry) Write(str string) error {
 	return r.ForAll(func(o Output) error {
-		_, err := o.Write([]byte(str))
+		n, err := o.Write([]byte(str))
+		if err == nil {
+			log.Debugf("Wrote %d bytes to %s", n, o)
+		}
 		return err
 	})
 }

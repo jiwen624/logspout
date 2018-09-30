@@ -11,7 +11,6 @@ import (
 
 	"github.com/Pallinder/go-randomdata"
 	xj "github.com/basgys/goxml2json"
-	"github.com/jiwen624/logspout/utils"
 	"github.com/jiwen624/uuid"
 	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
@@ -326,12 +325,12 @@ func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 
 // GetRandomString generates a random string of length n.
 func GetRandomString(chars string, length int) string {
-	return utils.RandomStr(chars, length)
+	return RandomStr(chars, length)
 }
 
 // GetXMLStr returns a randomly generated XML doc in string format
 func RandomXML(maxDepth int, maxElements int, seed []string) string {
-	doc, err := utils.XMLStr(maxDepth, maxElements, seed)
+	doc, err := XMLStr(maxDepth, maxElements, seed)
 	if err == nil {
 		return doc
 	} else {
