@@ -11,12 +11,12 @@ import (
 )
 
 type File struct {
-	FileName   string `json:"fileName"`
-	Directory  string `json:"directory"`
-	MaxSize    int    `json:"maxSize"`
-	MaxBackups int    `json:"maxBackups"`
+	FileName   string `json:"defaultFileName"`
+	Directory  string `json:"defaultDir"`
+	MaxSize    int    `json:"defaultMaxSize"`
+	MaxBackups int    `json:"defaultMaxBackups"`
 	Compress   bool   `json:"compress"`
-	MaxAge     int    `json:"maxAge"`
+	MaxAge     int    `json:"defaultMaxAge"`
 	Duplicate  int    `json:"duplicate"`
 	loggers    []*lumberjack.Logger
 }
@@ -60,43 +60,42 @@ func (f *File) Deactivate() error {
 	return nil
 }
 
+// default parameters
+const (
+	defaultFileName   = "logspout_default.log"
+	defaultDir        = "."
+	defaultMaxSize    = 100 // 100 Megabytes
+	defaultMaxBackups = 5   // 5 backups
+	defaultMaxAge     = 7   // 7 days
+)
+
 func (f *File) buildFile() {
-	// default parameters
-	var (
-		fileName   = "logspout_default.log"
-		directory  = "."
-		maxSize    = 100 // 100 Megabytes
-		maxBackups = 5   // 5 backups
-		maxAge     = 7   // 7 days
-		compress   = false
-	)
 	f.loggers = make([]*lumberjack.Logger, 0)
 
-	if f.FileName != "" {
-		fileName = f.FileName
+	if f.FileName == "" {
+		f.FileName = defaultFileName
 	}
-	if f.Directory != "" {
-		directory = f.Directory
+	if f.Directory == "" {
+		f.Directory = defaultDir
 	}
-	if f.MaxSize != 0 {
-		maxSize = f.MaxSize
+	if f.MaxSize == 0 {
+		f.MaxSize = defaultMaxSize
 	}
-	if f.MaxBackups != 0 {
-		maxBackups = f.MaxBackups
+	if f.MaxBackups == 0 {
+		f.MaxBackups = defaultMaxBackups
 	}
-	if f.MaxAge != 0 {
-		maxAge = f.MaxAge
+	if f.MaxAge == 0 {
+		f.MaxAge = defaultMaxAge
 	}
-	compress = f.Compress
 
 	for i := 0; i < f.Duplicate; i++ {
-		fn := fmt.Sprintf("%d_", i) + fileName
+		fn := fmt.Sprintf("%d_", i) + f.FileName
 		f.loggers = append(f.loggers, &lumberjack.Logger{
-			Filename:   filepath.Join(directory, fn),
-			MaxSize:    maxSize, // megabytes
-			MaxBackups: maxBackups,
-			MaxAge:     maxAge,   // days
-			Compress:   compress, // disabled by default.
+			Filename:   filepath.Join(f.Directory, fn),
+			MaxSize:    f.MaxSize, // megabytes
+			MaxBackups: f.MaxBackups,
+			MaxAge:     f.MaxAge,   // days
+			Compress:   f.Compress, // disabled by default.
 			LocalTime:  true,
 		})
 	}

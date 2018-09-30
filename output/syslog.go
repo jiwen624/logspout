@@ -10,14 +10,14 @@ import (
 
 type Syslog struct {
 	Protocol string `json:"protocol"`
-	NetAddr  string `json:"netAddr"`
+	Host     string `json:"host"`
 	Tag      string `json:"tag"`
 	logger   *slog.Writer
 }
 
 func (s *Syslog) String() string {
-	return fmt.Sprintf("Syslog{Protocl:%s,NetAddr:%s,Tag:%s}",
-		s.Protocol, s.NetAddr, s.Tag)
+	return fmt.Sprintf("Syslog{Protocol:%s,Host:%s,Tag:%s}",
+		s.Protocol, s.Host, s.Tag)
 }
 
 func (s *Syslog) Write(p []byte) (n int, err error) {
@@ -36,7 +36,7 @@ func (s *Syslog) Type() Type {
 }
 
 func (s *Syslog) Activate() error {
-	o := fmt.Sprintf("%s://%s", s.Protocol, s.NetAddr)
+	o := fmt.Sprintf("%s://%s", s.Protocol, s.Host)
 	log.Infof("Activating output %s", o)
 
 	if err := s.buildSyslog(); err != nil {
@@ -46,7 +46,7 @@ func (s *Syslog) Activate() error {
 }
 
 func (s *Syslog) Deactivate() error {
-	o := fmt.Sprintf("%s//%s", s.Protocol, s.NetAddr)
+	o := fmt.Sprintf("%s//%s", s.Protocol, s.Host)
 	log.Infof("Deactivating output %s", o)
 
 	return errors.Wrap(s.logger.Close(), "deactivate syslog")
@@ -66,8 +66,8 @@ func (s *Syslog) buildSyslog() error {
 		protocol = s.Protocol
 	}
 
-	if s.NetAddr != "" {
-		netaddr = s.NetAddr
+	if s.Host != "" {
+		netaddr = s.Host
 	}
 	if s.Tag != "" {
 		tag = s.Tag

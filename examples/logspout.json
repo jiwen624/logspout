@@ -24,7 +24,7 @@
       "type": "syslog",
       "attrs": {
         "protocol": "udp",
-        "netAddr": "localhost:516",
+        "host": "localhost:516",
         "tag": "logspout"
       }
     },

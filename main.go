@@ -20,7 +20,7 @@ func main() {
 
 	log.Infof("Starting up Logspout %s", spout.Version())
 
-	conf, err := config.FromJsonFile(flag.ConfigPath)
+	conf, err := config.FromFile(flag.ConfigPath)
 	utils.ExitOnErr(errFailedInMain, err)
 
 	spt, err := spout.Build(conf)

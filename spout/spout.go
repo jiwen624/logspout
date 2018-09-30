@@ -166,8 +166,8 @@ func (s *Spout) SanityCheck() (*Spout, error) {
 	return s, nil
 }
 
-// StartAllOutput starts all the outputs
-func (s *Spout) StartAllOutput() error {
+// StartAllOutputs starts all the outputs
+func (s *Spout) StartAllOutputs() error {
 	return s.Output.ForAll(func(o output.Output) error {
 		return o.Activate()
 	})
@@ -188,6 +188,9 @@ func (s *Spout) StartConsole() {
 
 // Start kicks off the spout
 func (s *Spout) Start() error {
+	if err := s.StartAllOutputs(); err != nil {
+		return errors.Wrap(err, "start failed")
+	}
 	s.StartConsole()
 	s.SigMon()
 	s.ProduceLogs()

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/jiwen624/logspout/metrics"
 
 	"github.com/jiwen624/logspout/log"
@@ -62,7 +64,9 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 		newLog = strings.Join(matches[evtIdxInTrans], "")
 		// Print to logger streams, you may redirect it to anywhere else you want
 
-		s.Spray(newLog)
+		if err := s.Spray(newLog); err != nil {
+			log.Warn(errors.Wrap(err, "err writing logs to output"))
+		}
 
 		tps++
 		// Exits after it exceeds the predefined maximum events.
