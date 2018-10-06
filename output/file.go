@@ -13,12 +13,12 @@ import (
 )
 
 type File struct {
-	FileName   string `json:"defaultFileName"`
-	Directory  string `json:"defaultDir"`
-	MaxSize    int    `json:"defaultMaxSize"`
-	MaxBackups int    `json:"defaultMaxBackups"`
+	FileName   string `json:"fileName"`
+	Directory  string `json:"directory"`
+	MaxSize    int    `json:"maxSize"`
+	MaxBackups int    `json:"maxBackups"`
 	Compress   bool   `json:"compress"`
-	MaxAge     int    `json:"defaultMaxAge"`
+	MaxAge     int    `json:"maxAge"`
 	Duplicate  int    `json:"duplicate"`
 	loggers    []ClosableWriter
 }
