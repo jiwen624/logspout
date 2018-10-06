@@ -75,13 +75,16 @@ type Spout struct {
 	// on-the-fly.
 	Output *output.Registry
 
-	// Patterns is a list of regular patterns that define the fields to be repalced
+	// Patterns is a list of regular patterns that define the fields to be replaced
 	// by policies defined in Replacement.
 	Patterns []pattern.Pattern
 
 	// Replacement defines the replacement policies for the fields extracted by
-	// patterns defined in Patterns
-	Replacers map[string]replacer.Replacer
+	// patterns defined in Patterns.
+	//
+	// This field is not concurrent-safe. Each worker should obtain its own copy
+	// of the spout replacers.
+	Replacers replacer.Replacers
 
 	// close is the indicator to close the spout
 	close     chan struct{}

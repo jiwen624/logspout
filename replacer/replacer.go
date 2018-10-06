@@ -6,4 +6,17 @@ import "github.com/leesper/go_rng"
 type Replacer interface {
 	// ReplacedValue returns the new replaced value.
 	ReplacedValue(*rng.GaussianGenerator) (string, error)
+
+	// Copy returns a deep copy of the replacer
+	Copy() Replacer
+}
+
+type Replacers map[string]Replacer
+
+func (r Replacers) Copy() Replacers {
+	n := Replacers{}
+	for k, v := range r {
+		n[k] = v.Copy()
+	}
+	return n
 }

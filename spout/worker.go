@@ -44,15 +44,14 @@ func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 	var generatedEvents int
 
 	cTicker := time.NewTicker(time.Second * 1).C
+	workerReplacers := s.Replacers.Copy()
 	for {
 		// The first message of a transaction
-		for k, v := range s.Replacers {
+		for k, v := range workerReplacers {
 			idx := utils.StrIndex(names[evtIdxInTrans], k)
 			if idx == -1 {
 				continue
 			} else if evtIdxInTrans == 0 || utils.StrIndex(s.TransactionID, k) == -1 {
-				// TODO: data race due to multiple workers using/manipulating the same
-				// TODO: replacer object
 				if s, err := v.ReplacedValue(grng); err == nil {
 					matches[evtIdxInTrans][idx] = s
 				}
