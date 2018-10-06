@@ -6,7 +6,7 @@ help:
 	@echo "    make mac - make the executable for macOS"
 	@echo "    make linux - make the executable for Linux"
 	@echo ""
-	@echo "Check the Makefile for more options, e.g., if you don't like a stripped binary. (Who don't like it?)"
+	@echo "Check the Makefile for more options."
 
 .PHONY: linux
 linux: std-linux-bin
