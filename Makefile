@@ -42,8 +42,8 @@ generate:
 	go generate ./...
 
 .PHONY: test
-test:
-	go test ./...
+test: generate
+	go test -v -race ./...
 
 are-you-sure:
 	@read -p "I suppose you know what you are doing. Are you sure? [Y/n]" -n 1 -r; \

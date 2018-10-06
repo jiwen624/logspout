@@ -15,6 +15,7 @@ var (
 		"syslog":      syslog,
 		"kafka":       kafka,
 		"es":          es,
+		"discard":     discard,
 	}
 
 	_TypeValueToName = map[Type]string{
@@ -24,6 +25,7 @@ var (
 		syslog:      "syslog",
 		kafka:       "kafka",
 		es:          "es",
+		discard:     "discard",
 	}
 )
 
@@ -37,6 +39,7 @@ func init() {
 			interface{}(syslog).(fmt.Stringer).String():      syslog,
 			interface{}(kafka).(fmt.Stringer).String():       kafka,
 			interface{}(es).(fmt.Stringer).String():          es,
+			interface{}(discard).(fmt.Stringer).String():     discard,
 		}
 	}
 }

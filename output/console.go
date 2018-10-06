@@ -57,7 +57,7 @@ func (c *Console) Activate() error {
 }
 
 func (c *Console) Deactivate() error {
-	log.Infof("Activating output %s", c.FileName)
+	log.Infof("Deactivating output %s", c.FileName)
 
 	c.logger = nil
 	return nil
