@@ -37,6 +37,12 @@ type Wrapper struct {
 	Raw json.RawMessage `json:"attrs"`
 }
 
+// ClosableWriter defines a writer who also can be closed.
+type ClosableWriter interface {
+	io.Writer
+	Close() error
+}
+
 // initializers is the map for the output types and their factory methods
 var (
 	initializers map[Type]Initializer
