@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/jiwen624/logspout/utils"
 
 	"github.com/jiwen624/logspout/log"
-	"gopkg.in/natefinch/lumberjack.v2"
+	lj "gopkg.in/natefinch/lumberjack.v2"
 )
 
 type File struct {
@@ -18,11 +20,13 @@ type File struct {
 	Compress   bool   `json:"compress"`
 	MaxAge     int    `json:"defaultMaxAge"`
 	Duplicate  int    `json:"duplicate"`
-	loggers    []*lumberjack.Logger
+	loggers    []ClosableWriter
 }
 
 func (f *File) Write(p []byte) (n int, err error) {
-	// TODO: write in parallel, pub/sub?
+	if f.loggers == nil {
+		return 0, errors.New("no file defined in this output")
+	}
 	var errs []error
 	for _, l := range f.loggers {
 		_, err := l.Write(p)
@@ -53,9 +57,13 @@ func (f *File) Activate() error {
 }
 
 func (f *File) Deactivate() error {
+	if f.loggers == nil {
+		return fmt.Errorf("closing a closed output: %s", f)
+	}
 	for _, l := range f.loggers {
 		l.Close()
 	}
+	f.loggers = nil
 	log.Infof("Deactivating output %s", f.FileName)
 	return nil
 }
@@ -63,14 +71,15 @@ func (f *File) Deactivate() error {
 // default parameters
 const (
 	defaultFileName   = "logspout_default.log"
-	defaultDir        = "."
+	defaultDir        = "." // current directory
 	defaultMaxSize    = 100 // 100 Megabytes
 	defaultMaxBackups = 5   // 5 backups
 	defaultMaxAge     = 7   // 7 days
+	defaultDuplicate  = 1
 )
 
 func (f *File) buildFile() {
-	f.loggers = make([]*lumberjack.Logger, 0)
+	f.loggers = make([]ClosableWriter, 0)
 
 	if f.FileName == "" {
 		f.FileName = defaultFileName
@@ -87,10 +96,23 @@ func (f *File) buildFile() {
 	if f.MaxAge == 0 {
 		f.MaxAge = defaultMaxAge
 	}
+	if f.Duplicate == 0 {
+		f.Duplicate = defaultDuplicate
+	}
+
+	var needPrefix = false
+	if f.Duplicate > 1 {
+		needPrefix = true
+	}
+	var prefix string
 
 	for i := 0; i < f.Duplicate; i++ {
-		fn := fmt.Sprintf("%d_", i) + f.FileName
-		f.loggers = append(f.loggers, &lumberjack.Logger{
+		if needPrefix {
+			prefix = fmt.Sprintf("%d_", i)
+		}
+
+		fn := prefix + f.FileName
+		f.loggers = append(f.loggers, &lj.Logger{
 			Filename:   filepath.Join(f.Directory, fn),
 			MaxSize:    f.MaxSize, // megabytes
 			MaxBackups: f.MaxBackups,

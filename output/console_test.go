@@ -57,14 +57,13 @@ func TestWrite(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.NotNil(t, err)
 
-	c.logger = &alwaysSuccessfulConsole{}
+	c.logger = &alwaysSuccessfulWriter{}
 	n, err = c.Write([]byte{'a'})
 	assert.Equal(t, 1, n)
 	assert.Nil(t, err)
 }
 
-type alwaysSuccessfulConsole struct{}
-
-func (f *alwaysSuccessfulConsole) Write(p []byte) (n int, err error) {
-	return len(p), nil
+func TestType(t *testing.T) {
+	c := &Console{}
+	assert.Equal(t, console, c.Type())
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/utils"
 )
 
@@ -40,6 +41,8 @@ func (c *Console) Type() Type {
 }
 
 func (c *Console) Activate() error {
+	log.Infof("Activating output %s", c.FileName)
+
 	normalized := normalizeName(c.FileName)
 	switch normalized {
 	case "stdout":
@@ -54,6 +57,8 @@ func (c *Console) Activate() error {
 }
 
 func (c *Console) Deactivate() error {
+	log.Infof("Activating output %s", c.FileName)
+
 	c.logger = nil
 	return nil
 }
