@@ -81,6 +81,16 @@ func NewFixedListReplacer(c string, v []string, ci int) Replacer {
 	}
 }
 
+func (fl *FixedListReplacer) Copy() Replacer {
+	n := &FixedListReplacer{
+		method:  fl.method,
+		currIdx: fl.currIdx,
+	}
+	n.valRange = append(n.valRange, fl.valRange...)
+
+	return n
+}
+
 // ReplacedValue returns a new replacement value of fixed-list type.
 func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	var newVal string
@@ -109,6 +119,14 @@ func NewTimeStampReplacer(f string) Replacer {
 	}
 }
 
+func (ts *TimeStampReplacer) Copy() Replacer {
+	n := &TimeStampReplacer{
+		format: ts.format,
+	}
+
+	return n
+}
+
 // ReplacedValue populates a new timestamp with current time.
 func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, error) {
 	return jodaTime.Format(ts.format, time.Now()), nil
@@ -126,6 +144,16 @@ func NewStringReplacer(chars string, min int64, max int64) Replacer {
 		min:   min,
 		max:   max,
 	}
+}
+
+func (s *StringReplacer) Copy() Replacer {
+	n := &StringReplacer{
+		chars: s.chars,
+		min:   s.min,
+		max:   s.max,
+	}
+
+	return n
 }
 
 func (s *StringReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
@@ -154,6 +182,15 @@ func NewFloatReplacer(min float64, max float64, precision int64) Replacer {
 	}
 }
 
+func (f *FloatReplacer) Copy() Replacer {
+	n := &FloatReplacer{
+		min:       f.min,
+		max:       f.max,
+		precision: f.precision,
+	}
+	return n
+}
+
 func (f *FloatReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
 	v := f.min + rand.Float64()*(f.max-f.min)
 	s := fmt.Sprintf("%%.%df", f.precision)
@@ -175,6 +212,16 @@ func NewIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
 		max:     maxV,
 		currVal: cv,
 	}
+}
+
+func (i *IntegerReplacer) Copy() Replacer {
+	n := &IntegerReplacer{
+		method:  i.method,
+		min:     i.min,
+		max:     i.max,
+		currVal: i.currVal,
+	}
+	return n
 }
 
 // ReplacedValue is the main function to populate replacement value of an integer type.
@@ -212,6 +259,15 @@ func NewLooksReal(m string, p map[string]interface{}) Replacer {
 		method: m,
 		opts:   p,
 	}
+}
+
+func (ia *LooksReal) Copy() Replacer {
+	n := &LooksReal{
+		method: ia.method,
+		// opts should be a bunch of read-only data, so it doesn't get deep-copied here.
+		opts: ia.opts,
+	}
+	return n
 }
 
 // ReplacedValue returns random data based on the data type selection.
