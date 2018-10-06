@@ -61,6 +61,7 @@ func TestFileActivate(t *testing.T) {
 
 func TestFileDeactivate(t *testing.T) {
 	f := &File{}
+	f.Activate()
 	assert.Nil(t, f.Deactivate())
 	assert.NotNil(t, f.Deactivate())
 }

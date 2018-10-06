@@ -28,13 +28,15 @@ func (f *File) Write(p []byte) (n int, err error) {
 		return 0, errors.New("no file defined in this output")
 	}
 	var errs []error
+	written := len(p)
 	for _, l := range f.loggers {
 		_, err := l.Write(p)
 		if err != nil {
 			errs = append(errs, err)
+			written = 0
 		}
 	}
-	return len(p), utils.CombineErrs(errs)
+	return written, utils.CombineErrs(errs)
 }
 
 func (f *File) String() string {

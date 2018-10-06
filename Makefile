@@ -43,7 +43,7 @@ generate:
 
 .PHONY: test
 test:
-	go test
+	go test ./...
 
 are-you-sure:
 	@read -p "I suppose you know what you are doing. Are you sure? [Y/n]" -n 1 -r; \
