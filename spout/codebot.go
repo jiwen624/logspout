@@ -17,11 +17,16 @@ package spout
 
 func init() {
 	version = %[1]q
+	commit = %[2]q
 }`
 
 func main() {
+	// the version: `git describe --abbrev=0 --tags`
 	ver := run("git", "describe", "--abbrev=0", "--tags")
-	txt := fmt.Sprintf(template, ver)
+	// the commit short hash: `git rev-parse --short HEAD`
+	commit := run("git", "rev-parse", "--short", "HEAD")
+
+	txt := fmt.Sprintf(template, ver, commit)
 	if err := ioutil.WriteFile("version_init.go", []byte(txt), 0664); err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrap(err, "spout/codebot"))
 	}

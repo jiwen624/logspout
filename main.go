@@ -18,7 +18,7 @@ const (
 func main() {
 	utils.ExitOnErr(errFailedInMain, log.SetLevel(flag.LogLevel))
 
-	log.Infof("Starting up Logspout %s", spout.Version())
+	log.Infof("Starting up Logspout %s+%s", spout.Version(), spout.Commit())
 
 	conf, err := config.FromFile(flag.ConfigPath)
 	utils.ExitOnErr(errFailedInMain, err)
