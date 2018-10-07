@@ -278,7 +278,7 @@ func (s *Spout) GenerateTokens() ([][]string, [][]string, error) {
 		names = append(names, ptn.Names())
 
 		if len(matches[idx]) == 0 {
-			return nil, nil, fmt.Errorf("pattern doesn't match sample log in #%d", idx)
+			return nil, nil, fmt.Errorf("#%d: unmatched pattern and logs", idx)
 		}
 
 		// Remove the first one as it is the whole string.
@@ -295,7 +295,22 @@ func (s *Spout) StartWorkers(matches [][]string, names [][]string) {
 	s.Add(s.Concurrency) // Add them before you start the goroutines.
 
 	for i := 0; i < s.Concurrency; i++ {
-		go s.startWorker(matches, names, i)
+		w := NewWorker(workerConfig{
+			Index:            i,
+			MaxEvents:        int(s.MaxEvents / s.Concurrency),
+			Seconds:          s.Duration,
+			Replacers:        s.Replacers.Copy(),
+			TransIDs:         s.TransactionID,
+			SeedLogs:         s.seedLogs,
+			MinInterval:      s.MinInterval,
+			MaxInterval:      s.MaxInterval,
+			UniformLoad:      s.UniformLoad,
+			MaxIntraTransLat: s.MaxIntraTransLat,
+			WriteTo:          s.Spray,
+			DoneCallback:     s.Done,
+			CloseChan:        s.close,
+		})
+		go w.start(matches, names, i)
 	}
 
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
