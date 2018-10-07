@@ -194,11 +194,11 @@ func (s *Spout) Start() error {
 	if err := s.StartAllOutputs(); err != nil {
 		return errors.Wrap(err, "start failed")
 	}
+
 	s.StartConsole()
 	s.SigMon()
-	s.ProduceLogs()
 
-	return nil
+	return s.ProduceLogs()
 }
 
 // Stop stops the spout
@@ -249,9 +249,27 @@ func (s *Spout) loadRawMessage() error {
 // ProduceLogs generate logs based on the replacers configuration. It will block
 // until the maximum number of events is reached, or timeout, or the program is
 // stopped by Ctrl-C
-func (s *Spout) ProduceLogs() {
-	s.Add(s.Concurrency) // Add it before you start the goroutine.
+func (s *Spout) ProduceLogs() error {
 
+	matches, names, err := s.GenerateTokens()
+	if err != nil {
+		return errors.Wrap(err, "ProduceLogs")
+	}
+
+	s.StartWorkers(matches, names)
+	s.WaitForWorkers()
+
+	return nil
+}
+
+// Spray sprays the generated logs into the predefined destinations.
+func (s *Spout) Spray(log string) error {
+	return s.Output.Write(log)
+}
+
+// GenerateTokens matches the seed logs with the patterns and generate
+// the tokens.
+func (s *Spout) GenerateTokens() ([][]string, [][]string, error) {
 	var matches = make([][]string, 0)
 	var names = make([][]string, 0)
 
@@ -260,8 +278,7 @@ func (s *Spout) ProduceLogs() {
 		names = append(names, ptn.Names())
 
 		if len(matches[idx]) == 0 {
-			log.Errorf("pattern doesn't match sample log in #%d", idx)
-			return
+			return nil, nil, fmt.Errorf("pattern doesn't match sample log in #%d", idx)
 		}
 
 		// Remove the first one as it is the whole string.
@@ -269,19 +286,24 @@ func (s *Spout) ProduceLogs() {
 		names[idx] = names[idx][1:]
 	}
 
-	for idx, match := range matches {
-		log.Debugf("   pattern #%d", idx)
-		for i, group := range match {
-			log.Debugf("       - %s: %s", names[idx][i], group)
-		}
-	}
+	debugPrintPatterns(matches, names)
+	return matches, names, nil
+}
+
+// StartWorkers creates and starts all workers.
+func (s *Spout) StartWorkers(matches [][]string, names [][]string) {
+	s.Add(s.Concurrency) // Add them before you start the goroutines.
 
 	for i := 0; i < s.Concurrency; i++ {
 		go s.startWorker(matches, names, i)
 	}
 
 	log.Infof("LogSpout started with %d workers.", s.Concurrency)
+}
 
+// WaitForWorkers monitors the timer, stop all workers then and wait for them
+// before exiting.
+func (s *Spout) WaitForWorkers() {
 	if s.Duration != 0 {
 		select {
 		case <-time.After(time.Second * time.Duration(s.Duration)):
@@ -294,7 +316,11 @@ func (s *Spout) ProduceLogs() {
 	s.Wait()
 }
 
-// Spray sprays the generated logs into the predefined destinations.
-func (s *Spout) Spray(log string) error {
-	return s.Output.Write(log)
+func debugPrintPatterns(matches, names [][]string) {
+	for idx, match := range matches {
+		log.Debugf("   pattern #%d", idx)
+		for i, group := range match {
+			log.Debugf("       - %s: %s", names[idx][i], group)
+		}
+	}
 }

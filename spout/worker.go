@@ -17,6 +17,33 @@ import (
 	"github.com/leesper/go_rng"
 )
 
+type worker struct {
+	name         string
+	maxEvents    int
+	duration     time.Duration
+	doneCallback func()
+	closeChan    chan struct{}
+}
+
+type workerConfig struct {
+	Index        int
+	MaxEvents    int
+	Seconds      int
+	DoneCallback func()
+	CloseChan    chan struct{}
+}
+
+func NewWorker(c workerConfig) *worker {
+	w := &worker{
+		name:         fmt.Sprintf("worker%d", c.Index),
+		maxEvents:    c.MaxEvents,
+		duration:     time.Second * time.Duration(c.Seconds),
+		doneCallback: c.DoneCallback,
+		closeChan:    c.CloseChan,
+	}
+	return w
+}
+
 // startWorker generates new logs with the replacement policies, in a infinite loop.
 func (s *Spout) startWorker(m [][]string, names [][]string, workerID int) {
 	workerName := fmt.Sprintf("worker%d", workerID)
