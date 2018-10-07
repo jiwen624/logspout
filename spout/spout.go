@@ -317,6 +317,10 @@ func (s *Spout) WaitForWorkers() {
 }
 
 func debugPrintPatterns(matches, names [][]string) {
+	if !log.GetLevel().Printable() {
+		return
+	}
+
 	for idx, match := range matches {
 		log.Debugf("   pattern #%d", idx)
 		for i, group := range match {
