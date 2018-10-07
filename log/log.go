@@ -62,6 +62,14 @@ func ToString(l Level) (s string) {
 	return s
 }
 
+func ToLevel(s string) (Level, error) {
+	l, ok := levelMap[s]
+	if !ok {
+		return DEBUG, errors.New("not a valid log level")
+	}
+	return l, nil
+}
+
 var (
 	lgrCfg zap.Config
 
@@ -82,6 +90,11 @@ func SetLevel(level string) error {
 	return nil
 }
 
-func GetLevel() string {
-	return ToString(Level(lgrCfg.Level.Level()))
+func GetLevel() Level {
+	return Level(lgrCfg.Level.Level())
+}
+
+// Printable returns if the level is printable on current log level configuration.
+func (l Level) Printable() bool {
+	return lgrCfg.Level.Level().Enabled(zapcore.Level(l))
 }
