@@ -30,6 +30,7 @@ type worker struct {
 	doneCallback     func()
 	closeChan        chan struct{}
 	rand             replacer.RandomGenerator
+	burstMode        bool
 }
 
 type workerConfig struct {
@@ -48,6 +49,7 @@ type workerConfig struct {
 	WriteTo          func(string) error
 	DoneCallback     func()
 	CloseChan        chan struct{}
+	BurstMode        bool
 }
 
 func NewWorker(c workerConfig) *worker {
@@ -66,6 +68,7 @@ func NewWorker(c workerConfig) *worker {
 		doneCallback:     c.DoneCallback,
 		closeChan:        c.CloseChan,
 		rand:             replacer.NewTruncatedGaussian(0.5, 0.2),
+		burstMode:        c.BurstMode,
 	}
 	return w
 }
@@ -77,7 +80,6 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	log.Infof("%s spawned", workerName)
 	defer log.Infof("%s is exiting.", workerName)
 
-	var newLog string
 	defer w.doneCallback()
 
 	matches := utils.StrSlice2DCopy(m)
@@ -90,7 +92,10 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	// the total count of log events
 	var generatedEvents int
 
+	sleepIntraTrans := len(w.transIDs) != 0 && !w.burstMode
+	sleepInterTrans := !w.burstMode && w.maxInterval > 0
 	cTicker := time.NewTicker(time.Second * 1).C
+
 	for {
 		// The first message of a transaction
 		for k, v := range w.replacers {
@@ -106,10 +111,8 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 			}
 		}
 
-		newLog = strings.Join(matches[evtIdxInTrans], "")
 		// Print to logger streams, you may redirect it to anywhere else you want
-
-		if err := w.writeTo(newLog); err != nil {
+		if err := w.writeTo(strings.Join(matches[evtIdxInTrans], "")); err != nil {
 			log.Warn(errors.Wrap(err, "err writing logs to output"))
 		}
 
@@ -120,8 +123,8 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 			return
 		}
 
-		// It never sleeps in hightide mode.
-		if len(w.transIDs) != 0 && (w.minInterval == w.maxInterval) {
+		// It never sleeps in burst mode.
+		if sleepIntraTrans {
 			time.Sleep(time.Millisecond * time.Duration(w.rand.Next(w.maxIntraTransLat)))
 		}
 
@@ -129,7 +132,9 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 		if evtIdxInTrans >= len(w.seedLogs) {
 			evtIdxInTrans = 0
 			// think for a while between transactions
-			w.think()
+			if sleepInterTrans {
+				w.think()
+			}
 		}
 
 		select {
@@ -146,13 +151,9 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 // TODO: use Jitter object as the only parameter
 // think calculates the think time and sleep for certain period if time
 func (w *worker) think() {
-	if w.minInterval == w.maxInterval {
-		return
-	}
-
 	// Sleep for a short while.
 	var sleepMsec = w.minInterval
-	if w.maxInterval == w.minInterval {
+	if w.maxInterval <= w.minInterval {
 		sleepMsec = w.minInterval
 	} else {
 		if w.uniformLoad == true {

@@ -309,6 +309,7 @@ func (s *Spout) StartWorkers(matches [][]string, names [][]string) {
 			WriteTo:          s.Spray,
 			DoneCallback:     s.Done,
 			CloseChan:        s.close,
+			BurstMode:        s.BurstMode,
 		})
 		go w.start(matches, names, i)
 	}
