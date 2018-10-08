@@ -86,11 +86,11 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 	// the index of current log event in the transaction (which contains multiple
 	// log events
-	var evtIdxInTrans int
+	var evtIdx int
 	// the transaction per second
 	var tps int64
 	// the total count of log events
-	var generatedEvents int
+	var generatedNum int
 
 	sleepIntraTrans := len(w.transIDs) != 0 && !w.burstMode
 	sleepInterTrans := !w.burstMode && w.maxInterval > 0
@@ -99,38 +99,39 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	for {
 		// The first message of a transaction
 		for k, v := range w.replacers {
-			idx := utils.StrIndex(names[evtIdxInTrans], k)
+			idx := utils.StrIndex(names[evtIdx], k)
 			if idx == -1 {
 				continue
-			} else if evtIdxInTrans == 0 || utils.StrIndex(w.transIDs, k) == -1 {
+			} else if evtIdx == 0 || utils.StrIndex(w.transIDs, k) == -1 {
 				if s, err := v.ReplacedValue(w.rand); err == nil {
-					matches[evtIdxInTrans][idx] = s
+					matches[evtIdx][idx] = s
 				}
 			} else {
-				matches[evtIdxInTrans][idx] = matches[0][idx]
+				matches[evtIdx][idx] = matches[0][idx]
 			}
 		}
 
 		// Print to logger streams, you may redirect it to anywhere else you want
-		if err := w.writeTo(strings.Join(matches[evtIdxInTrans], "")); err != nil {
+		if err := w.writeTo(strings.Join(matches[evtIdx], "")); err != nil {
 			log.Warn(errors.Wrap(err, "err writing logs to output"))
 		}
 
 		tps++
 		// Exits after it exceeds the predefined maximum events.
-		generatedEvents++
-		if generatedEvents >= w.maxEvents {
+		generatedNum++
+		if generatedNum >= w.maxEvents {
 			return
 		}
 
 		// It never sleeps in burst mode.
 		if sleepIntraTrans {
-			time.Sleep(time.Millisecond * time.Duration(w.rand.Next(w.maxIntraTransLat)))
+			sleepTime := time.Millisecond * time.Duration(w.rand.Next(w.maxIntraTransLat))
+			time.Sleep(sleepTime)
 		}
 
-		evtIdxInTrans++
-		if evtIdxInTrans >= len(w.seedLogs) {
-			evtIdxInTrans = 0
+		evtIdx++
+		if evtIdx >= len(w.seedLogs) {
+			evtIdx = 0
 			// think for a while between transactions
 			if sleepInterTrans {
 				w.think()
