@@ -1,11 +1,10 @@
 package replacer
 
-import "github.com/leesper/go_rng"
-
 // Replacer is the interface which must be implemented by a particular replacement policy.
 type Replacer interface {
-	// ReplacedValue returns the new replaced value.
-	ReplacedValue(*rng.GaussianGenerator) (string, error)
+	// ReplacedValue returns the new replaced value. It may need a random
+	// number generator provided by the caller.
+	ReplacedValue(RandomGenerator) (string, error)
 
 	// Copy returns a deep copy of the replacer
 	Copy() Replacer

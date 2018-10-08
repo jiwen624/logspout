@@ -13,8 +13,6 @@ import (
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
-
-	"github.com/leesper/go_rng"
 )
 
 type worker struct {
@@ -31,6 +29,7 @@ type worker struct {
 	writeTo          func(string) error
 	doneCallback     func()
 	closeChan        chan struct{}
+	rand             replacer.RandomGenerator
 }
 
 type workerConfig struct {
@@ -66,6 +65,7 @@ func NewWorker(c workerConfig) *worker {
 		writeTo:          c.WriteTo,
 		doneCallback:     c.DoneCallback,
 		closeChan:        c.CloseChan,
+		rand:             replacer.NewTruncatedGaussian(0.5, 0.2),
 	}
 	return w
 }
@@ -79,9 +79,6 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 	var newLog string
 	defer w.doneCallback()
-
-	// Gaussian distribution
-	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	matches := utils.StrSlice2DCopy(m)
 
@@ -101,7 +98,7 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 			if idx == -1 {
 				continue
 			} else if evtIdxInTrans == 0 || utils.StrIndex(w.transIDs, k) == -1 {
-				if s, err := v.ReplacedValue(grng); err == nil {
+				if s, err := v.ReplacedValue(w.rand); err == nil {
 					matches[evtIdxInTrans][idx] = s
 				}
 			} else {
@@ -125,14 +122,14 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 		// It never sleeps in hightide mode.
 		if len(w.transIDs) != 0 && (w.minInterval == w.maxInterval) {
-			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, w.maxIntraTransLat)))
+			time.Sleep(time.Millisecond * time.Duration(w.rand.Next(w.maxIntraTransLat)))
 		}
 
 		evtIdxInTrans++
 		if evtIdxInTrans >= len(w.seedLogs) {
 			evtIdxInTrans = 0
 			// think for a while between transactions
-			w.think(grng)
+			w.think()
 		}
 
 		select {
@@ -148,7 +145,7 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 // TODO: use Jitter object as the only parameter
 // think calculates the think time and sleep for certain period if time
-func (w *worker) think(grng *rng.GaussianGenerator) {
+func (w *worker) think() {
 	if w.minInterval == w.maxInterval {
 		return
 	}
@@ -159,7 +156,7 @@ func (w *worker) think(grng *rng.GaussianGenerator) {
 		sleepMsec = w.minInterval
 	} else {
 		if w.uniformLoad == true {
-			sleepMsec = w.minInterval + replacer.SimpleGaussian(grng, int(w.maxInterval-w.minInterval))
+			sleepMsec = w.minInterval + w.rand.Next(w.maxInterval-w.minInterval)
 		} else { // There should be a better algorithm here.
 			x := float64((time.Now().Unix() % 86400) / 13751)
 			y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
