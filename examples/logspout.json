@@ -1,7 +1,7 @@
 {
   "burstMode": true,
   "concurrency": 1,
-  "minInterval": 1,
+  "minInterval": 0,
   "duration": 0,
   "maxEvents": 0,
   "consolePort": 0,

@@ -92,7 +92,7 @@ func (fl *FixedListReplacer) Copy() Replacer {
 }
 
 // ReplacedValue returns a new replacement value of fixed-list type.
-func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+func (fl *FixedListReplacer) ReplacedValue(rg RandomGenerator) (string, error) {
 	var newVal string
 
 	switch fl.method {
@@ -102,7 +102,7 @@ func (fl *FixedListReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, er
 	case RANDOM:
 		fallthrough
 	default:
-		fl.currIdx = SimpleGaussian(g, len(fl.valRange))
+		fl.currIdx = rg.Next(len(fl.valRange))
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
@@ -128,7 +128,7 @@ func (ts *TimeStampReplacer) Copy() Replacer {
 }
 
 // ReplacedValue populates a new timestamp with current time.
-func (ts *TimeStampReplacer) ReplacedValue(*rng.GaussianGenerator) (string, error) {
+func (ts *TimeStampReplacer) ReplacedValue(g RandomGenerator) (string, error) {
 	return jodaTime.Format(ts.format, time.Now()), nil
 }
 
@@ -156,7 +156,7 @@ func (s *StringReplacer) Copy() Replacer {
 	return n
 }
 
-func (s *StringReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+func (s *StringReplacer) ReplacedValue(wg RandomGenerator) (string, error) {
 	var str string
 	var err error
 	if s.min == s.max {
@@ -191,7 +191,7 @@ func (f *FloatReplacer) Copy() Replacer {
 	return n
 }
 
-func (f *FloatReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+func (f *FloatReplacer) ReplacedValue(wg RandomGenerator) (string, error) {
 	v := f.min + rand.Float64()*(f.max-f.min)
 	s := fmt.Sprintf("%%.%df", f.precision)
 	return fmt.Sprintf(s, v), nil
@@ -225,7 +225,7 @@ func (i *IntegerReplacer) Copy() Replacer {
 }
 
 // ReplacedValue is the main function to populate replacement value of an integer type.
-func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error) {
+func (i *IntegerReplacer) ReplacedValue(wg RandomGenerator) (string, error) {
 	var currVal = i.currVal
 
 	switch i.method {
@@ -242,7 +242,7 @@ func (i *IntegerReplacer) ReplacedValue(g *rng.GaussianGenerator) (string, error
 	case RANDOM:
 		fallthrough
 	default: // Use random by default
-		i.currVal = int64(SimpleGaussian(g, int(i.max-i.min))) + i.min
+		i.currVal = int64(wg.Next(int(i.max-i.min))) + i.min
 	}
 	return strconv.FormatInt(currVal, 10), nil
 }
@@ -271,12 +271,12 @@ func (ia *LooksReal) Copy() Replacer {
 }
 
 // ReplacedValue returns random data based on the data type selection.
-func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err error) {
+func (ia *LooksReal) ReplacedValue(wg RandomGenerator) (data string, err error) {
 	switch ia.method {
 	case IPV4:
 		data = randomdata.IpV4Address()
 	case IPV4CHINA:
-		data = GetRandomChinaIP(g)
+		data = GetRandomChinaIP(wg)
 	case IPV6:
 		data = randomdata.IpV6Address()
 	case UA:
@@ -288,9 +288,9 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 	case NAME:
 		data = randomdata.SillyName()
 	case CELLPHONECHINA:
-		data = GetRandomChinaCellPhoneNo(g)
+		data = GetRandomChinaCellPhoneNo(wg)
 	case CHINESENAME:
-		data = GetRandomChineseName(g)
+		data = GetRandomChineseName(wg)
 	case MAC:
 		data = randomdata.MacAddress()
 	case UUID:
@@ -306,9 +306,9 @@ func (ia *LooksReal) ReplacedValue(g *rng.GaussianGenerator) (data string, err e
 }
 
 // GetRandomChinaIP returns a random IP address of China.
-func GetRandomChinaIP(g *rng.GaussianGenerator) string {
-	d1 := SimpleGaussian(g, len(seed))
-	d2 := SimpleGaussian(g, int(seed[d1][1]-seed[d1][0]))
+func GetRandomChinaIP(wg RandomGenerator) string {
+	d1 := wg.Next(len(seed))
+	d2 := wg.Next(int(seed[d1][1] - seed[d1][0]))
 	return int2ip(seed[d1][0] + int32(d2))
 }
 
@@ -324,7 +324,7 @@ func int2ip(n int32) string {
 }
 
 // GetRandomChinaCellPhoneNo returns a random cell phone number starts with 130 - 139
-func GetRandomChinaCellPhoneNo(g *rng.GaussianGenerator) string {
+func GetRandomChinaCellPhoneNo(wg RandomGenerator) string {
 	var seed = []string{
 		"130", "131", "132", "133", "134", "135", "136", "137", "138", "139",
 		"147", "148", "150", "151", "152", "157", " 158", "159", "178", "182",
@@ -332,8 +332,8 @@ func GetRandomChinaCellPhoneNo(g *rng.GaussianGenerator) string {
 		"176", "185", "186", "141", "149", "153", "173", "174", "177", "180",
 		"181"}
 	var phone = make([]string, 0)
-	phone = append(phone, seed[SimpleGaussian(g, len(seed))])
-	phone = append(phone, fmt.Sprintf("%06d", SimpleGaussian(g, 1e8)))
+	phone = append(phone, seed[wg.Next(len(seed))])
+	phone = append(phone, fmt.Sprintf("%06d", wg.Next(1e8)))
 	return strings.Join(phone, "")
 }
 
@@ -344,7 +344,7 @@ func GetRandomUUID() string {
 
 // GetRandomChineseName generates random (in gaussian distribution) Chinese name
 // picked from the seed.
-func GetRandomChineseName(g *rng.GaussianGenerator) string {
+func GetRandomChineseName(wg RandomGenerator) string {
 	seed := []string{
 		"李鸿平", "杨漫宇", "彭聪滨", "王新军", "吴鸣定", "蒋茵果", "李益文", "何子荣", "王志忠", "何联建",
 		"邓海国", "李萌雯", "张玉燕", "胡翠芳", "魏亚阳", "黄舒红", "许慧平", "贾文春", "张旭弟", "李汀然",
@@ -367,11 +367,11 @@ func GetRandomChineseName(g *rng.GaussianGenerator) string {
 		"范豹平", "李云芳", "杨一奎", "李桂平", "白春筠", "冯鹏颖", "陈柔玲", "王云云", "康繁颖", "李余剑",
 		"王树淳", "陈大彪", "孙万升", "陈俊凝", "叶昊滨", "唐保燕", "冯家华", "吴玉益", "韩州浩", "安希南",
 	}
-	return seed[SimpleGaussian(g, len(seed))]
+	return seed[wg.Next(len(seed))]
 }
 
-// SimpleGaussian returns a random value of Gaussian distribution.
-// mean=0.5*the_range, stddev=0.2*the_range
+// SimpleGaussian returns a random value of truncated Gaussian distribution.
+// meanC=0.5*the_range, stddevC=0.2*the_range
 func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
 	if gap == 0 {
 		return 0

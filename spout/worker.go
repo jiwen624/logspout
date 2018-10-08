@@ -13,8 +13,6 @@ import (
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/replacer"
 	"github.com/jiwen624/logspout/utils"
-
-	"github.com/leesper/go_rng"
 )
 
 type worker struct {
@@ -31,6 +29,8 @@ type worker struct {
 	writeTo          func(string) error
 	doneCallback     func()
 	closeChan        chan struct{}
+	rand             replacer.RandomGenerator
+	burstMode        bool
 }
 
 type workerConfig struct {
@@ -49,6 +49,7 @@ type workerConfig struct {
 	WriteTo          func(string) error
 	DoneCallback     func()
 	CloseChan        chan struct{}
+	BurstMode        bool
 }
 
 func NewWorker(c workerConfig) *worker {
@@ -66,6 +67,8 @@ func NewWorker(c workerConfig) *worker {
 		writeTo:          c.WriteTo,
 		doneCallback:     c.DoneCallback,
 		closeChan:        c.CloseChan,
+		rand:             replacer.NewTruncatedGaussian(0.5, 0.2),
+		burstMode:        c.BurstMode,
 	}
 	return w
 }
@@ -77,62 +80,62 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	log.Infof("%s spawned", workerName)
 	defer log.Infof("%s is exiting.", workerName)
 
-	var newLog string
 	defer w.doneCallback()
-
-	// Gaussian distribution
-	grng := rng.NewGaussianGenerator(time.Now().UnixNano())
 
 	matches := utils.StrSlice2DCopy(m)
 
 	// the index of current log event in the transaction (which contains multiple
 	// log events
-	var evtIdxInTrans int
+	var evtIdx int
 	// the transaction per second
 	var tps int64
 	// the total count of log events
-	var generatedEvents int
+	var generatedNum int
 
+	sleepIntraTrans := len(w.transIDs) != 0 && !w.burstMode
+	sleepInterTrans := !w.burstMode && w.maxInterval > 0
 	cTicker := time.NewTicker(time.Second * 1).C
+
 	for {
 		// The first message of a transaction
 		for k, v := range w.replacers {
-			idx := utils.StrIndex(names[evtIdxInTrans], k)
+			idx := utils.StrIndex(names[evtIdx], k)
 			if idx == -1 {
 				continue
-			} else if evtIdxInTrans == 0 || utils.StrIndex(w.transIDs, k) == -1 {
-				if s, err := v.ReplacedValue(grng); err == nil {
-					matches[evtIdxInTrans][idx] = s
+			} else if evtIdx == 0 || utils.StrIndex(w.transIDs, k) == -1 {
+				if s, err := v.ReplacedValue(w.rand); err == nil {
+					matches[evtIdx][idx] = s
 				}
 			} else {
-				matches[evtIdxInTrans][idx] = matches[0][idx]
+				matches[evtIdx][idx] = matches[0][idx]
 			}
 		}
 
-		newLog = strings.Join(matches[evtIdxInTrans], "")
 		// Print to logger streams, you may redirect it to anywhere else you want
-
-		if err := w.writeTo(newLog); err != nil {
+		if err := w.writeTo(strings.Join(matches[evtIdx], "")); err != nil {
 			log.Warn(errors.Wrap(err, "err writing logs to output"))
 		}
 
 		tps++
 		// Exits after it exceeds the predefined maximum events.
-		generatedEvents++
-		if generatedEvents >= w.maxEvents {
+		generatedNum++
+		if generatedNum >= w.maxEvents {
 			return
 		}
 
-		// It never sleeps in hightide mode.
-		if len(w.transIDs) != 0 && (w.minInterval == w.maxInterval) {
-			time.Sleep(time.Millisecond * time.Duration(replacer.SimpleGaussian(grng, w.maxIntraTransLat)))
+		// It never sleeps in burst mode.
+		if sleepIntraTrans {
+			sleepTime := time.Millisecond * time.Duration(w.rand.Next(w.maxIntraTransLat))
+			time.Sleep(sleepTime)
 		}
 
-		evtIdxInTrans++
-		if evtIdxInTrans >= len(w.seedLogs) {
-			evtIdxInTrans = 0
+		evtIdx++
+		if evtIdx >= len(w.seedLogs) {
+			evtIdx = 0
 			// think for a while between transactions
-			w.think(grng)
+			if sleepInterTrans {
+				w.think()
+			}
 		}
 
 		select {
@@ -148,18 +151,14 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 // TODO: use Jitter object as the only parameter
 // think calculates the think time and sleep for certain period if time
-func (w *worker) think(grng *rng.GaussianGenerator) {
-	if w.minInterval == w.maxInterval {
-		return
-	}
-
+func (w *worker) think() {
 	// Sleep for a short while.
 	var sleepMsec = w.minInterval
-	if w.maxInterval == w.minInterval {
+	if w.maxInterval <= w.minInterval {
 		sleepMsec = w.minInterval
 	} else {
 		if w.uniformLoad == true {
-			sleepMsec = w.minInterval + replacer.SimpleGaussian(grng, int(w.maxInterval-w.minInterval))
+			sleepMsec = w.minInterval + w.rand.Next(w.maxInterval-w.minInterval)
 		} else { // There should be a better algorithm here.
 			x := float64((time.Now().Unix() % 86400) / 13751)
 			y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
