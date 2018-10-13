@@ -224,7 +224,7 @@ func (i *IntegerReplacer) Copy() Replacer {
 	return n
 }
 
-// ReplacedValue is the main function to populate replacement value of an integer type.
+// ReplacedValue is to populate replacement value of an integer type.
 func (i *IntegerReplacer) ReplacedValue(wg RandomGenerator) (string, error) {
 	var currVal = i.currVal
 
@@ -264,7 +264,7 @@ func NewLooksReal(m string, p map[string]interface{}) Replacer {
 func (ia *LooksReal) Copy() Replacer {
 	n := &LooksReal{
 		method: ia.method,
-		// opts should be a bunch of read-only data, so it doesn't get deep-copied here.
+		// opts should be a bunch of read-only data, so it doesn't get deep-copied.
 		opts: ia.opts,
 	}
 	return n
@@ -295,10 +295,19 @@ func (ia *LooksReal) ReplacedValue(wg RandomGenerator) (data string, err error) 
 		data = randomdata.MacAddress()
 	case UUID:
 		data = GetRandomUUID()
-	case XML:
-		data = RandomXML(ia.opts[MAXDEPTH].(int), ia.opts[MAXELEMENTS].(int), ia.opts[TAGSEED].([]string))
-	case JSON:
-		data = RandomJSON(ia.opts[MAXDEPTH].(int), ia.opts[MAXELEMENTS].(int), ia.opts[TAGSEED].([]string))
+	case XML, JSON:
+		maxDepth, okDepth := ia.opts[MAXDEPTH].(int)
+		maxElements, okElements := ia.opts[MAXELEMENTS].(int)
+		tagSeed, okSeed := ia.opts[TAGSEED].([]string)
+		if !(okDepth && okElements && okSeed) {
+			err := errors.New("invalid XML/JSON config: not int")
+			return "", err
+		}
+		if ia.method == XML {
+			data = RandomXML(maxDepth, maxElements, tagSeed)
+		} else if ia.method == JSON {
+			data = RandomJSON(maxDepth, maxElements, tagSeed)
+		}
 	default:
 		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
 	}
@@ -396,7 +405,8 @@ func RandomXML(maxDepth int, maxElements int, seed []string) string {
 
 // RandomJSON returns a randomly generated JSON doc in string format.
 func RandomJSON(maxDepth int, maxElements int, seed []string) string {
-	json, err := xj.Convert(strings.NewReader(RandomXML(maxDepth, maxElements, seed)))
+	xml := RandomXML(maxDepth, maxElements, seed)
+	json, err := xj.Convert(strings.NewReader(xml))
 	if err != nil {
 		return ""
 	}

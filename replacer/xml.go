@@ -33,7 +33,8 @@ func XMLStr(maxDepth int, maxElements int, seed []string) (string, error) {
 
 // xmlStr is the internal helper function for XMLStr
 // In future we may use a different seed for each recursion.
-func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, elementsCnt map[int]int, seed []string) int {
+func xmlStr(doc *etree.Element, maxDepth int, maxElements int,
+	currDepth int, elementsCnt map[int]int, seed []string) int {
 	if doc == nil {
 		return 0
 	}
@@ -56,7 +57,9 @@ func xmlStr(doc *etree.Element, maxDepth int, maxElements int, currDepth int, el
 	numChildren := rand.Intn(maxElements)%10 + 1
 	// The maximum elements for each level would be less then maxElements
 	for i := 0; i < numChildren && elementsCnt[childDepth] < maxElements; i++ {
-		elementsCnt[childDepth] += xmlStr(doc.CreateElement(randomTag(seed)), maxDepth, maxElements, childDepth, elementsCnt, seed)
+		element := doc.CreateElement(randomTag(seed))
+		xml := xmlStr(element, maxDepth, maxElements, childDepth, elementsCnt, seed)
+		elementsCnt[childDepth] += xml
 		if currDepth == 0 {
 			break
 		}

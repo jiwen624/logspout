@@ -1,6 +1,6 @@
 package replacer
 
-// Replacer is the interface which must be implemented by a particular replacement policy.
+// Replacer should be implemented by a replacement policy.
 type Replacer interface {
 	// ReplacedValue returns the new replaced value. It may need a random
 	// number generator provided by the caller.

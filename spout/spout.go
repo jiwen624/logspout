@@ -292,6 +292,8 @@ func (s *Spout) GenerateTokens() ([][]string, [][]string, error) {
 
 // StartWorkers creates and starts all workers.
 func (s *Spout) StartWorkers(matches [][]string, names [][]string) {
+	log.Infof("LogSpout starting up with %d workers.", s.Concurrency)
+
 	s.Add(s.Concurrency) // Add them before you start the goroutines.
 
 	for i := 0; i < s.Concurrency; i++ {
@@ -313,8 +315,6 @@ func (s *Spout) StartWorkers(matches [][]string, names [][]string) {
 		})
 		go w.start(matches, names, i)
 	}
-
-	log.Infof("LogSpout started with %d workers.", s.Concurrency)
 }
 
 // WaitForWorkers monitors the timer, stop all workers then and wait for them
