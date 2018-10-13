@@ -2,7 +2,6 @@ package spout
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -149,24 +148,22 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	}
 }
 
-// TODO: use Jitter object as the only parameter
 // think calculates the think time and sleep for certain period if time
 func (w *worker) think() {
 	// Sleep for a short while.
-	var sleepMsec = w.minInterval
+	time.Sleep(w.calculateThinkTime())
+}
+
+func (w *worker) calculateThinkTime() time.Duration {
 	if w.maxInterval <= w.minInterval {
-		sleepMsec = w.minInterval
-	} else {
-		if w.uniformLoad == true {
-			sleepMsec = w.minInterval + w.rand.Next(w.maxInterval-w.minInterval)
-		} else { // There should be a better algorithm here.
-			x := float64((time.Now().Unix() % 86400) / 13751)
-			y := (math.Pow(math.Sin(x), 2) + math.Pow(math.Sin(x/2), 2) + 0.2) / 1.7619
-			sleepMsec = int(float64(w.minInterval) / y)
-			if sleepMsec > w.maxInterval {
-				sleepMsec = w.maxInterval
-			}
-		}
+		return time.Duration(w.minInterval) * time.Millisecond
 	}
-	time.Sleep(time.Millisecond * time.Duration(int(sleepMsec)))
+
+	if w.uniformLoad {
+		d := w.minInterval + w.rand.Next(w.maxInterval-w.minInterval)
+		return time.Duration(d) * time.Millisecond
+	}
+	// TODO: change to stochastic workload
+	d := w.minInterval + w.rand.Next(w.maxInterval-w.minInterval)
+	return time.Duration(d) * time.Millisecond
 }

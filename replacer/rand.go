@@ -37,5 +37,7 @@ func (tg *TruncatedGaussian) Next(max int) int {
 	if tg.g == nil || max <= 0 {
 		return 0
 	}
-	return int(math.Abs(tg.g.Gaussian(tg.meanC*float64(max), tg.stddevC*float64(max)))) % max
+	mean := tg.meanC * float64(max)
+	stddev := tg.stddevC * float64(max)
+	return int(math.Abs(tg.g.Gaussian(mean, stddev))) % max
 }
