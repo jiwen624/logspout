@@ -84,6 +84,13 @@ func UnregisterType(t Type) {
 	delete(initializers, t)
 }
 
+func GetInitializer(t Type) (Initializer, bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	i, ok := initializers[t]
+	return i, ok
+}
+
 // buildOutputMap builds the outputs based on the configurations wrapped by
 // Wrapper. It iterates all the configurations and creates output instances
 // of various types.
