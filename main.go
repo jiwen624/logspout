@@ -31,4 +31,6 @@ func main() {
 
 	spt.Stop()
 	log.Info("Logspout is stopped. Bye.")
+	log.Info("Logspout is stopped. Bye.")
+	log.Info("Logspout is stopped. Bye.")
 }
