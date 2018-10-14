@@ -20,6 +20,12 @@ const (
 	extYaml = ".yaml"
 )
 
+// config file errors
+var (
+	errUnsupportedFileType = errors.New("unsupported file extension")
+	errFileTooLarge        = errors.New("file too large")
+)
+
 func readFile(path string, sizeLimit int64) ([]byte, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
@@ -28,7 +34,8 @@ func readFile(path string, sizeLimit int64) ([]byte, error) {
 
 	size := fi.Size()
 	if size >= sizeLimit {
-		return nil, fmt.Errorf("larger than %d bytes", sizeLimit)
+		m := fmt.Sprintf("size: %d, expect: <=%d", size, sizeLimit)
+		return nil, errors.Wrap(errFileTooLarge, m)
 	}
 
 	cf, err := ioutil.ReadFile(path)
@@ -43,14 +50,14 @@ func readFile(path string, sizeLimit int64) ([]byte, error) {
 func FromJsonFile(name string) (*SpoutConfig, error) {
 	bs, err := readFile(name, maxConfFileSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "load config from file")
+		return nil, errors.Wrap(err, "from json")
 	}
 	return loadJson(bs)
 }
 
 // FromYamlFile loads a yaml config file and parse it to s SpoutConfig object
 func FromYamlFile(name string) (*SpoutConfig, error) {
-	return nil, errors.New("yaml config file is not yet supported")
+	return nil, errors.Wrap(errUnsupportedFileType, "Yaml")
 }
 
 // FromFile build a SpoutConfig object from a file. It calls different builders
@@ -62,7 +69,6 @@ func FromFile(path string) (*SpoutConfig, error) {
 	case extYml, extYaml:
 		return FromYamlFile(path)
 	default:
-		err := fmt.Errorf("unsupported file extension: %s", ext)
-		return nil, err
+		return nil, errors.Wrap(errUnsupportedFileType, ext)
 	}
 }
