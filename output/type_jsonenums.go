@@ -16,6 +16,7 @@ var (
 		"kafka":       kafka,
 		"es":          es,
 		"discard":     discard,
+		"upperbound":  upperbound,
 	}
 
 	_TypeValueToName = map[Type]string{
@@ -26,6 +27,7 @@ var (
 		kafka:       "kafka",
 		es:          "es",
 		discard:     "discard",
+		upperbound:  "upperbound",
 	}
 )
 
@@ -40,6 +42,7 @@ func init() {
 			interface{}(kafka).(fmt.Stringer).String():       kafka,
 			interface{}(es).(fmt.Stringer).String():          es,
 			interface{}(discard).(fmt.Stringer).String():     discard,
+			interface{}(upperbound).(fmt.Stringer).String():  upperbound,
 		}
 	}
 }
