@@ -32,7 +32,7 @@ func TestNormalizeName(t *testing.T) {
 
 func TestDeactivate(t *testing.T) {
 	c := &Console{}
-	assert.Nil(t, c.Deactivate())
+	assert.NotNil(t, c.Deactivate())
 }
 
 func TestActivate(t *testing.T) {

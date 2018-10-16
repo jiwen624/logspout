@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/jiwen624/logspout/log"
 	"github.com/jiwen624/logspout/utils"
 )
@@ -23,7 +25,7 @@ var supported = []string{
 
 func (c *Console) Write(p []byte) (n int, err error) {
 	if c.logger == nil {
-		return 0, fmt.Errorf("output is null: %s", c)
+		return 0, errors.Wrap(errOutputNull, c.String())
 	}
 	return c.logger.Write(p)
 }
@@ -57,6 +59,10 @@ func (c *Console) Activate() error {
 }
 
 func (c *Console) Deactivate() error {
+	if c.logger == nil {
+		return errors.Wrap(errOutputNull, c.String())
+	}
+
 	log.Infof("Deactivating output %s", c.FileName)
 
 	c.logger = nil

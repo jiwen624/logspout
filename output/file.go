@@ -25,7 +25,7 @@ type File struct {
 
 func (f *File) Write(p []byte) (n int, err error) {
 	if f.loggers == nil {
-		return 0, errors.New("no file defined in this output")
+		return 0, errors.Wrap(errOutputNull, f.String())
 	}
 	var errs []error
 	written := len(p)
@@ -60,7 +60,7 @@ func (f *File) Activate() error {
 
 func (f *File) Deactivate() error {
 	if f.loggers == nil {
-		return fmt.Errorf("closing a closed output: %s", f)
+		return errors.Wrap(errOutputNull, f.String())
 	}
 	for _, l := range f.loggers {
 		l.Close()

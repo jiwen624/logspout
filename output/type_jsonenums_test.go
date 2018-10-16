@@ -13,6 +13,12 @@ func TestMarshal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, []byte("\"console\""), b)
 
+	// receiver & method
+	o = file
+	b, err = o.MarshalJSON()
+	assert.Nil(t, err)
+	assert.Equal(t, []byte("\"file\""), b)
+
 	// invalid type
 	o = Type(upperbound + 1)
 	b, err = json.Marshal(o)
@@ -25,6 +31,13 @@ func TestUnMarshal(t *testing.T) {
 	err := json.Unmarshal(s, &typ)
 	assert.Nil(t, err)
 	assert.Equal(t, console, typ)
+
+	// receiver & method
+	s = []byte("\"kafka\"")
+	typ = unspecified
+	err = typ.UnmarshalJSON(s)
+	assert.Nil(t, err)
+	assert.Equal(t, kafka, typ)
 
 	// invalid type
 	s = []byte("\"invalid\"")
