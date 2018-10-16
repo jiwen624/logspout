@@ -14,7 +14,6 @@ var (
 		"file":        file,
 		"syslog":      syslog,
 		"kafka":       kafka,
-		"es":          es,
 		"discard":     discard,
 		"upperbound":  upperbound,
 	}
@@ -25,7 +24,6 @@ var (
 		file:        "file",
 		syslog:      "syslog",
 		kafka:       "kafka",
-		es:          "es",
 		discard:     "discard",
 		upperbound:  "upperbound",
 	}
@@ -40,7 +38,6 @@ func init() {
 			interface{}(file).(fmt.Stringer).String():        file,
 			interface{}(syslog).(fmt.Stringer).String():      syslog,
 			interface{}(kafka).(fmt.Stringer).String():       kafka,
-			interface{}(es).(fmt.Stringer).String():          es,
 			interface{}(discard).(fmt.Stringer).String():     discard,
 			interface{}(upperbound).(fmt.Stringer).String():  upperbound,
 		}

@@ -82,6 +82,7 @@ func setupInitializers() {
 		file:    func() Output { return &File{} },
 		syslog:  func() Output { return &Syslog{} },
 		kafka:   func() Output { return &Kafka{} },
+		discard: func() Output { return &Discard{} },
 	}
 }
 

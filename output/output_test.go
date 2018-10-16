@@ -49,3 +49,8 @@ func TestID(t *testing.T) {
 	assert.NotEqual(t, id(a), id(b))
 	assert.NotEqual(t, id(b), id(c))
 }
+
+func TestSetUpInitializers(t *testing.T) {
+	setupInitializers()
+	assert.Len(t, initializers, len(Types()))
+}

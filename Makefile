@@ -38,8 +38,11 @@ clean-logs:
 clean: clean-bin clean-logs
 
 .PHONY: generate
-generate:
+generate: clean-generated
 	go generate ./...
+
+clean-generated:
+	rm output/type_jsonenums.go
 
 .PHONY: test
 test: generate
