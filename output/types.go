@@ -20,7 +20,7 @@ const (
 	kafka
 
 	// To ElasticSearch // TODO: not implemented
-	es
+	// es
 
 	// To /dev/null
 	discard
@@ -31,5 +31,5 @@ const (
 
 // Types returns all output types
 func Types() []Type {
-	return []Type{console, file, syslog, kafka, es, discard}
+	return []Type{console, file, syslog, kafka, discard}
 }

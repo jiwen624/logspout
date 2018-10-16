@@ -24,6 +24,7 @@ func TestSyslog_Write(t *testing.T) {
 	n, err = sl.Write([]byte("hello"))
 	assert.Equal(t, len("hello"), n)
 	assert.Nil(t, err)
+	assert.Nil(t, sl.Deactivate())
 }
 
 func TestSyslog_ID(t *testing.T) {

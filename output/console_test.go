@@ -33,12 +33,25 @@ func TestNormalizeName(t *testing.T) {
 func TestDeactivate(t *testing.T) {
 	c := &Console{}
 	assert.NotNil(t, c.Deactivate())
+
+	c = &Console{FileName: "stderr"}
+	assert.Nil(t, c.Activate())
+	assert.Nil(t, c.Deactivate())
+	assert.Nil(t, c.logger)
 }
 
 func TestActivate(t *testing.T) {
 	c := &Console{FileName: "stdout"}
-	c.Activate()
+	assert.Nil(t, c.Activate())
 	assert.Equal(t, os.Stdout, c.logger)
+
+	c = &Console{FileName: "stderr"}
+	assert.Nil(t, c.Activate())
+	assert.Equal(t, os.Stderr, c.logger)
+
+	c = &Console{FileName: "invalid"}
+	assert.NotNil(t, c.Activate())
+	assert.Equal(t, nil, c.logger)
 }
 
 func TestId(t *testing.T) {
