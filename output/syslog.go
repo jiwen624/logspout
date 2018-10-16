@@ -12,7 +12,7 @@ type Syslog struct {
 	Protocol string `json:"protocol"`
 	Host     string `json:"host"`
 	Tag      string `json:"tag"`
-	logger   *slog.Writer
+	logger   ClosableWriter
 }
 
 func (s *Syslog) String() string {
@@ -22,7 +22,7 @@ func (s *Syslog) String() string {
 
 func (s *Syslog) Write(p []byte) (n int, err error) {
 	if s.logger == nil {
-		return 0, fmt.Errorf("output is null: %s", s)
+		return 0, errors.Wrap(errOutputNull, s.String())
 	}
 	return s.logger.Write(p)
 }
@@ -46,6 +46,9 @@ func (s *Syslog) Activate() error {
 }
 
 func (s *Syslog) Deactivate() error {
+	if s.logger == nil {
+		return errors.Wrap(errOutputNull, s.String())
+	}
 	o := fmt.Sprintf("%s//%s", s.Protocol, s.Host)
 	log.Infof("Deactivating output %s", o)
 

@@ -6,6 +6,8 @@ import (
 	"io"
 	"sync"
 
+	"github.com/pkg/errors"
+
 	"github.com/jiwen624/logspout/utils"
 )
 
@@ -42,6 +44,20 @@ type ClosableWriter interface {
 	io.Writer
 	Close() error
 }
+
+// DumbClosableWriter is used for test only. It never returns error
+type DumbClosableWriter struct{}
+
+// Write implements the Write method of interface ClosableWriter
+func (d DumbClosableWriter) Write(p []byte) (n int, err error) { return len(p), nil }
+
+// Close implements the Close method of the interface ClosableWriter
+func (d DumbClosableWriter) Close() error { return nil }
+
+// errors
+var (
+	errOutputNull = errors.New("output is null")
+)
 
 // initializers is the map for the output types and their factory methods
 var (
