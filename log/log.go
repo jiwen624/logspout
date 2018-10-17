@@ -63,6 +63,8 @@ func ToString(l Level) (s string) {
 }
 
 func ToLevel(s string) (Level, error) {
+	s = strings.ToLower(s)
+
 	l, ok := levelMap[s]
 	if !ok {
 		return DEBUG, errors.New("not a valid log level")

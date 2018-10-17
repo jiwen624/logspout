@@ -104,6 +104,9 @@ func (fl *FixedListReplacer) ReplacedValue(rg RandomGenerator) (string, error) {
 	case NEXT:
 		fl.currIdx = (fl.currIdx + 1) % len(fl.valRange)
 	case PREV:
+		if fl.currIdx == 0 {
+			fl.currIdx = 3
+		}
 		fl.currIdx = (fl.currIdx - 1) % len(fl.valRange)
 	case RANDOM:
 		fallthrough
