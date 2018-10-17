@@ -65,3 +65,9 @@ func TestFileDeactivate(t *testing.T) {
 	assert.Nil(t, f.Deactivate())
 	assert.NotNil(t, f.Deactivate())
 }
+
+func TestBuildFile(t *testing.T) {
+	f := &File{Duplicate: 3}
+	f.Activate()
+	assert.Equal(t, 3, len(f.loggers))
+}

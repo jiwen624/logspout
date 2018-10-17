@@ -39,6 +39,13 @@ func TestUnMarshal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, kafka, typ)
 
+	// not string
+	s = []byte("1")
+	typ = unspecified
+	err = typ.UnmarshalJSON(s)
+	assert.NotNil(t, err)
+	assert.Equal(t, unspecified, typ)
+
 	// invalid type
 	s = []byte("\"invalid\"")
 	typ = unspecified
