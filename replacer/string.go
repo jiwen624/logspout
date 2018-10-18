@@ -2,7 +2,7 @@ package replacer
 
 import "math/rand"
 
-var cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const cset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 // Constants for generating random strings
 const (
@@ -13,8 +13,8 @@ const (
 
 // RandomStr generates a random string within charset `chars` and shorter than length
 func RandomStr(chars string, length int) string {
-	if chars != "" {
-		cset = chars
+	if chars == "" {
+		chars = cset
 	}
 
 	b := make([]byte, length)
@@ -22,8 +22,8 @@ func RandomStr(chars string, length int) string {
 		if remain == 0 {
 			cache, remain = rand.Int63(), idxMax
 		}
-		if idx := int(cache & idxMask); idx < len(cset) {
-			b[i] = cset[idx]
+		if idx := int(cache & idxMask); idx < len(chars) {
+			b[i] = chars[idx]
 			i--
 		}
 		cache >>= lIdxBits
