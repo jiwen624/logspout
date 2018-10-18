@@ -73,7 +73,12 @@ type FixedListReplacer struct {
 }
 
 // NewFixedListReplacer returns a new FixedListReplacer struct instance
-func NewFixedListReplacer(c string, v []string, ci int) Replacer {
+func NewFixedListReplacer(c string, v []string, ci int) *FixedListReplacer {
+	if v == nil {
+		v = []string{""}
+	}
+	ci = ci % len(v)
+
 	return &FixedListReplacer{
 		method:   c,
 		valRange: v,
@@ -98,11 +103,17 @@ func (fl *FixedListReplacer) ReplacedValue(rg RandomGenerator) (string, error) {
 	switch fl.method {
 	case NEXT:
 		fl.currIdx = (fl.currIdx + 1) % len(fl.valRange)
-
+	case PREV:
+		if fl.currIdx == 0 {
+			fl.currIdx = 3
+		}
+		fl.currIdx = (fl.currIdx - 1) % len(fl.valRange)
 	case RANDOM:
 		fallthrough
 	default:
-		fl.currIdx = rg.Next(len(fl.valRange))
+		if rg != nil {
+			fl.currIdx = rg.Next(len(fl.valRange))
+		}
 	}
 	newVal = fl.valRange[fl.currIdx]
 	return newVal, nil
@@ -113,7 +124,7 @@ type TimeStampReplacer struct {
 }
 
 // NewTimeStampReplacer returns a new TimeStampReplacer struct instance.
-func NewTimeStampReplacer(f string) Replacer {
+func NewTimeStampReplacer(f string) *TimeStampReplacer {
 	return &TimeStampReplacer{
 		format: f,
 	}
@@ -138,7 +149,7 @@ type StringReplacer struct {
 	max   int64
 }
 
-func NewStringReplacer(chars string, min int64, max int64) Replacer {
+func NewStringReplacer(chars string, min int64, max int64) *StringReplacer {
 	return &StringReplacer{
 		chars: chars,
 		min:   min,
@@ -174,7 +185,7 @@ type FloatReplacer struct {
 	precision int64
 }
 
-func NewFloatReplacer(min float64, max float64, precision int64) Replacer {
+func NewFloatReplacer(min float64, max float64, precision int64) *FloatReplacer {
 	return &FloatReplacer{
 		min:       min,
 		max:       max,
@@ -205,7 +216,7 @@ type IntegerReplacer struct {
 }
 
 // NewIntegerReplacer returns a new IntegerReplacer struct instance
-func NewIntegerReplacer(c string, minV int64, maxV int64, cv int64) Replacer {
+func NewIntegerReplacer(c string, minV int64, maxV int64, cv int64) *IntegerReplacer {
 	return &IntegerReplacer{
 		method:  c,
 		min:     minV,
@@ -254,7 +265,7 @@ type LooksReal struct {
 }
 
 // NewLooksReal returns a new LooksReal struct instance
-func NewLooksReal(m string, p map[string]interface{}) Replacer {
+func NewLooksReal(m string, p map[string]interface{}) *LooksReal {
 	return &LooksReal{
 		method: m,
 		opts:   p,

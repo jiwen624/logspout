@@ -12,9 +12,9 @@ type Replacer interface {
 
 type Replacers map[string]Replacer
 
-func (r Replacers) Copy() Replacers {
+func (r *Replacers) Copy() Replacers {
 	n := Replacers{}
-	for k, v := range r {
+	for k, v := range *r {
 		n[k] = v.Copy()
 	}
 	return n
