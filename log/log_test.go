@@ -11,6 +11,7 @@ func TestSetLevel(t *testing.T) {
 	assert.Nil(t, SetLevel("info"))
 	assert.Equal(t, INFO, GetLevel())
 	assert.Equal(t, "info", ToString(INFO))
+	assert.False(t, DEBUG.Printable())
 }
 
 func TestToString(t *testing.T) {
