@@ -1,7 +1,9 @@
 package replacer
 
 import (
+	"encoding/json"
 	"fmt"
+	"net"
 	"strconv"
 	"testing"
 
@@ -161,5 +163,128 @@ func TestIntegerReplacer(t *testing.T) {
 		assert.Nil(t, e)
 		assert.Equal(t, i%101, v, fmt.Sprintf("Case: %d", i))
 	}
+}
 
+func TestLooksReal(t *testing.T) {
+	rng := NewTruncatedGaussian(0.5, 0.2)
+
+	// IPv4 address
+	lr := NewLooksReal(IPV4, nil)
+	assert.NotNil(t, lr)
+	ip, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotNil(t, net.ParseIP(ip))
+
+	// unknown format
+	lr = NewLooksReal("Unknown", nil)
+	assert.NotNil(t, lr)
+	ip, err = lr.ReplacedValue(rng)
+	assert.NotNil(t, err)
+	assert.Equal(t, "", ip)
+
+	// IPv4 China address
+	lr = NewLooksReal(IPV4CHINA, nil)
+	assert.NotNil(t, lr)
+	ip, err = lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotNil(t, net.ParseIP(ip))
+
+	// IPv6 address
+	lr = NewLooksReal(IPV6, nil)
+	assert.NotNil(t, lr)
+	ip, err = lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	ipv6 := net.ParseIP(ip)
+	assert.NotNil(t, ipv6)
+	assert.Nil(t, ipv6.To4())
+
+	// User Agent
+	lr = NewLooksReal(UA, nil)
+	assert.NotNil(t, lr)
+	ua, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.Contains(t, ua, "Mozilla")
+
+	// Country
+	lr = NewLooksReal(COUNTRY, nil)
+	assert.NotNil(t, lr)
+	c, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, c)
+
+	// Email
+	lr = NewLooksReal(EMAIL, nil)
+	assert.NotNil(t, lr)
+	e, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.Contains(t, e, "@")
+
+	// Name
+	lr = NewLooksReal(COUNTRY, nil)
+	assert.NotNil(t, lr)
+	n, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, n)
+
+	// Chinese name
+	lr = NewLooksReal(CHINESENAME, nil)
+	assert.NotNil(t, lr)
+	n, err = lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, n)
+
+	// China cellphone
+	lr = NewLooksReal(CELLPHONECHINA, nil)
+	assert.NotNil(t, lr)
+	cell, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, cell)
+
+	// Mac address
+	lr = NewLooksReal(MAC, nil)
+	assert.NotNil(t, lr)
+	mac, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	hw, err := net.ParseMAC(mac)
+	assert.NotNil(t, hw)
+	assert.Nil(t, err)
+
+	// UUID
+	lr = NewLooksReal(UUID, nil)
+	assert.NotNil(t, lr)
+	id, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, id)
+
+	// JSON
+	lr = NewLooksReal(JSON, map[string]interface{}{
+		MAXDEPTH:    1,
+		MAXELEMENTS: 1,
+		TAGSEED:     []string{"hello", "world"},
+	})
+	assert.NotNil(t, lr)
+	json, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.True(t, isJSON(json))
+
+	// XML
+	lr = NewLooksReal(XML, map[string]interface{}{
+		MAXDEPTH:    1,
+		MAXELEMENTS: 1,
+		TAGSEED:     []string{"hello", "world"},
+	})
+	assert.NotNil(t, lr)
+	xml, err := lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.True(t, isXML(xml))
+}
+
+func isJSON(s string) bool {
+	j := json.RawMessage{}
+	return json.Unmarshal([]byte(s), &j) == nil
+}
+
+func isXML(s string) bool {
+	// TODO
+	return s != ""
 }
