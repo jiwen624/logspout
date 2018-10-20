@@ -203,7 +203,7 @@ func TestLooksReal(t *testing.T) {
 	assert.NotNil(t, lr)
 	ua, err := lr.ReplacedValue(rng)
 	assert.Nil(t, err)
-	assert.Contains(t, ua, "Mozilla")
+	assert.NotEqual(t, "", ua)
 
 	// Country
 	lr = NewLooksReal(COUNTRY, nil)
