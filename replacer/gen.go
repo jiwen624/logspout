@@ -1,18 +1,17 @@
 package replacer
 
 import (
-	"errors"
 	"fmt"
-	"math"
 	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/Pallinder/go-randomdata"
 	xj "github.com/basgys/goxml2json"
 	"github.com/jiwen624/uuid"
-	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 )
 
@@ -60,6 +59,11 @@ var seed = [][]int32{
 	{-770113536, -768606209},   // 210.25.0.0-210.47.255.255
 	{-569376768, -564133889},   // 222.16.0.0-222.95.255.255
 }
+
+// the ReplaceValue errors
+var (
+	errUnknownLooksRealFormat = errors.New("unknown LooksReal format")
+)
 
 func init() {
 	uuid.Init()
@@ -266,6 +270,7 @@ type LooksReal struct {
 
 // NewLooksReal returns a new LooksReal struct instance
 func NewLooksReal(m string, p map[string]interface{}) *LooksReal {
+	// TODO: reject invalid method format
 	return &LooksReal{
 		method: m,
 		opts:   p,
@@ -307,6 +312,8 @@ func (ia *LooksReal) ReplacedValue(wg RandomGenerator) (data string, err error) 
 	case UUID:
 		data = GetRandomUUID()
 	case XML, JSON:
+		// TODO: make xml/json a separate replacer type, otherwise the performance
+		// TODO: would be bad here
 		maxDepth, okDepth := ia.opts[MAXDEPTH].(int)
 		maxElements, okElements := ia.opts[MAXELEMENTS].(int)
 		tagSeed, okSeed := ia.opts[TAGSEED].([]string)
@@ -320,7 +327,7 @@ func (ia *LooksReal) ReplacedValue(wg RandomGenerator) (data string, err error) 
 			data = RandomJSON(maxDepth, maxElements, tagSeed)
 		}
 	default:
-		err = errors.New(fmt.Sprintf("bad format %s", ia.method))
+		err = errors.Wrap(errUnknownLooksRealFormat, ia.method)
 	}
 	return data, err
 }
@@ -390,15 +397,6 @@ func GetRandomChineseName(wg RandomGenerator) string {
 	return seed[wg.Next(len(seed))]
 }
 
-// SimpleGaussian returns a random value of truncated Gaussian distribution.
-// meanC=0.5*the_range, stddevC=0.2*the_range
-func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
-	if gap == 0 {
-		return 0
-	}
-	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
-}
-
 // GetRandomString generates a random string of length n.
 func GetRandomString(chars string, length int) string {
 	return RandomStr(chars, length)
@@ -406,7 +404,7 @@ func GetRandomString(chars string, length int) string {
 
 // GetXMLStr returns a randomly generated XML doc in string format
 func RandomXML(maxDepth int, maxElements int, seed []string) string {
-	doc, err := XMLStr(maxDepth, maxElements, seed)
+	doc, err := XMLStr(int(maxDepth), int(maxElements), seed)
 	if err == nil {
 		return doc
 	} else {
