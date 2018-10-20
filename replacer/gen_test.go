@@ -233,6 +233,13 @@ func TestLooksReal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, n)
 
+	// Name
+	lr = NewLooksReal(NAME, nil)
+	assert.NotNil(t, lr)
+	n, err = lr.ReplacedValue(rng)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, n)
+
 	// China cellphone
 	lr = NewLooksReal(CELLPHONECHINA, nil)
 	assert.NotNil(t, lr)
@@ -267,6 +274,18 @@ func TestLooksReal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, isJSON(json))
 
+	// JSON with invalid parameter
+	// TODO: disable this case temporarily as the xml/json needs to be refactored.
+	// lr = NewLooksReal(JSON, map[string]interface{}{
+	// 	MAXDEPTH:    -1,
+	// 	MAXELEMENTS: 1,
+	// 	TAGSEED:     []string{"hello", "world"},
+	// })
+	// assert.NotNil(t, lr)
+	// json, err = lr.ReplacedValue(rng)
+	// assert.Nil(t, err)
+	// assert.Equal(t, "", json)
+
 	// XML
 	lr = NewLooksReal(XML, map[string]interface{}{
 		MAXDEPTH:    1,
@@ -277,6 +296,29 @@ func TestLooksReal(t *testing.T) {
 	xml, err := lr.ReplacedValue(rng)
 	assert.Nil(t, err)
 	assert.True(t, isXML(xml))
+
+	lrCopy := lr.Copy()
+	assert.Equal(t, lrCopy, lr)
+
+	// XML: missing mandatory parameter
+	lr = NewLooksReal(XML, map[string]interface{}{
+		MAXDEPTH:    1,
+		MAXELEMENTS: 1,
+	})
+	xml, err = lr.ReplacedValue(rng)
+	assert.NotNil(t, err)
+	assert.Empty(t, xml)
+
+	// XML: invalid mandatory parameter
+	// TODO: disable it temporarily
+	// lr = NewLooksReal(XML, map[string]interface{}{
+	// 	MAXDEPTH:    1,
+	// 	MAXELEMENTS: -1,
+	// 	TAGSEED:     []string{"hello", "world"},
+	// })
+	// xml, err = lr.ReplacedValue(rng)
+	// assert.NotNil(t, err)
+	// assert.Empty(t, xml)
 }
 
 func isJSON(s string) bool {

@@ -2,7 +2,6 @@ package replacer
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -13,7 +12,6 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	xj "github.com/basgys/goxml2json"
 	"github.com/jiwen624/uuid"
-	"github.com/leesper/go_rng"
 	"github.com/vjeantet/jodaTime"
 )
 
@@ -314,6 +312,8 @@ func (ia *LooksReal) ReplacedValue(wg RandomGenerator) (data string, err error) 
 	case UUID:
 		data = GetRandomUUID()
 	case XML, JSON:
+		// TODO: make xml/json a separate replacer type, otherwise the performance
+		// TODO: would be bad here
 		maxDepth, okDepth := ia.opts[MAXDEPTH].(int)
 		maxElements, okElements := ia.opts[MAXELEMENTS].(int)
 		tagSeed, okSeed := ia.opts[TAGSEED].([]string)
@@ -397,15 +397,6 @@ func GetRandomChineseName(wg RandomGenerator) string {
 	return seed[wg.Next(len(seed))]
 }
 
-// SimpleGaussian returns a random value of truncated Gaussian distribution.
-// meanC=0.5*the_range, stddevC=0.2*the_range
-func SimpleGaussian(g *rng.GaussianGenerator, gap int) int {
-	if gap == 0 {
-		return 0
-	}
-	return int(math.Abs(g.Gaussian(0.5*float64(gap), 0.2*float64(gap)))) % gap
-}
-
 // GetRandomString generates a random string of length n.
 func GetRandomString(chars string, length int) string {
 	return RandomStr(chars, length)
@@ -413,7 +404,7 @@ func GetRandomString(chars string, length int) string {
 
 // GetXMLStr returns a randomly generated XML doc in string format
 func RandomXML(maxDepth int, maxElements int, seed []string) string {
-	doc, err := XMLStr(maxDepth, maxElements, seed)
+	doc, err := XMLStr(int(maxDepth), int(maxElements), seed)
 	if err == nil {
 		return doc
 	} else {
