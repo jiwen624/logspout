@@ -14,6 +14,10 @@ import (
 
 // Build builds and returns an string-Replacer map for future use.
 func Build(replace []byte) (map[string]Replacer, error) {
+	if replace == nil {
+		return nil, errors.New("nil json raw message")
+	}
+
 	var replacerMap = make(map[string]Replacer)
 
 	handler := func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
@@ -72,6 +76,10 @@ func Build(replace []byte) (map[string]Replacer, error) {
 			}, config.LIST)
 			// No list found
 			if err != nil {
+				if err != jsonparser.KeyPathNotFoundError {
+					return errors.Wrap(err, fmt.Sprintf("%v", string(p)))
+				}
+
 				f, err := jsonparser.GetString(p, config.LISTFILE)
 				if err != nil {
 					return notFound(config.LISTFILE, err)

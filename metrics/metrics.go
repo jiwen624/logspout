@@ -18,7 +18,7 @@ var (
 
 func init() {
 	initCounters()
-	registerHandler()
+	registerHandlers()
 }
 
 func initCounters() {
@@ -27,12 +27,20 @@ func initCounters() {
 	tps.Init()
 }
 
-func registerHandler() {
-	http.HandleFunc("/metrics/tps", tpsHandler)
+func registerHandlers() {
+	registerHandler("/metrics/tps", tpsHandler)
+}
+
+func registerHandler(url string, handler http.HandlerFunc) {
+	http.HandleFunc(url, handler)
 }
 
 // SetTPS sets the transaction per second data of a particular worker
 func SetTPS(worker string, val int64) {
+	setTPS(tps, worker, val)
+}
+
+func setTPS(tps *expvar.Map, worker string, val int64) {
 	v := &expvar.Int{}
 	v.Set(val)
 	tps.Set(worker, v)
@@ -44,7 +52,7 @@ func tpsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	var s string
-	if b, err := json.Marshal(tpsSnapshot()); err != nil {
+	if b, err := json.Marshal(tpsSnapshot(tps)); err != nil {
 		s = err.Error()
 	} else {
 		s = string(b)
@@ -53,7 +61,7 @@ func tpsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // tpsSnapshot takes a consistent snapshot of the current TPS metrics.
-func tpsSnapshot() map[string]int64 {
+func tpsSnapshot(tps *expvar.Map) map[string]int64 {
 	tpsMap := make(map[string]int64)
 
 	tps.Do(func(kv expvar.KeyValue) {
