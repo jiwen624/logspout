@@ -94,7 +94,7 @@ func (r *Registry) Register(output Output) error {
 // Unregister unregisters an output from the global registry. When an output is
 // unregistered it will be deactivated automatically.
 func (r *Registry) Unregister(output Output) error {
-	if output == nil {
+	if output == nil || r.Size() == 0 {
 		return ErrUnRegisterNilOutput
 	}
 	id := output.ID()

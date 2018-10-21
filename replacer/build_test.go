@@ -133,3 +133,148 @@ func TestBuild(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Nil(t, r)
 }
+
+func TestInvalidBuild(t *testing.T) {
+	rawMsg := []byte(`{"timestamp": {
+      "type": "timestamp",
+      "attrs": {
+        "format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+      }
+    }}`)
+	_, err := Build(rawMsg)
+	assert.Nil(t, err)
+
+	rawMsg = []byte(`{"timestamp": {
+      "attrs": {
+        "format": "MMM dd, yyyy hh:mm:ss.SSS a z"
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"timestamp": {
+      "type": "timestamp",
+      "attrs": {
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{    "severity": {
+      "type": "fixedList",
+      "attrs": {
+        "listFile": "../examples/severity.sample"
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"users": {
+      "type": "fixedList",
+      "attrs": {
+        "method": "random"
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"subsystem": {
+      "type": "float",
+      "attrs": {
+        "min": 100,
+        "max": 10000,
+        "precision": 20
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.Nil(t, err)
+
+	rawMsg = []byte(`{"subsystem": {
+      "type": "float",
+      "attrs": {
+        "max": 10000,
+        "precision": 20
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"subsystem": {
+      "type": "float",
+      "attrs": {
+        "min": 100,
+        "precision": 20
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{ "thread": {
+      "type": "integer",
+      "attrs": {
+        "method": "next",
+        "min": 1,
+        "max": 100
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.Nil(t, err)
+
+	rawMsg = []byte(`{ "thread": {
+      "type": "integer",
+      "attrs": {
+        "min": 1,
+        "max": 100
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"transaction": {
+      "type": "string",
+      "attrs": {
+        "chars": "abcde12345",
+        "min": 10,
+        "max": 20
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.Nil(t, err)
+
+	rawMsg = []byte(`{"transaction": {
+      "type": "string",
+      "attrs": {
+        "chars": "abcde12345",
+        "max": 20
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"transaction": {
+      "type": "string",
+      "attrs": {
+        "chars": "abcde12345",
+        "min": 10
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+
+	rawMsg = []byte(`{"phone": {
+      "type": "looksReal",
+      "attrs": {
+        "method": "cellphoneChina"
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.Nil(t, err)
+
+	rawMsg = []byte(`{"phone": {
+      "type": "looksReal",
+      "attrs": {
+      }
+    }}`)
+	_, err = Build(rawMsg)
+	assert.NotNil(t, err)
+}

@@ -8,6 +8,13 @@ import (
 
 func TestRegistry(t *testing.T) {
 	r := NewRegistry()
+	assert.Equal(t, 0, r.Size())
+
+	assert.Equal(t, ErrRegisterNilOutput, r.Register(nil))
+	assert.Equal(t, ErrUnRegisterNilOutput, r.Unregister(nil))
+	assert.Equal(t, ErrEmptyRegistry, r.ForEach(func(Output) error {
+		return nil
+	}, func(Output) bool { return true }))
 
 	do := &Discard{}
 	assert.Nil(t, r.Register(do))
@@ -15,6 +22,10 @@ func TestRegistry(t *testing.T) {
 
 	fo := &Console{FileName: "stdout"}
 	assert.Nil(t, r.Register(fo))
+
+	// Register it again
+	assert.Equal(t, ErrDuplicate, r.Register(fo))
+
 	assert.Equal(t, 2, r.Size())
 
 	assert.Nil(t, r.ForAll(func(o Output) error {
