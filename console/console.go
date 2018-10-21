@@ -1,3 +1,5 @@
+// Package console contains the methods and functions of the management console.
+// The metrics data can be exposed through the management console.
 package console
 
 import (

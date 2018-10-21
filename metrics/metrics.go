@@ -1,3 +1,7 @@
+// Package metrics contains the methods and functions of recording metrics, e.g.,
+// TPS (transaction per second). The data recorded in this package can be offered
+// to the management console which then exposes it through a particular HTTP
+// endpoint.
 package metrics
 
 import (
@@ -62,6 +66,10 @@ func tpsHandler(w http.ResponseWriter, r *http.Request) {
 
 // tpsSnapshot takes a consistent snapshot of the current TPS metrics.
 func tpsSnapshot(tps *expvar.Map) map[string]int64 {
+	if tps == nil {
+		return nil
+	}
+
 	tpsMap := make(map[string]int64)
 
 	tps.Do(func(kv expvar.KeyValue) {

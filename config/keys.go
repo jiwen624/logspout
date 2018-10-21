@@ -33,7 +33,6 @@ const (
 	CONCURRENY           = "concurrency"
 	DUPLICATE            = "duplicate"
 	UNIFORM              = "uniform"
-	HIGHTIDE             = "hightide"
 	RECONVERT            = "reConvert"
 	TRANSACTION          = "transaction"
 	TRANSACTIONIDS       = "transactionIDs"

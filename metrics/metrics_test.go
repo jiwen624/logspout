@@ -69,3 +69,7 @@ func TestSetGetTPS(t *testing.T) {
 	assert.Equal(t, 3, tps.Worker3)
 	assert.Equal(t, 6, tps.Total)
 }
+
+func TestTpsSnapshot(t *testing.T) {
+	assert.Nil(t, tpsSnapshot(nil))
+}

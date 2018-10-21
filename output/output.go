@@ -1,7 +1,11 @@
+// Package output contains the interface and implementations of the output. The
+// output provides a Write method to send the generated logs to the destination.
+// It can also be activated and deactivated.
 package output
 
 import (
 	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"sync"
@@ -133,7 +137,7 @@ func id(s string) ID {
 	h := sha1.New()
 	h.Write([]byte(s))
 	id := h.Sum(nil)
-	return ID(id)
+	return ID(base64.StdEncoding.EncodeToString(id))
 }
 
 // Initializer defines the initializer type which creates an empty output object

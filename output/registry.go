@@ -25,15 +25,26 @@ type Registry struct {
 }
 
 var (
-	ErrDuplicate     = errors.New("duplicate ID found")
-	ErrNotFound      = errors.New("output not found")
-	ErrEmptyRegistry = errors.New("registry is empty")
+	ErrRegisterNilOutput   = errors.New("cannot register a nil output")
+	ErrUnRegisterNilOutput = errors.New("cannot unregister a nil output")
+	ErrDuplicate           = errors.New("duplicate ID found")
+	ErrNotFound            = errors.New("output not found")
+	ErrEmptyRegistry       = errors.New("registry is empty")
 )
 
 func (r *Registry) Size() int {
 	r.Lock()
 	defer r.Unlock()
-	return len(r.m)
+
+	if r.m == nil || len(r.m) == 0 {
+		return 0
+	}
+
+	length := 0
+	for _, im := range r.m {
+		length += len(im)
+	}
+	return length
 }
 
 func (r *Registry) String() string {
@@ -43,11 +54,18 @@ func (r *Registry) String() string {
 
 }
 
-// Register registers an output destination
+// Register registers an output destination. The output needs to activate explicitly
+// either by calling its Activate method or use the Registry's ForAll/ForEach/ForOne
+// method.
 func (r *Registry) Register(output Output) error {
+	if output == nil {
+		return ErrRegisterNilOutput
+	}
+
 	r.Lock()
 	defer r.Unlock()
 
+	// -- Don't activate the output here --
 	// if err := output.Activate(); err != nil {
 	// 	return errors.Wrap(err, "register failed")
 	// }
@@ -68,11 +86,20 @@ func (r *Registry) Register(output Output) error {
 		return ErrDuplicate
 	}
 	tm[id] = output
+	log.Debugf("Registering output id: %s type: %v", id, typ)
+
 	return nil
 }
 
-// Unregister unregisters an output from the global registry
+// Unregister unregisters an output from the global registry. When an output is
+// unregistered it will be deactivated automatically.
 func (r *Registry) Unregister(output Output) error {
+	if output == nil || r.Size() == 0 {
+		return ErrUnRegisterNilOutput
+	}
+	id := output.ID()
+	typ := output.Type()
+
 	r.Lock()
 	defer r.Unlock()
 
@@ -80,15 +107,15 @@ func (r *Registry) Unregister(output Output) error {
 		return errors.Wrap(err, "unregister failed:")
 	}
 
-	tm, ok := r.m[output.Type()]
+	tm, ok := r.m[typ]
 	if !ok {
-		return ErrNotFound
+		return errors.Wrap(ErrNotFound, fmt.Sprintf("Type: %v", typ))
 	}
 
-	id := output.ID()
-	if _, ok := tm[id]; ok {
-		return ErrNotFound
+	if _, ok := tm[id]; !ok {
+		return errors.Wrap(ErrNotFound, fmt.Sprintf("ID: %v", id))
 	}
+	log.Debugf("Unregistering output id: %s type: %v", id, typ)
 	delete(tm, id)
 	return nil
 }
@@ -155,7 +182,7 @@ func (r *Registry) ForOne(apply Apply, typ Type, id ID) error {
 			}
 		}
 	}
-	return ErrNotFound
+	return errors.Wrap(ErrNotFound, fmt.Sprintf("Type: %v, ID: %s", typ, id))
 }
 
 // Write is a helper function to write the string to all the outputs

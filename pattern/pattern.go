@@ -1,3 +1,5 @@
+// Package pattern defines the log match and replacement patterns. It can be either
+// regular expressions or rules of fixed-length strings.
 package pattern
 
 type Pattern interface {

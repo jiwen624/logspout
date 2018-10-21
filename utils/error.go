@@ -11,9 +11,13 @@ import (
 
 // ExitOnErr prints the error and exits immediately
 func ExitOnErr(wrapper string, e error) {
+	exitOnErr(wrapper, e, func() { os.Exit(1) })
+}
+
+func exitOnErr(wrapper string, e error, doExit func()) {
 	if e != nil {
 		log.Error(errors.Wrap(e, wrapper))
-		os.Exit(1)
+		doExit()
 	}
 }
 
