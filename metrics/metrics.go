@@ -66,6 +66,10 @@ func tpsHandler(w http.ResponseWriter, r *http.Request) {
 
 // tpsSnapshot takes a consistent snapshot of the current TPS metrics.
 func tpsSnapshot(tps *expvar.Map) map[string]int64 {
+	if tps == nil {
+		return nil
+	}
+
 	tpsMap := make(map[string]int64)
 
 	tps.Do(func(kv expvar.KeyValue) {

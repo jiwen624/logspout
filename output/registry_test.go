@@ -45,6 +45,8 @@ func TestRegistry(t *testing.T) {
 
 	assert.NotEqual(t, "", r.String())
 
+	assert.NotNil(t, r.Unregister(&Console{FileName: "invalid"}))
+
 	assert.Nil(t, r.Unregister(fo))
 	assert.Equal(t, 1, r.Size())
 
