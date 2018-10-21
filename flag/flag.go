@@ -1,3 +1,4 @@
+// Package flag processes the command line parameters
 package flag
 
 import "flag"

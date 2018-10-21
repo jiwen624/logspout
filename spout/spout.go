@@ -1,3 +1,5 @@
+// Package spout has all the methods of logspout workers which parses the patterns,
+// generate logs and write to the output destinations.
 package spout
 
 import (

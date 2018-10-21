@@ -1,3 +1,7 @@
+// Package replacer defines the interface and the implementations of replacers.
+// The replacers are responsible of generating new values based on pre-defined
+// rules. The generated values will be concatenated into an entry of machine log
+// which is then sent to the output destinations.
 package replacer
 
 // Replacer should be implemented by a replacement policy.

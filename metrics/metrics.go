@@ -1,3 +1,7 @@
+// Package metrics contains the methods and functions of recording metrics, e.g.,
+// TPS (transaction per second). The data recorded in this package can be offered
+// to the management console which then exposes it through a particular HTTP
+// endpoint.
 package metrics
 
 import (
