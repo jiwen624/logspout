@@ -116,7 +116,13 @@ func (r *Registry) Unregister(output Output) error {
 		return errors.Wrap(ErrNotFound, fmt.Sprintf("ID: %v", id))
 	}
 	log.Debugf("Unregistering output id: %s type: %v", id, typ)
+
 	delete(tm, id)
+
+	if len(tm) == 0 {
+		delete(r.m, typ)
+	}
+
 	return nil
 }
 

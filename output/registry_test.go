@@ -52,6 +52,8 @@ func TestRegistry(t *testing.T) {
 
 	assert.Nil(t, r.Unregister(do))
 	assert.Equal(t, 0, r.Size())
+
+	assert.NotNil(t, r.Unregister(do))
 }
 
 func TestRegistryFromConf(t *testing.T) {
