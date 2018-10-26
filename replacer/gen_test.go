@@ -330,3 +330,12 @@ func isXML(s string) bool {
 	// TODO
 	return s != ""
 }
+
+func TestInitLooksRealParms(t *testing.T) {
+	m := map[string]interface{}{}
+
+	InitLooksRealParms(m, XML)
+	assert.Equal(t, 100, m[MAXELEMENTS])
+	assert.Equal(t, 10, m[MAXDEPTH])
+	assert.Equal(t, []string{}, m[TAGSEED])
+}
