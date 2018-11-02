@@ -100,6 +100,7 @@ const (
 	defaultConsolePort = 10306
 )
 
+// NewDefault returns the pointer of a new Spout object.
 func NewDefault() *Spout {
 	return &Spout{close: make(chan struct{})}
 }

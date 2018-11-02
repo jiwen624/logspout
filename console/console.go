@@ -17,6 +17,6 @@ func Start(host string) {
 func startListener(host string) {
 	err := http.ListenAndServe(host, nil)
 	if err != nil {
-		log.Fatal("listen and serve: ", err)
+		log.Error("listen and serve: ", err)
 	}
 }
