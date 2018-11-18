@@ -159,13 +159,19 @@ func Build(cfg *config.SpoutConfig) (*Spout, error) {
 	return s.SanityCheck()
 }
 
+type PatternSeedMismatchError string
+
+func (e PatternSeedMismatchError) Error() string {
+	return fmt.Sprintf("See logs and patterns don't match: %s", e)
+}
+
 // TODO: add more checks
 func (s *Spout) SanityCheck() (*Spout, error) {
 	var errs []error
 	rl := len(s.seedLogs)
 	pl := len(s.Patterns)
 	if rl != pl {
-		e := fmt.Errorf("%d seed log(s) but %d pattern(s) found", rl, pl)
+		e := PatternSeedMismatchError(fmt.Sprintf("%d, %d", rl, pl))
 		errs = append(errs, e)
 		return nil, utils.CombineErrs(errs)
 	}
@@ -281,7 +287,7 @@ func (s *Spout) GenerateTokens() ([][]string, [][]string, error) {
 		names = append(names, ptn.Names())
 
 		if len(matches[idx]) == 0 {
-			return nil, nil, fmt.Errorf("#%d: unmatched pattern and logs", idx)
+			return nil, nil, PatternSeedMismatchError(idx)
 		}
 
 		// Remove the first one as it is the whole string.
