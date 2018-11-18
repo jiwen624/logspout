@@ -12,6 +12,12 @@ import (
 	"github.com/jiwen624/logspout/utils"
 )
 
+type UnsupportedConsoleTypeError string
+
+func (e UnsupportedConsoleTypeError) Error() string {
+	return fmt.Sprintf("Unsupported console type: %s", e)
+}
+
 type Console struct {
 	FileName string `json:"defaultFileName"`
 	logger   io.Writer
@@ -52,7 +58,7 @@ func (c *Console) Activate() error {
 	case "stderr":
 		c.logger = os.Stderr
 	default:
-		return fmt.Errorf("invalid console type: %s", c)
+		return UnsupportedConsoleTypeError(c.String())
 	}
 	c.FileName = normalized
 	return nil

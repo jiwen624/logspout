@@ -14,6 +14,7 @@ import (
 const (
 	TPS      = "tps"
 	TotalTPS = "Total"
+	EndPoint = "/metrics/tps"
 )
 
 var (

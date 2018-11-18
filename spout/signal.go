@@ -18,16 +18,23 @@ func (s *Spout) SigMon() {
 	go s.sigHandler(c)
 }
 
+type UnsupportedSignalError string
+
+func (e UnsupportedSignalError) Error() string {
+	return fmt.Sprintf("Unsupported signal: %s", e)
+}
+
 func (s *Spout) sigHandler(c chan os.Signal) {
 	for sig := range c {
 		switch sig {
 		case os.Interrupt:
 			fallthrough
 		case syscall.SIGTERM:
+			signal.Stop(c)
 			// Don't call os.Exit(), wait until all workers are closed.
 			s.Stop()
 		default:
-			err := fmt.Errorf("unhandled signal: %v", sig)
+			err := UnsupportedSignalError(sig.String())
 			fmt.Fprintln(os.Stderr, err)
 		}
 	}

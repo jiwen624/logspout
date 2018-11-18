@@ -81,12 +81,18 @@ var (
 	sugar zap.SugaredLogger
 )
 
+type UnsupportedLogLevelError string
+
+func (e UnsupportedLogLevelError) Error() string {
+	return fmt.Sprintf("Unsupported log level: %s", e)
+}
+
 func SetLevel(level string) error {
 	level = strings.ToLower(level)
 
 	lvl, ok := levelMap[level]
 	if !ok {
-		return fmt.Errorf("failed to set log level: %s", level)
+		return UnsupportedLogLevelError(level)
 	}
 
 	lgrCfg.Level.SetLevel(zapcore.Level(lvl))

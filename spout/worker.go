@@ -15,27 +15,43 @@ import (
 )
 
 type worker struct {
-	name             string
-	maxEvents        int
-	duration         time.Duration
-	replacers        replacer.Replacers
-	transIDs         []string
-	seedLogs         []string
-	minInterval      int
-	maxInterval      int
+	// The name of the worker, which is mainly used for logging purpose.
+	name string
+	// The maximum number of events expected, the worker will quit after reaching
+	// this number.
+	// It's calculated via spout's maximum events / concurrency
+	maxEvents int
+	// The life cycle of this worker.
+	duration time.Duration
+	// The replacers used by the worker to do string substitutions.
+	replacers replacer.Replacers
+	// The transaction ID
+	transIDs []string
+	// The logs to be used for substitutions.
+	seedLogs []string
+	// The minimum interval in milliseconds between logs in the same transaction.
+	minInterval int
+	// The maximum interval in milliseconds between logs in the same transaction.
+	maxInterval int
+	// The maximum interval in milliseconds between two adjacent transactions.
 	maxIntraTransLat int
-	uniformLoad      bool
-	writeTo          func(string) error
-	doneCallback     func()
-	closeChan        chan struct{}
-	rand             replacer.RandomGenerator
-	burstMode        bool
+	// Is the workload (aka TPS) is uniformed or with some jitter
+	uniformLoad bool
+	// The function to be called to write logs to the output destinations
+	writeTo func(string) error
+	// The callback function after the worker is finished.
+	doneCallback func()
+	// The channel that indicates the worker should exit when it's closed.
+	closeChan chan struct{}
+	// The random number generator.
+	rand replacer.RandomGenerator
+	// The flag indicates if the workload is in burst mode, where no think time exists.
+	burstMode bool
 }
 
+// See the corresponding comments in fields of the struct worker.
 type workerConfig struct {
-	Index int
-	// the maximum events of this particular worker
-	// should be spout's maximum events / concurrency
+	Index            int
 	MaxEvents        int
 	Seconds          int
 	Replacers        replacer.Replacers
@@ -81,6 +97,7 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 
 	defer w.doneCallback()
 
+	// Make a deep copy of m, as it's used by multiple workers.
 	matches := utils.StrSlice2DCopy(m)
 
 	// the index of current log event in the transaction (which contains multiple
@@ -91,8 +108,11 @@ func (w *worker) start(m [][]string, names [][]string, workerID int) {
 	// the total count of log events
 	var generatedNum int
 
+	// Does it `think` between two adjacent transactions.
 	sleepIntraTrans := len(w.transIDs) != 0 && !w.burstMode
+	// Does it `think` between two adjacent logs in the same transaction.
 	sleepInterTrans := !w.burstMode && w.maxInterval > 0
+	// The ticker defines the worker metrics flushing interval.
 	cTicker := time.NewTicker(time.Second * 1).C
 
 	for {
