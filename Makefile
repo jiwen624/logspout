@@ -42,7 +42,7 @@ generate: clean-generated
 	go generate ./...
 
 clean-generated:
-	rm output/type_jsonenums.go
+	rm -f output/type_jsonenums.go
 
 .PHONY: test
 test: generate
